@@ -792,3 +792,15 @@ void handleNavigation(BuildContext context, int index) {
   }
   context.go(route);
 }
+
+
+
+// codescnepal@Codescs-Mac-mini salesshopapp-main % flutter run --observatory-port=65432 -d "Bonik’s iPhone"
+// Launching lib/main.dart on Bonik’s iPhone in debug mode...
+// Automatically signing iOS for device deployment using specified development team in Xcode project: BDUA82D842
+// Running Xcode build...                                                  
+//  └─Compiling, linking and signing...                      2,637ms
+// Xcode build done.                                           15.6s
+// You may be prompted to give access to control Xcode. Flutter uses Xcode to run your app. If access is not allowed, you can change this through your Settings > Privacy & Security > Automation.
+// Installing and launching...                                        16.7s
+// Error connecting to the service protocol: failed to connect to http://127.0.0.1:8000/jjmTNrVXqDc=/ HttpException: Connection closed before full header was received, uri = http://127.0.0.1:59408/jjmTNrVXqDc=/ws

@@ -368,9 +368,12 @@ class AppDrawer extends StatelessWidget {
                   title: "Reports",
                   icon: Icons.settings,
                   subItems: const [
-                    'Ledger Report', // index 16
+                    'Ledger Report', // index 17
                   ],
-                  onNavigate: (index) => onNavigate(index + 4),
+                  onNavigate: (index) {
+                    final indices = [17];
+                    onNavigate(indices[index]);
+                  },
                 ),
               ],
             ),
