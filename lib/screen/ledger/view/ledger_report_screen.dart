@@ -1,209 +1,26 @@
-
-// import 'package:flutter/material.dart';
-// import 'package:intl/intl.dart';
-// import 'package:saleup_app/core/network/dio_client.dart';
-// import 'package:saleup_app/model/ledger_report_response.dart';
-// import 'package:permission_handler/permission_handler.dart';
-
-// class LedgerReportScreen extends StatefulWidget {
-//   const LedgerReportScreen({super.key});
-
-//   @override
-//   State<LedgerReportScreen> createState() => _LedgerReportScreenState();
-// }
-
-// class _LedgerReportScreenState extends State<LedgerReportScreen> {
-//   DateTime? startDate;
-//   DateTime? endDate;
-//   LedgerAccount? selectedAccount;
-//   List<LedgerAccount> accountList = [];
-//   LedgerReport? ledgerReport;
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _fetchAccounts();
-//   }
-
-//   Future<void> _fetchAccounts() async {
-//     try {
-//       final response = await DioClient().dio.get(
-//         '/ledger/get_ledger_report/',
-//         queryParameters: {'start_date': '2025-01-01', 'end_date': '2025-12-31'},
-//       );
-//       if (response.statusCode == 200) {
-//         final data = response.data['data'] as List<dynamic>;
-//         setState(() {
-//           accountList = data.map((e) => LedgerAccount.fromJson(e)).toList();
-//         });
-//       }
-//     } catch (e) {
-//       print('Error fetching accounts: $e');
-//     }
-//   }
-
-//   Future<void> _pickDate({required bool isStart}) async {
-//     final date = await showDatePicker(
-//       context: context,
-//       initialDate: DateTime.now(),
-//       firstDate: DateTime(2020),
-//       lastDate: DateTime(2030),
-//     );
-//     if (date != null) {
-//       setState(() {
-//         if (isStart) {
-//           startDate = date;
-//         } else {
-//           endDate = date;
-//         }
-//       });
-//     }
-//   }
-
-//   Future<void> _fetchLedger() async {
-//     if (selectedAccount == null || startDate == null || endDate == null) return;
-
-//     final response = await DioClient().dio.get(
-//       '/ledger/get_ledger_report/',
-//       queryParameters: {
-//         'start_date': DateFormat('yyyy-MM-dd').format(startDate!),
-//         'end_date': DateFormat('yyyy-MM-dd').format(endDate!),
-//         'acc_head': selectedAccount!.accountId,
-//       },
-//     );
-
-//     if (response.statusCode == 200) {
-//       setState(() {
-//         ledgerReport = LedgerReport.fromJson(response.data);
-//       });
-//     }
-//   }
-
-//   Future<void> _download(bool asPdf) async {
-//     if (ledgerReport == null) return;
-
-//     bool granted = await _requestPermission();
-//     if (!granted) return;
-
-//     if (asPdf) {
-//       await DioClient().downloadAsPdf(
-//         ledgerReport!,
-//         DateFormat('yyyy-MM-dd').format(startDate!),
-//         DateFormat('yyyy-MM-dd').format(endDate!),
-//       );
-//     } else {
-//       await DioClient().downloadAsExcel(
-//         ledgerReport!,
-//         DateFormat('yyyy-MM-dd').format(startDate!),
-//         DateFormat('yyyy-MM-dd').format(endDate!),
-//       );
-//     }
-
-//     ScaffoldMessenger.of(context).showSnackBar(
-//       SnackBar(content: Text(asPdf ? 'PDF downloaded' : 'Excel downloaded')),
-//     );
-//   }
-
-//   Future<bool> _requestPermission() async {
-//     if (Theme.of(context).platform == TargetPlatform.android) {
-//       final status = await Permission.storage.request();
-//       return status.isGranted;
-//     } else if (Theme.of(context).platform == TargetPlatform.iOS) {
-//       final status = await Permission.photosAddOnly.request();
-//       return status.isGranted;
-//     }
-//     return false;
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: const Text('Ledger Report')),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16),
-//         child: Column(
-//           children: [
-//             Row(
-//               children: [
-//                 Expanded(
-//                   child: ElevatedButton(
-//                     onPressed: () => _pickDate(isStart: true),
-//                     child: Text(startDate == null
-//                         ? 'Select Start Date'
-//                         : DateFormat('yyyy-MM-dd').format(startDate!)),
-//                   ),
-//                 ),
-//                 const SizedBox(width: 10),
-//                 Expanded(
-//                   child: ElevatedButton(
-//                     onPressed: () => _pickDate(isStart: false),
-//                     child: Text(endDate == null
-//                         ? 'Select End Date'
-//                         : DateFormat('yyyy-MM-dd').format(endDate!)),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//             const SizedBox(height: 10),
-//             DropdownButton<LedgerAccount>(
-//               value: selectedAccount,
-//               hint: const Text('Select Account'),
-//               items: accountList
-//                   .map((e) => DropdownMenuItem(
-//                         value: e,
-//                         child: Text(e.accountName ?? ''),
-//                       ))
-//                   .toList(),
-//               onChanged: (val) => setState(() => selectedAccount = val),
-//             ),
-//             const SizedBox(height: 10),
-//             ElevatedButton(
-//               onPressed: _fetchLedger,
-//               child: const Text('Fetch Ledger'),
-//             ),
-//             const SizedBox(height: 20),
-//             if (ledgerReport != null)
-//               Row(
-//                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-//                 children: [
-//                   ElevatedButton(
-//                     onPressed: () => _download(true),
-//                     child: const Text('Download PDF'),
-//                   ),
-//                   ElevatedButton(
-//                     onPressed: () => _download(false),
-//                     child: const Text('Download Excel'),
-//                   ),
-//                 ],
-//               ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
 // import 'package:flutter/material.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:go_router/go_router.dart';
 // import 'package:intl/intl.dart';
 // import 'package:saleup_app/core/network/dio_client.dart';
+// import 'package:saleup_app/model/account_heads_response.dart';
+// import 'dart:io';
+// import 'package:path_provider/path_provider.dart';
 // import 'package:saleup_app/screen/ledger/bloc/ledger_report_bloc.dart';
 // import 'package:saleup_app/screen/ledger/bloc/ledger_report_event.dart';
 // import 'package:saleup_app/screen/ledger/bloc/ledger_report_state.dart';
-// import 'package:saleup_app/model/ledger_report_response.dart';
 
 // class LedgerReportScreen extends StatefulWidget {
 //   const LedgerReportScreen({super.key});
-
 //   @override
-//   _LedgerReportScreenState createState() => _LedgerReportScreenState();
+//   State<LedgerReportScreen> createState() => _LedgerReportScreenState();
 // }
 
 // class _LedgerReportScreenState extends State<LedgerReportScreen> {
 //   late final LedgerReportBloc _bloc;
 //   DateTime? _selectedStartDate;
 //   DateTime? _selectedEndDate;
-//   String? _selectedAccHead;
+//   AccountHeadData? _selectedAccount;
+//   bool _dialogShown = false;
 
 //   @override
 //   void initState() {
@@ -236,29 +53,65 @@
 //     }
 //   }
 
+//   // FIXED: Clear only selections, NOT the account list
 //   void _clearFilter() {
 //     setState(() {
 //       _selectedStartDate = null;
 //       _selectedEndDate = null;
-//       _selectedAccHead = null;
+//       _selectedAccount = null; // Only selection cleared
+//       _dialogShown = false;
 //     });
-//     _bloc.add(ClearFilterEvent()); // Use the new event
+//     // DO NOT emit ClearFilterEvent() → it resets the account list!
+//   }
+
+//   void _applyFilter() {
+//     if (_selectedStartDate == null ||
+//         _selectedEndDate == null ||
+//         _selectedAccount == null) {
+//       return;
+//     }
+//     _dialogShown = false;
+//     _bloc.add(FetchAndDownloadLedgerReport(
+//       startDate: DateFormat('yyyy-MM-dd').format(_selectedStartDate!),
+//       endDate: DateFormat('yyyy-MM-dd').format(_selectedEndDate!),
+//       accHeadId: _selectedAccount!.id,
+//     ));
+//   }
+
+//   Future<void> _download(String type, Future<void> Function() fn) async {
+//     try {
+//       await fn();
+//       final dir = Platform.isAndroid
+//           ? (await getDownloadsDirectory()) ??
+//               await getApplicationDocumentsDirectory()
+//           : await getApplicationDocumentsDirectory();
+//       final ext = type == 'PDF' ? 'pdf' : 'csv';
+//       final path =
+//           '${dir.path}/ledger_report_${DateTime.now().toIso8601String().replaceAll(':', '-')}.$ext';
+
+//       if (!mounted) return;
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text('$type saved: $path')),
+//       );
+//     } catch (e) {
+//       if (!mounted) return;
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text('Failed to download $type')),
+//       );
+//     }
 //   }
 
 //   @override
 //   Widget build(BuildContext context) {
 //     return BlocProvider(
-//       create: (context) => _bloc,
+//       create: (_) => _bloc,
 //       child: Scaffold(
-//         key: _bloc.navigatorKey,
 //         appBar: AppBar(
 //           title: const Text('Ledger Report'),
 //           actions: [
 //             IconButton(
 //               icon: const Icon(Icons.refresh),
-//               onPressed: () {
-//                 _bloc.add(FetchFilterOptions()); // Refresh account list
-//               },
+//               onPressed: () => _bloc.add(FetchFilterOptions()),
 //             ),
 //           ],
 //         ),
@@ -267,7 +120,7 @@
 //           child: Column(
 //             crossAxisAlignment: CrossAxisAlignment.start,
 //             children: [
-//               // Filter Section
+//               // FILTER CARD
 //               Card(
 //                 elevation: 4,
 //                 child: Padding(
@@ -277,9 +130,12 @@
 //                     children: [
 //                       const Text(
 //                         'Filter Options',
-//                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//                         style: TextStyle(
+//                             fontSize: 18, fontWeight: FontWeight.bold),
 //                       ),
 //                       const SizedBox(height: 10),
+
+//                       // START & END DATE
 //                       Row(
 //                         children: [
 //                           Expanded(
@@ -290,9 +146,12 @@
 //                                 const SizedBox(height: 5),
 //                                 ElevatedButton(
 //                                   onPressed: () => _pickDate(isStart: true),
-//                                   child: Text(_selectedStartDate == null
-//                                       ? 'Select Start Date'
-//                                       : DateFormat('yyyy-MM-dd').format(_selectedStartDate!)),
+//                                   child: Text(
+//                                     _selectedStartDate == null
+//                                         ? 'Select Start Date'
+//                                         : DateFormat('yyyy-MM-dd')
+//                                             .format(_selectedStartDate!),
+//                                   ),
 //                                 ),
 //                               ],
 //                             ),
@@ -306,9 +165,12 @@
 //                                 const SizedBox(height: 5),
 //                                 ElevatedButton(
 //                                   onPressed: () => _pickDate(isStart: false),
-//                                   child: Text(_selectedEndDate == null
-//                                       ? 'Select End Date'
-//                                       : DateFormat('yyyy-MM-dd').format(_selectedEndDate!)),
+//                                   child: Text(
+//                                     _selectedEndDate == null
+//                                         ? 'Select End Date'
+//                                         : DateFormat('yyyy-MM-dd')
+//                                             .format(_selectedEndDate!),
+//                                   ),
 //                                 ),
 //                               ],
 //                             ),
@@ -316,34 +178,82 @@
 //                         ],
 //                       ),
 //                       const SizedBox(height: 10),
+
+//                       // ACCOUNT DROPDOWN – ALWAYS SHOWS AFTER LOADED
 //                       Column(
 //                         crossAxisAlignment: CrossAxisAlignment.start,
 //                         children: [
-//                           const Text('Account'),
+//                           const Text('Account Heads'),
 //                           const SizedBox(height: 5),
 //                           BlocBuilder<LedgerReportBloc, LedgerReportState>(
 //                             builder: (context, state) {
-//                               List<String> accHeads = [];
-//                               if (state is FilterOptionsLoaded) {
-//                                 accHeads = state.accHeads;
-//                                 _selectedAccHead ??= accHeads.isNotEmpty ? accHeads.first : null;
+//                               // SHOW LOADING TEXT ONLY ONCE
+//                               if (state is LedgerReportInitial ||
+//                                   state is LedgerReportLoading) {
+//                                 return const SizedBox(
+//                                   height: 56,
+//                                   child: Center(
+//                                       child: Text('Loading accounts...')),
+//                                 );
 //                               }
-//                               return DropdownButton<String>(
-//                                 value: _selectedAccHead,
-//                                 items: accHeads.map<DropdownMenuItem<String>>((String value) {
-//                                   return DropdownMenuItem<String>(
-//                                     value: value,
-//                                     child: Text(value),
+
+//                               // SHOW DROPDOWN IF ACCOUNTS LOADED
+//                               if (state is FilterOptionsLoaded) {
+//                                 final accounts = state.accountHeads;
+//                                 if (accounts.isEmpty) {
+//                                   return const SizedBox(
+//                                     height: 56,
+//                                     child: Center(
+//                                         child: Text(
+//                                             'No accounts heads available')),
 //                                   );
-//                                 }).toList(),
-//                                 onChanged: (String? newValue) {
-//                                   setState(() {
-//                                     _selectedAccHead = newValue;
-//                                   });
-//                                 },
-//                                 hint: const Text('Select Account'),
-//                                 isExpanded: true,
-//                               );
+//                                 }
+
+//                                 // Auto-select first if none selected
+//                                 if (_selectedAccount == null) {
+//                                   _selectedAccount = accounts.first;
+//                                 }
+
+//                                 final valid = accounts.firstWhere(
+//                                   (a) => a.id == _selectedAccount?.id,
+//                                   orElse: () => accounts.first,
+//                                 );
+
+//                                 return DropdownButtonFormField<AccountHeadData>(
+//                                   value: valid,
+//                                   decoration: const InputDecoration(
+//                                     border: OutlineInputBorder(),
+//                                     contentPadding: EdgeInsets.symmetric(
+//                                         horizontal: 12, vertical: 8),
+//                                   ),
+//                                   hint: const Text('Select Account Head'),
+//                                   isExpanded: true,
+//                                   items: accounts
+//                                       .map((a) => DropdownMenuItem(
+//                                           value: a, child: Text(a.name)))
+//                                       .toList(),
+//                                   onChanged: (v) =>
+//                                       setState(() => _selectedAccount = v),
+//                                 );
+//                               }
+
+//                               // SHOW ERROR WITH RETRY
+//                               if (state is LedgerReportFailure) {
+//                                 return SizedBox(
+//                                   height: 56,
+//                                   child: Center(
+//                                     child: TextButton.icon(
+//                                       icon: const Icon(Icons.refresh),
+//                                       label: Text(state.errorMessage),
+//                                       onPressed: () =>
+//                                           _bloc.add(FetchFilterOptions()),
+//                                     ),
+//                                   ),
+//                                 );
+//                               }
+
+//                               // FALLBACK
+//                               return const SizedBox.shrink();
 //                             },
 //                           ),
 //                         ],
@@ -352,48 +262,18 @@
 //                   ),
 //                 ),
 //               ),
+
 //               const SizedBox(height: 20),
-//               // Apply Filter and Clear Filter Buttons
+
+//               // APPLY & CLEAR BUTTONS
 //               Row(
 //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
 //                 children: [
 //                   ElevatedButton(
-//                     onPressed: _selectedStartDate != null &&
+//                     onPressed: (_selectedStartDate != null &&
 //                             _selectedEndDate != null &&
-//                             _selectedAccHead != null
-//                         ? () async {
-//                             final state = _bloc.state;
-//                             if (state is FilterOptionsLoaded) {
-//                               _bloc.add(FetchFilterOptions()); // Ensure fresh data
-//                               final initialResponse = await _bloc.dioClient.dio.get(
-//                                 '/ledger/get_ledger_report/',
-//                                 queryParameters: {'start_date': '2025-01-01', 'end_date': '2025-12-31'},
-//                               );
-//                               if (initialResponse.statusCode == 200) {
-//                                 final initialData = LedgerReport.fromJson(initialResponse.data);
-//                                 final account = initialData.data?.firstWhere(
-//                                   (acc) => acc.accountName == _selectedAccHead,
-//                                   orElse: () => LedgerAccount(
-//                                     accountId: 0,
-//                                     accountName: '',
-//                                     openingBalance: 0.0,
-//                                     ledger: [],
-//                                   ),
-//                                 );
-//                                 if (account?.accountId != null && account!.accountId != 0) {
-//                                   _bloc.add(FetchAndDownloadLedgerReport(
-//                                     startDate: DateFormat('yyyy-MM-dd').format(_selectedStartDate!),
-//                                     endDate: DateFormat('yyyy-MM-dd').format(_selectedEndDate!),
-//                                     accHead: account.accountId.toString(),
-//                                   ));
-//                                 } else {
-//                                   ScaffoldMessenger.of(context).showSnackBar(
-//                                     const SnackBar(content: Text('Invalid account selected')),
-//                                   );
-//                                 }
-//                               }
-//                             }
-//                           }
+//                             _selectedAccount != null)
+//                         ? _applyFilter
 //                         : null,
 //                     child: const Text('Apply Filter'),
 //                   ),
@@ -403,60 +283,109 @@
 //                   ),
 //                 ],
 //               ),
+
 //               const SizedBox(height: 20),
-//               // No table display
-//               if (false) // Placeholder to disable table
-//                 Expanded(
-//                   child: Container(),
-//                 ),
-//               // Download Buttons (conditional)
-//               Padding(
-//                 padding: const EdgeInsets.only(top: 16.0),
-//                 child: BlocBuilder<LedgerReportBloc, LedgerReportState>(
-//                   builder: (context, state) {
-//                     if (state is LedgerReportSuccess &&
-//                         state.ledgerReport.data != null &&
-//                         state.ledgerReport.data!.isNotEmpty) {
-//                       return Row(
+
+//               // DIALOG + DOWNLOAD BUTTONS
+//               BlocConsumer<LedgerReportBloc, LedgerReportState>(
+//                 listenWhen: (prev, curr) =>
+//                     curr is LedgerReportSuccess &&
+//                     prev is! LedgerReportSuccess &&
+//                     !_dialogShown,
+//                 listener: (context, state) {
+//                   if (state is LedgerReportSuccess) {
+//                     _dialogShown = true;
+//                     Future.microtask(() {
+//                       if (!mounted) return;
+//                       showDialog(
+//                         context: context,
+//                         useRootNavigator: false, // Safe with go_router
+//                         builder: (_) => AlertDialog(
+//                           title: const Text('Download'),
+//                           content: Column(
+//                             mainAxisSize: MainAxisSize.min,
+//                             children: [
+//                               ElevatedButton(
+//                                 onPressed: () {
+//                                   Navigator.of(context).pop();
+//                                   _download(
+//                                     'PDF',
+//                                     () => _bloc.dioClient.downloadAsPdf(
+//                                       state.ledgerReport,
+//                                       DateFormat('yyyy-MM-dd')
+//                                           .format(_selectedStartDate!),
+//                                       DateFormat('yyyy-MM-dd')
+//                                           .format(_selectedEndDate!),
+//                                     ),
+//                                   );
+//                                 },
+//                                 child: const Text('Download PDF'),
+//                               ),
+//                               const SizedBox(height: 8),
+//                               ElevatedButton(
+//                                 onPressed: () {
+//                                   Navigator.of(context).pop();
+//                                   _download(
+//                                     'Excel',
+//                                     () => _bloc.dioClient.downloadAsExcel(
+//                                       state.ledgerReport,
+//                                       DateFormat('yyyy-MM-dd')
+//                                           .format(_selectedStartDate!),
+//                                       DateFormat('yyyy-MM-dd')
+//                                           .format(_selectedEndDate!),
+//                                     ),
+//                                   );
+//                                 },
+//                                 child: const Text('Download Excel'),
+//                               ),
+//                             ],
+//                           ),
+//                         ),
+//                       ).then((_) => _dialogShown = false);
+//                     });
+//                   }
+//                 },
+//                 builder: (context, state) {
+//                   if (state is LedgerReportSuccess &&
+//                       state.ledgerReport.data?.isNotEmpty == true) {
+//                     return Padding(
+//                       padding: const EdgeInsets.only(top: 16.0),
+//                       child: Row(
 //                         mainAxisAlignment: MainAxisAlignment.end,
 //                         children: [
 //                           ElevatedButton(
-//                             onPressed: () {
-//                               if (state is LedgerReportSuccess) {
-//                                 _bloc.dioClient.downloadAsPdf(
-//                                   state.ledgerReport,
-//                                   DateFormat('yyyy-MM-dd').format(_selectedStartDate!),
-//                                   DateFormat('yyyy-MM-dd').format(_selectedEndDate!),
-//                                 );
-//                                 ScaffoldMessenger.of(context).showSnackBar(
-//                                   const SnackBar(content: Text('PDF downloaded successfully')),
-//                                 );
-//                               }
-//                             },
-//                             child: const Text('Download PDF'),
+//                             onPressed: () => _download(
+//                               'PDF',
+//                               () => _bloc.dioClient.downloadAsPdf(
+//                                 state.ledgerReport,
+//                                 DateFormat('yyyy-MM-dd')
+//                                     .format(_selectedStartDate!),
+//                                 DateFormat('yyyy-MM-dd')
+//                                     .format(_selectedEndDate!),
+//                               ),
+//                             ),
+//                             child: const Text('PDF'),
 //                           ),
 //                           const SizedBox(width: 10),
 //                           ElevatedButton(
-//                             onPressed: () {
-//                               if (state is LedgerReportSuccess) {
-//                                 _bloc.dioClient.downloadAsExcel(
-//                                   state.ledgerReport,
-//                                   DateFormat('yyyy-MM-dd').format(_selectedStartDate!),
-//                                   DateFormat('yyyy-MM-dd').format(_selectedEndDate!),
-//                                 );
-//                                 ScaffoldMessenger.of(context).showSnackBar(
-//                                   const SnackBar(content: Text('Excel downloaded successfully')),
-//                                 );
-//                               }
-//                             },
-//                             child: const Text('Download Excel'),
+//                             onPressed: () => _download(
+//                               'Excel',
+//                               () => _bloc.dioClient.downloadAsExcel(
+//                                 state.ledgerReport,
+//                                 DateFormat('yyyy-MM-dd')
+//                                     .format(_selectedStartDate!),
+//                                 DateFormat('yyyy-MM-dd')
+//                                     .format(_selectedEndDate!),
+//                               ),
+//                             ),
+//                             child: const Text('Excel'),
 //                           ),
 //                         ],
-//                       );
-//                     }
-//                     return const SizedBox.shrink(); // Hide when no data
-//                   },
-//                 ),
+//                       ),
+//                     );
+//                   }
+//                   return const SizedBox.shrink();
+//                 },
 //               ),
 //             ],
 //           ),
@@ -465,27 +394,31 @@
 //     );
 //   }
 // }
+// lib/screen/ledger/ledger_report_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
+import 'package:saleup_app/model/account_heads_response.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 import 'package:saleup_app/screen/ledger/bloc/ledger_report_bloc.dart';
 import 'package:saleup_app/screen/ledger/bloc/ledger_report_event.dart';
 import 'package:saleup_app/screen/ledger/bloc/ledger_report_state.dart';
-import 'package:saleup_app/model/ledger_report_response.dart';
 
 class LedgerReportScreen extends StatefulWidget {
   const LedgerReportScreen({super.key});
-
   @override
-  _LedgerReportScreenState createState() => _LedgerReportScreenState();
+  State<LedgerReportScreen> createState() => _LedgerReportScreenState();
 }
 
 class _LedgerReportScreenState extends State<LedgerReportScreen> {
   late final LedgerReportBloc _bloc;
   DateTime? _selectedStartDate;
   DateTime? _selectedEndDate;
-  String? _selectedAccHead;
+  AccountHeadData? _selectedAccount;
+  bool _dialogShown = false;
 
   @override
   void initState() {
@@ -518,29 +451,64 @@ class _LedgerReportScreenState extends State<LedgerReportScreen> {
     }
   }
 
+  // Clear only selections
   void _clearFilter() {
     setState(() {
       _selectedStartDate = null;
       _selectedEndDate = null;
-      _selectedAccHead = null;
+      _selectedAccount = null; // This will show "Select Account Head"
+      _dialogShown = false;
     });
-    _bloc.add(ClearFilterEvent());
+  }
+
+  void _applyFilter() {
+    if (_selectedStartDate == null ||
+        _selectedEndDate == null ||
+        _selectedAccount == null) {
+      return;
+    }
+    _dialogShown = false;
+    _bloc.add(FetchAndDownloadLedgerReport(
+      startDate: DateFormat('yyyy-MM-dd').format(_selectedStartDate!),
+      endDate: DateFormat('yyyy-MM-dd').format(_selectedEndDate!),
+      accHeadId: _selectedAccount!.id,
+    ));
+  }
+
+  Future<void> _download(String type, Future<void> Function() fn) async {
+    try {
+      await fn();
+      final dir = Platform.isAndroid
+          ? (await getDownloadsDirectory()) ??
+              await getApplicationDocumentsDirectory()
+          : await getApplicationDocumentsDirectory();
+      final ext = type == 'PDF' ? 'pdf' : 'csv';
+      final path =
+          '${dir.path}/ledger_report_${DateTime.now().toIso8601String().replaceAll(':', '-')}.$ext';
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$type saved: $path')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to download $type')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => _bloc,
+      create: (_) => _bloc,
       child: Scaffold(
-        key: _bloc.navigatorKey,
         appBar: AppBar(
           title: const Text('Ledger Report'),
           actions: [
             IconButton(
               icon: const Icon(Icons.refresh),
-              onPressed: () {
-                _bloc.add(FetchFilterOptions());
-              },
+              onPressed: () => _bloc.add(FetchFilterOptions()),
             ),
           ],
         ),
@@ -549,6 +517,7 @@ class _LedgerReportScreenState extends State<LedgerReportScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // FILTER CARD
               Card(
                 elevation: 4,
                 child: Padding(
@@ -558,9 +527,12 @@ class _LedgerReportScreenState extends State<LedgerReportScreen> {
                     children: [
                       const Text(
                         'Filter Options',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
+
+                      // START & END DATE
                       Row(
                         children: [
                           Expanded(
@@ -571,9 +543,12 @@ class _LedgerReportScreenState extends State<LedgerReportScreen> {
                                 const SizedBox(height: 5),
                                 ElevatedButton(
                                   onPressed: () => _pickDate(isStart: true),
-                                  child: Text(_selectedStartDate == null
-                                      ? 'Select Start Date'
-                                      : DateFormat('yyyy-MM-dd').format(_selectedStartDate!)),
+                                  child: Text(
+                                    _selectedStartDate == null
+                                        ? 'Select Start Date'
+                                        : DateFormat('yyyy-MM-dd')
+                                            .format(_selectedStartDate!),
+                                  ),
                                 ),
                               ],
                             ),
@@ -587,9 +562,12 @@ class _LedgerReportScreenState extends State<LedgerReportScreen> {
                                 const SizedBox(height: 5),
                                 ElevatedButton(
                                   onPressed: () => _pickDate(isStart: false),
-                                  child: Text(_selectedEndDate == null
-                                      ? 'Select End Date'
-                                      : DateFormat('yyyy-MM-dd').format(_selectedEndDate!)),
+                                  child: Text(
+                                    _selectedEndDate == null
+                                        ? 'Select End Date'
+                                        : DateFormat('yyyy-MM-dd')
+                                            .format(_selectedEndDate!),
+                                  ),
                                 ),
                               ],
                             ),
@@ -597,34 +575,73 @@ class _LedgerReportScreenState extends State<LedgerReportScreen> {
                         ],
                       ),
                       const SizedBox(height: 10),
+
+                      // ACCOUNT DROPDOWN – SHOWS "Select Account Head" FIRST
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Account'),
+                          const Text('Account Heads'),
                           const SizedBox(height: 5),
                           BlocBuilder<LedgerReportBloc, LedgerReportState>(
                             builder: (context, state) {
-                              List<String> accHeads = [];
-                              if (state is FilterOptionsLoaded) {
-                                accHeads = state.accHeads;
-                                _selectedAccHead ??= accHeads.isNotEmpty ? accHeads.first : null;
+                              // Loading
+                              if (state is LedgerReportInitial ||
+                                  state is LedgerReportLoading) {
+                                return const SizedBox(
+                                  height: 56,
+                                  child: Center(
+                                      child: Text('Loading accounts...')),
+                                );
                               }
-                              return DropdownButton<String>(
-                                value: _selectedAccHead,
-                                items: accHeads.map<DropdownMenuItem<String>>((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
+
+                              // Loaded
+                              if (state is FilterOptionsLoaded) {
+                                final accounts = state.accountHeads;
+                                if (accounts.isEmpty) {
+                                  return const SizedBox(
+                                    height: 56,
+                                    child: Center(
+                                        child:
+                                            Text('No account heads available')),
                                   );
-                                }).toList(),
-                                onChanged: (String? newValue) {
-                                  setState(() {
-                                    _selectedAccHead = newValue;
-                                  });
-                                },
-                                hint: const Text('Select Account'),
-                                isExpanded: true,
-                              );
+                                }
+
+                                return DropdownButtonFormField<AccountHeadData>(
+                                  initialValue:
+                                      _selectedAccount, // null = show hint
+                                  decoration: const InputDecoration(
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                  ),
+                                  hint: const Text(
+                                      'Select Account Head'), // Shows when null
+                                  isExpanded: true,
+                                  items: accounts
+                                      .map((a) => DropdownMenuItem(
+                                          value: a, child: Text(a.name)))
+                                      .toList(),
+                                  onChanged: (v) =>
+                                      setState(() => _selectedAccount = v),
+                                );
+                              }
+
+                              // Error
+                              if (state is LedgerReportFailure) {
+                                return SizedBox(
+                                  height: 56,
+                                  child: Center(
+                                    child: TextButton.icon(
+                                      icon: const Icon(Icons.refresh),
+                                      label: Text(state.errorMessage),
+                                      onPressed: () =>
+                                          _bloc.add(FetchFilterOptions()),
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              return const SizedBox.shrink();
                             },
                           ),
                         ],
@@ -633,47 +650,18 @@ class _LedgerReportScreenState extends State<LedgerReportScreen> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 20),
+
+              // BUTTONS
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
-                    onPressed: _selectedStartDate != null &&
+                    onPressed: (_selectedStartDate != null &&
                             _selectedEndDate != null &&
-                            _selectedAccHead != null
-                        ? () async {
-                            final state = _bloc.state;
-                            if (state is FilterOptionsLoaded) {
-                              _bloc.add(FetchFilterOptions());
-                              final initialResponse = await _bloc.dioClient.dio.get(
-                                '/ledger/get_ledger_report/',
-                                queryParameters: {'start_date': '2025-01-01', 'end_date': '2025-12-31'},
-                              );
-                              if (initialResponse.statusCode == 200) {
-                                final initialData = LedgerReport.fromJson(initialResponse.data);
-                                final account = initialData.data?.firstWhere(
-                                  (acc) => acc.accountName == _selectedAccHead,
-                                  orElse: () => const LedgerAccount(
-                                    accountId: 0,
-                                    accountName: '',
-                                    openingBalance: 0.0,
-                                    ledger: [],
-                                  ),
-                                );
-                                if (account?.accountId != null && account!.accountId != 0) {
-                                  _bloc.add(FetchAndDownloadLedgerReport(
-                                    startDate: DateFormat('yyyy-MM-dd').format(_selectedStartDate!),
-                                    endDate: DateFormat('yyyy-MM-dd').format(_selectedEndDate!),
-                                    accHead: account.accountId.toString(),
-                                  ));
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Invalid account selected')),
-                                  );
-                                }
-                              }
-                            }
-                          }
+                            _selectedAccount != null)
+                        ? _applyFilter
                         : null,
                     child: const Text('Apply Filter'),
                   ),
@@ -683,54 +671,109 @@ class _LedgerReportScreenState extends State<LedgerReportScreen> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 20),
-              if (false)
-                Expanded(
-                  child: Container(),
-                ),
-              Padding(
-                padding: const EdgeInsets.only(top: 16.0),
-                child: BlocBuilder<LedgerReportBloc, LedgerReportState>(
-                  builder: (context, state) {
-                    if (state is LedgerReportSuccess &&
-                        state.ledgerReport.data != null &&
-                        state.ledgerReport.data!.isNotEmpty) {
-                      return Row(
+
+              // DIALOG + DOWNLOAD
+              BlocConsumer<LedgerReportBloc, LedgerReportState>(
+                listenWhen: (prev, curr) =>
+                    curr is LedgerReportSuccess &&
+                    prev is! LedgerReportSuccess &&
+                    !_dialogShown,
+                listener: (context, state) {
+                  if (state is LedgerReportSuccess) {
+                    _dialogShown = true;
+                    Future.microtask(() {
+                      if (!mounted) return;
+                      showDialog(
+                        context: context,
+                        useRootNavigator: false,
+                        builder: (_) => AlertDialog(
+                          title: const Text('Download'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  _download(
+                                    'PDF',
+                                    () => _bloc.dioClient.downloadAsPdf(
+                                      state.ledgerReport,
+                                      DateFormat('yyyy-MM-dd')
+                                          .format(_selectedStartDate!),
+                                      DateFormat('yyyy-MM-dd')
+                                          .format(_selectedEndDate!),
+                                    ),
+                                  );
+                                },
+                                child: const Text('Download PDF'),
+                              ),
+                              const SizedBox(height: 8),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                  _download(
+                                    'Excel',
+                                    () => _bloc.dioClient.downloadAsExcel(
+                                      state.ledgerReport,
+                                      DateFormat('yyyy-MM-dd')
+                                          .format(_selectedStartDate!),
+                                      DateFormat('yyyy-MM-dd')
+                                          .format(_selectedEndDate!),
+                                    ),
+                                  );
+                                },
+                                child: const Text('Download Excel'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ).then((_) => _dialogShown = false);
+                    });
+                  }
+                },
+                builder: (context, state) {
+                  if (state is LedgerReportSuccess &&
+                      state.ledgerReport.data?.isNotEmpty == true) {
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 16.0),
+                      child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           ElevatedButton(
-                            onPressed: () {
-                              _bloc.dioClient.downloadAsPdf(
+                            onPressed: () => _download(
+                              'PDF',
+                              () => _bloc.dioClient.downloadAsPdf(
                                 state.ledgerReport,
-                                DateFormat('yyyy-MM-dd').format(_selectedStartDate!),
-                                DateFormat('yyyy-MM-dd').format(_selectedEndDate!),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('PDF download initiated')),
-                              );
-                            },
-                            child: const Text('Download PDF'),
+                                DateFormat('yyyy-MM-dd')
+                                    .format(_selectedStartDate!),
+                                DateFormat('yyyy-MM-dd')
+                                    .format(_selectedEndDate!),
+                              ),
+                            ),
+                            child: const Text('PDF'),
                           ),
                           const SizedBox(width: 10),
                           ElevatedButton(
-                            onPressed: () {
-                              _bloc.dioClient.downloadAsExcel(
+                            onPressed: () => _download(
+                              'Excel',
+                              () => _bloc.dioClient.downloadAsExcel(
                                 state.ledgerReport,
-                                DateFormat('yyyy-MM-dd').format(_selectedStartDate!),
-                                DateFormat('yyyy-MM-dd').format(_selectedEndDate!),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Excel download initiated')),
-                              );
-                            },
-                            child: const Text('Download Excel'),
+                                DateFormat('yyyy-MM-dd')
+                                    .format(_selectedStartDate!),
+                                DateFormat('yyyy-MM-dd')
+                                    .format(_selectedEndDate!),
+                              ),
+                            ),
+                            child: const Text('Excel'),
                           ),
                         ],
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
+                      ),
+                    );
+                  }
+                  return const SizedBox.shrink();
+                },
               ),
             ],
           ),
