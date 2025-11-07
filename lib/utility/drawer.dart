@@ -378,7 +378,7 @@ class AppDrawer extends StatelessWidget {
                         "Log Summary",
                       ],
                       onNavigate: (index) {
-                        final indices = [19];
+                        final indices = [19, 20];
                         onNavigate(indices[index]);
                       },
                     ),

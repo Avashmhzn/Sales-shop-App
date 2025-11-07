@@ -458,6 +458,7 @@ import 'package:saleup_app/screen/salesReturn/bloc/sale_return_bloc.dart';
 import 'package:saleup_app/screen/salesReturn/view/sale_return_screen.dart';
 import 'package:saleup_app/screen/dayClosing/view/day_closing.dart';
 import 'package:saleup_app/screen/setting/view/setting_screen.dart';
+import 'package:saleup_app/screen/stockLedger/view/stock_ledger_screen.dart';
 import 'package:saleup_app/screen/units/bloc/unit_bloc.dart';
 import 'package:saleup_app/screen/units/view/unit_screen.dart';
 import 'package:saleup_app/screen/voucher/bloc/voucher_bloc.dart';
@@ -669,6 +670,9 @@ void handleNavigation(BuildContext context, int index) {
     case 19:
       route = '/ledger-report';
       break;
+    case 20:
+      route = '/stock-ledger-report';
+      break;
     default:
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Invalid navigation index: $index')),
@@ -815,6 +819,10 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/product-report',
           builder: (context, state) => const ProductReport(),
+        ),
+        GoRoute(
+          path: '/stock-ledger-report',
+          builder: (context, state) => const StockLedgerScreen(),
         ),
       ],
     ),
