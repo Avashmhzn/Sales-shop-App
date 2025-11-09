@@ -371,14 +371,14 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.account_balance,
                       subItems: const [
                         "Ledger Report", // index 19
-                        "Stock-Ledger",
-                        "Trial Balance",
+                        "Stock-Ledger", // index 20
+                        "Trial Balance", // index 21
                         "Balance Sheet",
                         "Profit & Loss",
                         "Log Summary",
                       ],
                       onNavigate: (index) {
-                        final indices = [19, 20];
+                        final indices = [19, 20, 21];
                         onNavigate(indices[index]);
                       },
                     ),

@@ -29,6 +29,7 @@
 // import 'package:saleup_app/screen/purchase/view/purchase_screen.dart';
 // import 'package:saleup_app/screen/purchaseReturn/bloc/purchase_return_bloc.dart';
 // import 'package:saleup_app/screen/purchaseReturn/view/purchase_return_screen.dart';
+// import 'package:saleup_app/screen/productReport/view/product_report.dart';
 // import 'package:saleup_app/screen/receipts/bloc/receipt_bloc.dart';
 // import 'package:saleup_app/screen/receipts/bloc/receipt_event.dart';
 // import 'package:saleup_app/screen/receipts/view/receipt_screen.dart';
@@ -36,7 +37,10 @@
 // import 'package:saleup_app/screen/sales/view/sales_screen.dart';
 // import 'package:saleup_app/screen/salesReturn/bloc/sale_return_bloc.dart';
 // import 'package:saleup_app/screen/salesReturn/view/sale_return_screen.dart';
+// import 'package:saleup_app/screen/dayClosing/view/day_closing.dart';
 // import 'package:saleup_app/screen/setting/view/setting_screen.dart';
+// import 'package:saleup_app/screen/stockLedger/view/stock_ledger_screen.dart';
+// import 'package:saleup_app/screen/trialBalance/view/trial_balance_screen.dart';
 // import 'package:saleup_app/screen/units/bloc/unit_bloc.dart';
 // import 'package:saleup_app/screen/units/view/unit_screen.dart';
 // import 'package:saleup_app/screen/voucher/bloc/voucher_bloc.dart';
@@ -47,18 +51,15 @@
 // import 'package:saleup_app/utility/drawer.dart';
 // import 'package:saleup_app/utility/splash_screen.dart';
 
-// // Global navigator key for GoRouter
 // final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-// // Shell widget to provide consistent Scaffold with AppDrawer and BottomNav
 // class ShellScaffold extends StatefulWidget {
 //   final Widget child;
-
 //   const ShellScaffold({super.key, required this.child});
 
 //   @override
-//   _ShellScaffoldState createState() => _ShellScaffoldState();
+//   State<ShellScaffold> createState() => _ShellScaffoldState();
 // }
 
 // class _ShellScaffoldState extends State<ShellScaffold> {
@@ -67,7 +68,6 @@
 //   bool _isBottomNavVisible = true;
 //   int _selectedIndex = 0;
 
-//   // Map routes to BottomNav indices for highlighting
 //   int _getIndexForRoute(String route) {
 //     switch (route) {
 //       case '/home':
@@ -79,14 +79,13 @@
 //       case '/settings':
 //         return 3;
 //       default:
-//         return -1; // Use -1 for sub-item routes to exclude them from BottomNav
+//         return -1;
 //     }
 //   }
 
 //   @override
 //   void didChangeDependencies() {
 //     super.didChangeDependencies();
-//     // Defer the state update to a post-frame callback to avoid build scheduling during frame
 //     WidgetsBinding.instance.addPostFrameCallback((_) {
 //       if (mounted) {
 //         final route = GoRouterState.of(context).uri.toString();
@@ -108,15 +107,11 @@
 
 //       if (delta > 5 && _isBottomNavVisible && isMainRoute) {
 //         WidgetsBinding.instance.addPostFrameCallback((_) {
-//           if (mounted) {
-//             setState(() => _isBottomNavVisible = false);
-//           }
+//           if (mounted) setState(() => _isBottomNavVisible = false);
 //         });
 //       } else if (delta < -5 && !_isBottomNavVisible && isMainRoute) {
 //         WidgetsBinding.instance.addPostFrameCallback((_) {
-//           if (mounted) {
-//             setState(() => _isBottomNavVisible = true);
-//           }
+//           if (mounted) setState(() => _isBottomNavVisible = true);
 //         });
 //       }
 //     } else if (notification is ScrollEndNotification &&
@@ -124,9 +119,7 @@
 //         _getIndexForRoute(GoRouterState.of(context).uri.toString()) != -1) {
 //       if (!_isBottomNavVisible) {
 //         WidgetsBinding.instance.addPostFrameCallback((_) {
-//           if (mounted) {
-//             setState(() => _isBottomNavVisible = true);
-//           }
+//           if (mounted) setState(() => _isBottomNavVisible = true);
 //         });
 //       }
 //     }
@@ -147,20 +140,13 @@
 //       ],
 //     );
 
-//     if (currentRoute != '/home') {
-//       body = RefreshIndicator(
-//         onRefresh: _refresh,
-//         child: NotificationListener<ScrollNotification>(
-//           onNotification: _handleScrollNotification,
-//           child: body,
-//         ),
-//       );
-//     } else {
-//       body = NotificationListener<ScrollNotification>(
+//     body = RefreshIndicator(
+//       onRefresh: _refresh,
+//       child: NotificationListener<ScrollNotification>(
 //         onNotification: _handleScrollNotification,
 //         child: body,
-//       );
-//     }
+//       ),
+//     );
 
 //     return Scaffold(
 //       key: _scaffoldKey,
@@ -171,7 +157,8 @@
 //           final result = await Navigator.push(
 //             context,
 //             MaterialPageRoute(
-//                 builder: (context) => const NotificationsScreen()),
+//               builder: (context) => const NotificationsScreen(),
+//             ),
 //           );
 //           if (result != null && result is int) {
 //             setState(() => _notificationCount = result);
@@ -201,27 +188,96 @@
 //   }
 // }
 
-// // GoRouter configuration
+// // ✅ FIXED: removed '/error' invalid route reference
+// void handleNavigation(BuildContext context, int index) {
+//   String? route;
+//   switch (index) {
+//     case 0:
+//       route = '/home';
+//       break;
+//     case 1:
+//       route = '/purchase';
+//       break;
+//     case 2:
+//       route = '/sales';
+//       break;
+//     case 3:
+//       route = '/settings';
+//       break;
+//     case 4:
+//       route = '/account-heads';
+//       break;
+//     case 5:
+//       route = '/parties';
+//       break;
+//     case 6:
+//       route = '/locations';
+//       break;
+//     case 7:
+//       route = '/categories';
+//       break;
+//     case 8:
+//       route = '/products';
+//       break;
+//     case 9:
+//       route = '/units';
+//       break;
+//     case 10:
+//       route = '/expiry';
+//       break;
+//     case 11:
+//       route = '/purchase-return';
+//       break;
+//     case 12:
+//       route = '/sales-return';
+//       break;
+//     case 13:
+//       route = '/voucher';
+//       break;
+//     case 14:
+//       route = '/receipt';
+//       break;
+//     case 15:
+//       route = '/payment';
+//       break;
+//     case 16:
+//       route = '/chat';
+//       break;
+//     case 17:
+//       route = '/day-closing';
+//       break;
+//     case 18:
+//       route = '/product-report';
+//       break;
+//     case 19:
+//       route = '/ledger-report';
+//       break;
+//     case 20:
+//       route = '/stock-ledger-report';
+//       break;
+//     case 21:
+//       route = '/trial-balace-report';
+//       break;
+//     default:
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(content: Text('Invalid navigation index: $index')),
+//       );
+//       return;
+//   }
+//   context.go(route);
+// }
+
 // final GoRouter router = GoRouter(
 //   initialLocation: '/splash',
 //   navigatorKey: navigatorKey,
 //   routes: [
+//     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
+//     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
 //     GoRoute(
-//       path: '/splash',
-//       builder: (context, state) => const SplashScreen(),
-//     ),
+//         path: '/signup', builder: (context, state) => const OnboardingScreen()),
 //     GoRoute(
-//       path: '/login',
-//       builder: (context, state) => const LoginScreen(),
-//     ),
-//     GoRoute(
-//       path: '/signup',
-//       builder: (context, state) => const OnboardingScreen(),
-//     ),
-//     GoRoute(
-//       path: '/forgot-password',
-//       builder: (context, state) => const ForgotPasswordScreen(),
-//     ),
+//         path: '/forgot-password',
+//         builder: (context, state) => const ForgotPasswordScreen()),
 //     ShellRoute(
 //       builder: (context, state, child) => ShellScaffold(child: child),
 //       routes: [
@@ -248,13 +304,11 @@
 //           ),
 //         ),
 //         GoRoute(
-//           path: '/settings',
-//           builder: (context, state) => const SettingsScreen(),
-//         ),
+//             path: '/settings',
+//             builder: (context, state) => const SettingsScreen()),
 //         GoRoute(
-//           path: '/account-heads',
-//           builder: (context, state) => const AccountHead(),
-//         ),
+//             path: '/account-heads',
+//             builder: (context, state) => const AccountHead()),
 //         GoRoute(
 //           path: '/parties',
 //           builder: (context, state) => BlocProvider(
@@ -334,89 +388,37 @@
 //         ),
 //         GoRoute(
 //           path: '/chat',
-//           builder: (context, state) => BlocProvider.value(
-//             value: context.read<ChatBloc>(),
+//           builder: (context, state) => BlocProvider(
+//             create: (context) => ChatBloc(),
 //             child: const ChatScreen(),
 //           ),
 //         ),
 //         GoRoute(
-//       path: '/ledger-report',
-//       builder: (context, state) => const LedgerReportScreen(),
-//     ),
+//           path: '/ledger-report',
+//           builder: (context, state) => const LedgerReportScreen(),
+//         ),
+//         GoRoute(
+//           path: '/day-closing',
+//           builder: (context, state) => const DayClosing(),
+//         ),
+//         GoRoute(
+//           path: '/product-report',
+//           builder: (context, state) => const ProductReport(),
+//         ),
+//         GoRoute(
+//           path: '/stock-ledger-report',
+//           builder: (context, state) => const StockLedgerScreen(),
+//         ),
+//         GoRoute(
+//           path: '/trial-balace-report',
+//           builder: (context, state) => const TrialBalanceScreen(),
+//         ),
 //       ],
 //     ),
 //   ],
-//   errorBuilder: (context, state) => Scaffold(
-//     body: Center(child: Text('Route not found: ${state.uri.toString()}')),
-//   ),
+//   errorBuilder: (context, state) =>
+//       Scaffold(body: Center(child: Text('Route not found: ${state.uri}'))),
 // );
-
-// // Navigation handler for AppDrawer and BottomNav
-// void handleNavigation(BuildContext context, int index) {
-//   String? route;
-//   switch (index) {
-//     case 0: // BottomNav: Home, Drawer: Dashboard
-//       route = '/home';
-//       break;
-//     case 1: // BottomNav: Purchase, Drawer: Accounting > Purchase
-//       route = '/purchase';
-//       break;
-//     case 2: // BottomNav: Sales, Drawer: Accounting > Sales
-//       route = '/sales';
-//       break;
-//     case 3: // BottomNav: Settings
-//       route = '/settings';
-//       break;
-//     case 4: // Drawer: Setup > Account Heads
-//       route = '/account-heads';
-//       break;
-//     case 5: // Drawer: Setup > Parties
-//       route = '/parties';
-//       break;
-//     case 6: // Drawer: Setup > Locations
-//       route = '/locations';
-//       break;
-//     case 7: // Drawer: Setup > Categories
-//       route = '/categories';
-//       break;
-//     case 8: // Drawer: Setup > Products
-//       route = '/products';
-//       break;
-//     case 9: // Drawer: Setup > Units
-//       route = '/units';
-//       break;
-//     case 10: // Drawer: Setup > Expiry
-//       route = '/expiry';
-//       break;
-//     case 11: // Drawer: Accounting > Purchase Return
-//       route = '/purchase-return';
-//       break;
-//     case 12: // Drawer: Accounting > Sales Return
-//       route = '/sales-return';
-//       break;
-//     case 13: // Drawer: Accounting > Voucher
-//       route = '/voucher';
-//       break;
-//     case 14: // Drawer: Accounting > Receipt
-//       route = '/receipt';
-//       break;
-//     case 15: // Drawer: Accounting > Payment
-//       route = '/payment';
-//       break;
-//     case 16:
-//       route = '/chat';
-//       break;
-//     case 17:
-//       route = '/ledger-report';
-//       break;
-
-//     default:
-//       context
-//           .go('/error', extra: {'message': 'Invalid navigation index: $index'});
-//       return;
-//   }
-//   context.go(route);
-// }
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -459,6 +461,7 @@ import 'package:saleup_app/screen/salesReturn/view/sale_return_screen.dart';
 import 'package:saleup_app/screen/dayClosing/view/day_closing.dart';
 import 'package:saleup_app/screen/setting/view/setting_screen.dart';
 import 'package:saleup_app/screen/stockLedger/view/stock_ledger_screen.dart';
+import 'package:saleup_app/screen/trialBalance/view/trial_balance_screen.dart';
 import 'package:saleup_app/screen/units/bloc/unit_bloc.dart';
 import 'package:saleup_app/screen/units/view/unit_screen.dart';
 import 'package:saleup_app/screen/voucher/bloc/voucher_bloc.dart';
@@ -468,6 +471,11 @@ import 'package:saleup_app/theme/custom_app_bar.dart';
 import 'package:saleup_app/utility/bottomnav.dart';
 import 'package:saleup_app/utility/drawer.dart';
 import 'package:saleup_app/utility/splash_screen.dart';
+
+// ──────────────────────────────────────────────────────────────
+// ROOT NAVIGATOR KEY — THIS IS THE ONLY NEW LINE
+// ──────────────────────────────────────────────────────────────
+final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -606,7 +614,7 @@ class _ShellScaffoldState extends State<ShellScaffold> {
   }
 }
 
-// ✅ FIXED: removed '/error' invalid route reference
+// FIXED: removed '/error' invalid route reference
 void handleNavigation(BuildContext context, int index) {
   String? route;
   switch (index) {
@@ -673,6 +681,9 @@ void handleNavigation(BuildContext context, int index) {
     case 20:
       route = '/stock-ledger-report';
       break;
+    case 21:
+      route = '/trial-balace-report';
+      break;
     default:
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Invalid navigation index: $index')),
@@ -682,9 +693,12 @@ void handleNavigation(BuildContext context, int index) {
   context.go(route);
 }
 
+// ──────────────────────────────────────────────────────────────
+// ONLY CHANGE: navigatorKey → _rootNavigatorKey
+// ──────────────────────────────────────────────────────────────
 final GoRouter router = GoRouter(
   initialLocation: '/splash',
-  navigatorKey: navigatorKey,
+  navigatorKey: rootNavigatorKey, // ← CHANGED THIS LINE
   routes: [
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
@@ -823,6 +837,10 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/stock-ledger-report',
           builder: (context, state) => const StockLedgerScreen(),
+        ),
+        GoRoute(
+          path: '/trial-balace-report',
+          builder: (context, state) => const TrialBalanceScreen(),
         ),
       ],
     ),

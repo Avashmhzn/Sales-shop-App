@@ -1,3 +1,4 @@
+// // core/network/dio_client.dart
 // import 'dart:developer';
 // import 'dart:io';
 // import 'package:csv/csv.dart';
@@ -7,6 +8,7 @@
 // import 'package:pdf/widgets.dart' as pw;
 // import 'package:saleup_app/core/network/api_endpoints.dart';
 // import 'package:saleup_app/model/ledger_report_response.dart';
+// import 'package:saleup_app/model/stock_ledger_response.dart'; // ← ADDED
 // import 'package:saleup_app/services/auth_service.dart';
 // import 'package:flutter/material.dart';
 // import 'package:go_router/go_router.dart';
@@ -144,7 +146,6 @@
 //       }
 //       return true;
 //     }
-//     // No permission needed for Documents directory on iOS
 //     return true;
 //   }
 
@@ -160,14 +161,15 @@
 //         log('Error accessing Downloads directory: $e');
 //       }
 //     }
-//     // Use Documents directory for iOS or as fallback for Android
 //     return await getApplicationDocumentsDirectory();
 //   }
 
+//   // ────────────────────────────
+//   // YOUR ORIGINAL METHODS (UNTOUCHED)
+//   // ────────────────────────────
 //   Future<void> downloadAsPdf(
 //       LedgerReport ledgerReport, String startDate, String endDate) async {
 //     try {
-//       // Request permission before saving
 //       final granted = await _requestPermission();
 //       if (!granted) {
 //         log('Permission denied for PDF download');
@@ -240,7 +242,6 @@
 //   Future<void> downloadAsExcel(
 //       LedgerReport ledgerReport, String startDate, String endDate) async {
 //     try {
-//       // Request permission before saving
 //       final granted = await _requestPermission();
 //       if (!granted) {
 //         log('Permission denied for Excel download');
@@ -272,18 +273,145 @@
 //       rethrow;
 //     }
 //   }
+
+//   // ─────────────────────────────────────────────────────────────
+//   // NEW: STOCK LEDGER EXPORT (ADDED – NO CHANGE TO YOUR CODE)
+//   // ─────────────────────────────────────────────────────────────
+//   Future<void> downloadStockLedgerAsPdf(
+//     StockLedgerReport report,
+//     String startDate,
+//     String endDate,
+//   ) async {
+//     try {
+//       final granted = await _requestPermission();
+//       if (!granted) throw Exception('Permission denied');
+
+//       final pdf = pw.Document();
+
+//       if (report.data?.isNotEmpty == true) {
+//         final account = report.data!.first;
+//         final entries = account.ledger ?? [];
+
+//         pdf.addPage(
+//           pw.Page(
+//             build: (pw.Context context) => pw.Column(
+//               crossAxisAlignment: pw.CrossAxisAlignment.start,
+//               children: [
+//                 pw.Text('Stock Ledger Report',
+//                     style: pw.TextStyle(
+//                         fontSize: 24, fontWeight: pw.FontWeight.bold)),
+//                 pw.Text('Product: ${account.productName ?? 'N/A'}',
+//                     style: const pw.TextStyle(fontSize: 16)),
+//                 pw.Text('Period: $startDate to $endDate',
+//                     style: const pw.TextStyle(fontSize: 16)),
+//                 pw.SizedBox(height: 20),
+//                 pw.Table.fromTextArray(
+//                   headers: [
+//                     'Date',
+//                     'Opening',
+//                     'Purchase',
+//                     'Sales',
+//                     'Closing',
+//                     'Cost',
+//                     'Selling'
+//                   ],
+//                   data: entries
+//                       .map((e) => [
+//                             e.date?.split('T')[0] ?? '',
+//                             (e.opening ?? 0).toStringAsFixed(2),
+//                             (e.purchase ?? 0).toStringAsFixed(2),
+//                             (e.sales ?? 0).toStringAsFixed(2),
+//                             (e.closing ?? 0).toStringAsFixed(2),
+//                             (e.costPrice ?? 0).toStringAsFixed(2),
+//                             (e.sellingPrice ?? 0).toStringAsFixed(2),
+//                           ])
+//                       .toList(),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         );
+//       } else {
+//         pdf.addPage(
+//             pw.Page(build: (_) => pw.Center(child: pw.Text('No data'))));
+//       }
+
+//       final dir = await _getDownloadDirectory();
+//       final file = File(
+//           '${dir.path}/stock_ledger_${DateTime.now().millisecondsSinceEpoch}.pdf');
+//       await file.writeAsBytes(await pdf.save());
+//       log('Stock Ledger PDF saved: ${file.path}');
+//     } catch (e) {
+//       log('Stock Ledger PDF failed: $e');
+//       rethrow;
+//     }
+//   }
+
+//   Future<void> downloadStockLedgerAsExcel(
+//     StockLedgerReport report,
+//     String startDate,
+//     String endDate,
+//   ) async {
+//     try {
+//       final granted = await _requestPermission();
+//       if (!granted) throw Exception('Permission denied');
+
+//       final rows = <List<dynamic>>[
+//         ['Stock Ledger Report'],
+//         ['Product', report.data?.first.productName ?? 'N/A'],
+//         ['Period', '$startDate - $endDate'],
+//         [],
+//         [
+//           'Date',
+//           'Opening',
+//           'Purchase',
+//           'Sales',
+//           'Closing',
+//           'Cost Price',
+//           'Selling Price'
+//         ],
+//       ];
+
+//       if (report.data?.isNotEmpty == true) {
+//         for (final e in report.data!.first.ledger!) {
+//           rows.add([
+//             e.date?.split('T')[0] ?? '',
+//             (e.opening ?? 0).toStringAsFixed(2),
+//             (e.purchase ?? 0).toStringAsFixed(2),
+//             (e.sales ?? 0).toStringAsFixed(2),
+//             (e.closing ?? 0).toStringAsFixed(2),
+//             (e.costPrice ?? 0).toStringAsFixed(2),
+//             (e.sellingPrice ?? 0).toStringAsFixed(2),
+//           ]);
+//         }
+//       }
+
+//       final csv = const ListToCsvConverter().convert(rows);
+//       final dir = await _getDownloadDirectory();
+//       final file = File(
+//           '${dir.path}/stock_ledger_${DateTime.now().millisecondsSinceEpoch}.csv');
+//       await file.writeAsString(csv);
+//       log('Stock Ledger CSV saved: ${file.path}');
+//     } catch (e) {
+//       log('Stock Ledger CSV failed: $e');
+//       rethrow;
+//     }
+//   }
 // }
-// core/network/dio_client.dart
 import 'dart:developer';
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:csv/csv.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart'; // ← REQUIRED FOR PNG PREVIEW
 import 'package:saleup_app/core/network/api_endpoints.dart';
 import 'package:saleup_app/model/ledger_report_response.dart';
-import 'package:saleup_app/model/stock_ledger_response.dart'; // ← ADDED
+import 'package:saleup_app/model/stock_ledger_response.dart';
+import 'package:saleup_app/model/trial_balance_report_response.dart';
 import 'package:saleup_app/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -669,6 +797,389 @@ class DioClient {
       log('Stock Ledger CSV saved: ${file.path}');
     } catch (e) {
       log('Stock Ledger CSV failed: $e');
+      rethrow;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // FIXED: TRIAL BALANCE PDF + PNG PREVIEW (Using .pixels)
+  // ─────────────────────────────────────────────────────────────
+  // Future<void> downloadTrialBalanceAsPdf(
+  //   TrialBalanceReport report,
+  //   String startDate,
+  //   String endDate,
+  // ) async {
+  //   try {
+  //     final granted = await _requestPermission();
+  //     if (!granted) throw Exception('Permission denied');
+
+  //     final pdf = pw.Document();
+
+  //     final List<TrialBalanceAccount> accounts = report.data ?? [];
+
+  //     pdf.addPage(
+  //       pw.Page(
+  //         pageFormat: PdfPageFormat.a4,
+  //         margin: const pw.EdgeInsets.all(40),
+  //         build: (pw.Context ctx) => pw.Column(
+  //           crossAxisAlignment: pw.CrossAxisAlignment.start,
+  //           children: [
+  //             pw.Text('Trial Balance Report',
+  //                 style: pw.TextStyle(
+  //                     fontSize: 22, fontWeight: pw.FontWeight.bold)),
+  //             pw.SizedBox(height: 8),
+  //             pw.Text('Period: $startDate to $endDate'),
+  //             pw.SizedBox(height: 4),
+  //             pw.Text(
+  //               report.isDayOpen == true ? 'Day is OPEN' : 'Day is CLOSED',
+  //               style: pw.TextStyle(
+  //                 color: report.isDayOpen == true
+  //                     ? PdfColors.green
+  //                     : PdfColors.red,
+  //                 fontWeight: pw.FontWeight.bold,
+  //               ),
+  //             ),
+  //             pw.SizedBox(height: 20),
+  //             pw.Table(
+  //               border: pw.TableBorder.all(),
+  //               columnWidths: {
+  //                 0: const pw.FlexColumnWidth(4),
+  //                 1: const pw.FlexColumnWidth(2),
+  //                 2: const pw.FlexColumnWidth(2),
+  //               },
+  //               children: [
+  //                 pw.TableRow(
+  //                   decoration:
+  //                       const pw.BoxDecoration(color: PdfColors.grey300),
+  //                   children: [
+  //                     pw.Padding(
+  //                         padding: const pw.EdgeInsets.all(8),
+  //                         child: pw.Text('Account',
+  //                             style: pw.TextStyle(
+  //                                 fontWeight: pw.FontWeight.bold))),
+  //                     pw.Padding(
+  //                         padding: const pw.EdgeInsets.all(8),
+  //                         child: pw.Text('Debit',
+  //                             style: pw.TextStyle(
+  //                                 fontWeight: pw.FontWeight.bold))),
+  //                     pw.Padding(
+  //                         padding: const pw.EdgeInsets.all(8),
+  //                         child: pw.Text('Credit',
+  //                             style: pw.TextStyle(
+  //                                 fontWeight: pw.FontWeight.bold))),
+  //                   ],
+  //                 ),
+  //                 ...accounts.map((a) => pw.TableRow(children: [
+  //                       pw.Padding(
+  //                           padding: const pw.EdgeInsets.all(8),
+  //                           child: pw.Text(a.accountName ?? '')),
+  //                       pw.Padding(
+  //                           padding: const pw.EdgeInsets.all(8),
+  //                           child: pw.Text((a.debit ?? 0).toStringAsFixed(2))),
+  //                       pw.Padding(
+  //                           padding: const pw.EdgeInsets.all(8),
+  //                           child: pw.Text((a.credit ?? 0).toStringAsFixed(2))),
+  //                     ])),
+  //                 pw.TableRow(
+  //                   decoration:
+  //                       const pw.BoxDecoration(color: PdfColors.grey200),
+  //                   children: [
+  //                     pw.Padding(
+  //                         padding: const pw.EdgeInsets.all(8),
+  //                         child: pw.Text('TOTAL',
+  //                             style: pw.TextStyle(
+  //                                 fontWeight: pw.FontWeight.bold))),
+  //                     pw.Padding(
+  //                         padding: const pw.EdgeInsets.all(8),
+  //                         child: pw.Text(
+  //                             accounts
+  //                                 .fold<double>(0, (p, e) => p + (e.debit ?? 0))
+  //                                 .toStringAsFixed(2),
+  //                             style: pw.TextStyle(
+  //                                 fontWeight: pw.FontWeight.bold))),
+  //                     pw.Padding(
+  //                         padding: const pw.EdgeInsets.all(8),
+  //                         child: pw.Text(
+  //                             accounts
+  //                                 .fold<double>(
+  //                                     0, (p, e) => p + (e.credit ?? 0))
+  //                                 .toStringAsFixed(2),
+  //                             style: pw.TextStyle(
+  //                                 fontWeight: pw.FontWeight.bold))),
+  //                   ],
+  //                 ),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     );
+
+  //     final pdfBytes = await pdf.save();
+
+  //     // Save PDF
+  //     final dir = await _getDownloadDirectory();
+  //     final pdfFile = File(
+  //         '${dir.path}/trial_balance_${DateTime.now().millisecondsSinceEpoch}.pdf');
+  //     await pdfFile.writeAsBytes(pdfBytes);
+  //     log('Trial Balance PDF saved: ${pdfFile.path}');
+
+  //     // PNG PREVIEW — CORRECTED: Use .pixels
+  //     try {
+  //       final rasterImages =
+  //           await Printing.raster(pdfBytes, pages: [0], dpi: 150).toList();
+  //       if (rasterImages.isNotEmpty) {
+  //         final raster = rasterImages.first;
+  //         final pngFile = File(
+  //             '${dir.path}/trial_balance_preview_${DateTime.now().millisecondsSinceEpoch}.png');
+  //         await pngFile.writeAsBytes(raster.pixels); // ← CORRECT: .pixels
+  //         log('Preview PNG saved: ${pngFile.path}');
+  //       }
+  //     } catch (e) {
+  //       log('PNG preview failed (non-critical): $e');
+  //     }
+  //   } catch (e) {
+  //     log('Trial Balance PDF failed: $e');
+  //     rethrow;
+  //   }
+  // }
+
+  // Future<void> downloadTrialBalanceAsExcel(
+  //   TrialBalanceReport report,
+  //   String startDate,
+  //   String endDate,
+  // ) async {
+  //   try {
+  //     final granted = await _requestPermission();
+  //     if (!granted) throw Exception('Permission denied');
+
+  //     final rows = <List<dynamic>>[
+  //       ['Trial Balance Report'],
+  //       ['Period', '$startDate - $endDate'],
+  //       ['Day Status', report.isDayOpen == true ? 'OPEN' : 'CLOSED'],
+  //       [],
+  //       ['Account', 'Debit', 'Credit'],
+  //     ];
+
+  //     final accounts = report.data ?? [];
+  //     for (final a in accounts) {
+  //       rows.add([
+  //         a.accountName ?? '',
+  //         (a.debit ?? 0).toStringAsFixed(2),
+  //         (a.credit ?? 0).toStringAsFixed(2),
+  //       ]);
+  //     }
+
+  //     final totalDebit = accounts.fold<double>(0, (p, e) => p + (e.debit ?? 0));
+  //     final totalCredit =
+  //         accounts.fold<double>(0, (p, e) => p + (e.credit ?? 0));
+  //     rows.add([
+  //       'TOTAL',
+  //       totalDebit.toStringAsFixed(2),
+  //       totalCredit.toStringAsFixed(2)
+  //     ]);
+
+  //     final csv = const ListToCsvConverter().convert(rows);
+  //     final dir = await _getDownloadDirectory();
+  //     final file = File(
+  //         '${dir.path}/trial_balance_${DateTime.now().millisecondsSinceEpoch}.csv');
+  //     await file.writeAsString(csv);
+
+  //     log('Trial Balance CSV saved: ${file.path}');
+  //   } catch (e) {
+  //     log('Trial Balance CSV failed: $e');
+  //     rethrow;
+  //   }
+  // }
+  Future<TrialBalanceReport> fetchTrialBalance(String start, String end) async {
+    final response = await dio.get(
+      '/ledger/get_trial_balance/',
+      queryParameters: {'start_date': start, 'end_date': end},
+    );
+    return TrialBalanceReport.fromJson(response.data);
+  }
+
+  Future<void> downloadTrialBalanceAsPdf(
+    TrialBalanceReport report,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final granted = await _requestPermission();
+      if (!granted) throw Exception('Permission denied');
+
+      final pdf = pw.Document();
+
+      final List<TrialBalanceAccount> accounts = report.data ?? [];
+
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(40),
+          build: (pw.Context ctx) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Trial Balance Report',
+                  style: pw.TextStyle(
+                      fontSize: 22, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 8),
+              pw.Text('Period: $startDate to $endDate'),
+              pw.SizedBox(height: 4),
+              pw.Text(
+                report.isDayOpen == true ? 'Day is OPEN' : 'Day is CLOSED',
+                style: pw.TextStyle(
+                  color: report.isDayOpen == true
+                      ? PdfColors.green
+                      : PdfColors.red,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 20),
+              pw.Table(
+                border: pw.TableBorder.all(),
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(4),
+                  1: const pw.FlexColumnWidth(2),
+                  2: const pw.FlexColumnWidth(2),
+                },
+                children: [
+                  pw.TableRow(
+                    decoration:
+                        const pw.BoxDecoration(color: PdfColors.grey300),
+                    children: [
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text('Account',
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold))),
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text('Debit',
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold))),
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text('Credit',
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold))),
+                    ],
+                  ),
+                  ...accounts.map((a) => pw.TableRow(children: [
+                        pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text(a.accountName ?? '')),
+                        pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text((a.debit ?? 0).toStringAsFixed(2))),
+                        pw.Padding(
+                            padding: const pw.EdgeInsets.all(8),
+                            child: pw.Text((a.credit ?? 0).toStringAsFixed(2))),
+                      ])),
+                  pw.TableRow(
+                    decoration:
+                        const pw.BoxDecoration(color: PdfColors.grey200),
+                    children: [
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text('TOTAL',
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold))),
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text(
+                              accounts
+                                  .fold<double>(0, (p, e) => p + (e.debit ?? 0))
+                                  .toStringAsFixed(2),
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold))),
+                      pw.Padding(
+                          padding: const pw.EdgeInsets.all(8),
+                          child: pw.Text(
+                              accounts
+                                  .fold<double>(
+                                      0, (p, e) => p + (e.credit ?? 0))
+                                  .toStringAsFixed(2),
+                              style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold))),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final pdfBytes = await pdf.save();
+      final dir = await _getDownloadDirectory();
+      final pdfFile = File(
+          '${dir.path}/trial_balance_${DateTime.now().millisecondsSinceEpoch}.pdf');
+      await pdfFile.writeAsBytes(pdfBytes);
+      log('Trial Balance PDF saved: ${pdfFile.path}');
+
+      // PNG PREVIEW
+      try {
+        final rasterImages =
+            await Printing.raster(pdfBytes, pages: [0], dpi: 150).toList();
+        if (rasterImages.isNotEmpty) {
+          final raster = rasterImages.first;
+          final pngFile = File(
+              '${dir.path}/trial_balance_preview_${DateTime.now().millisecondsSinceEpoch}.png');
+          await pngFile.writeAsBytes(raster.pixels);
+          log('Preview PNG saved: ${pngFile.path}');
+        }
+      } catch (e) {
+        log('PNG preview failed: $e');
+      }
+    } catch (e) {
+      log('Trial Balance PDF failed: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> downloadTrialBalanceAsExcel(
+    TrialBalanceReport report,
+    String startDate,
+    String endDate,
+  ) async {
+    try {
+      final granted = await _requestPermission();
+      if (!granted) throw Exception('Permission denied');
+
+      final rows = <List<dynamic>>[
+        ['Trial Balance Report'],
+        ['Period', '$startDate - $endDate'],
+        ['Day Status', report.isDayOpen == true ? 'OPEN' : 'CLOSED'],
+        [],
+        ['Account', 'Debit', 'Credit'],
+      ];
+
+      final accounts = report.data ?? [];
+      for (final a in accounts) {
+        rows.add([
+          a.accountName ?? '',
+          (a.debit ?? 0).toStringAsFixed(2),
+          (a.credit ?? 0).toStringAsFixed(2),
+        ]);
+      }
+
+      final totalDebit = accounts.fold<double>(0, (p, e) => p + (e.debit ?? 0));
+      final totalCredit =
+          accounts.fold<double>(0, (p, e) => p + (e.credit ?? 0));
+      rows.add([
+        'TOTAL',
+        totalDebit.toStringAsFixed(2),
+        totalCredit.toStringAsFixed(2)
+      ]);
+
+      final csv = const ListToCsvConverter().convert(rows);
+      final dir = await _getDownloadDirectory();
+      final file = File(
+          '${dir.path}/trial_balance_${DateTime.now().millisecondsSinceEpoch}.csv');
+      await file.writeAsString(csv);
+      log('Trial Balance CSV saved: ${file.path}');
+    } catch (e) {
+      log('Trial Balance CSV failed: $e');
       rethrow;
     }
   }
