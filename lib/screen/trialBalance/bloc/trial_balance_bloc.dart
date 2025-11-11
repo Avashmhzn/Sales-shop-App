@@ -2,7 +2,6 @@
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
-import 'package:saleup_app/model/trial_balance_report_response.dart';
 import 'trial_balance_event.dart';
 import 'trial_balance_state.dart';
 

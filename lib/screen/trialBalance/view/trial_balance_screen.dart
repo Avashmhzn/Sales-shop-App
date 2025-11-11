@@ -1,5 +1,4 @@
 // lib/screen/trial_balance/trial_balance_screen.dart
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -175,14 +174,17 @@ class _TrialBalanceScreenState extends State<TrialBalanceScreen> {
                     }
                   },
                   builder: (context, state) {
-                    if (state is TrialBalanceLoading)
+                    if (state is TrialBalanceLoading) {
                       return const Center(child: CircularProgressIndicator());
-                    if (state is TrialBalanceLoaded)
+                    }
+                    if (state is TrialBalanceLoaded) {
                       return _buildReport(state.report);
-                    if (state is TrialBalanceError)
+                    }
+                    if (state is TrialBalanceError) {
                       return Center(
                           child: Text(state.message,
                               style: const TextStyle(color: Colors.red)));
+                    }
                     return const Center(
                         child: Text('Select dates and apply filter'));
                   },
@@ -334,12 +336,12 @@ class _TrialBalanceScreenState extends State<TrialBalanceScreen> {
                             Expanded(
                                 child: Text(groupDebit.toStringAsFixed(2),
                                     textAlign: TextAlign.right,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         fontWeight: FontWeight.bold))),
                             Expanded(
                                 child: Text(groupCredit.toStringAsFixed(2),
                                     textAlign: TextAlign.right,
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         fontWeight: FontWeight.bold))),
                           ],
                         ),

@@ -1,4 +1,3 @@
-// lib/model/stock_ledger_response.dart
 import 'package:equatable/equatable.dart';
 import 'package:json_annotation/json_annotation.dart';
 
@@ -10,7 +9,11 @@ class StockLedgerReport {
   final String message;
   final List<StockLedgerAccount>? data;
 
-  StockLedgerReport({required this.success, required this.message, this.data});
+  StockLedgerReport({
+    required this.success,
+    required this.message,
+    this.data,
+  });
 
   factory StockLedgerReport.fromJson(Map<String, dynamic> json) =>
       _$StockLedgerReportFromJson(json);
@@ -39,13 +42,13 @@ class StockLedgerEntry extends Equatable {
   final double? opening;
   final double? purchase;
   final double? sales;
-  final double? closing;
+  double? closing; // ← NOT FINAL (we set it later)
   @JsonKey(name: 'cost_price')
   final double? costPrice;
   @JsonKey(name: 'selling_price')
   final double? sellingPrice;
 
-  const StockLedgerEntry({
+  StockLedgerEntry({
     this.date,
     this.opening,
     this.purchase,
