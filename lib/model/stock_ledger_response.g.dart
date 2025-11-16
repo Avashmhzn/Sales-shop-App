@@ -24,7 +24,7 @@ Map<String, dynamic> _$StockLedgerReportToJson(StockLedgerReport instance) =>
 
 StockLedgerAccount _$StockLedgerAccountFromJson(Map<String, dynamic> json) =>
     StockLedgerAccount(
-      productName: json['product'] as String?,
+      productName: json['productName'] as String?,
       ledger: (json['ledger'] as List<dynamic>?)
           ?.map((e) => StockLedgerEntry.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -32,7 +32,7 @@ StockLedgerAccount _$StockLedgerAccountFromJson(Map<String, dynamic> json) =>
 
 Map<String, dynamic> _$StockLedgerAccountToJson(StockLedgerAccount instance) =>
     <String, dynamic>{
-      'product': instance.productName,
+      'productName': instance.productName,
       'ledger': instance.ledger,
     };
 
@@ -42,9 +42,9 @@ StockLedgerEntry _$StockLedgerEntryFromJson(Map<String, dynamic> json) =>
       opening: (json['opening'] as num?)?.toDouble(),
       purchase: (json['purchase'] as num?)?.toDouble(),
       sales: (json['sales'] as num?)?.toDouble(),
+      costPrice: (json['costPrice'] as num?)?.toDouble(),
+      sellingPrice: (json['sellingPrice'] as num?)?.toDouble(),
       closing: (json['closing'] as num?)?.toDouble(),
-      costPrice: (json['cost_price'] as num?)?.toDouble(),
-      sellingPrice: (json['selling_price'] as num?)?.toDouble(),
     );
 
 Map<String, dynamic> _$StockLedgerEntryToJson(StockLedgerEntry instance) =>
@@ -53,7 +53,7 @@ Map<String, dynamic> _$StockLedgerEntryToJson(StockLedgerEntry instance) =>
       'opening': instance.opening,
       'purchase': instance.purchase,
       'sales': instance.sales,
+      'costPrice': instance.costPrice,
+      'sellingPrice': instance.sellingPrice,
       'closing': instance.closing,
-      'cost_price': instance.costPrice,
-      'selling_price': instance.sellingPrice,
     };

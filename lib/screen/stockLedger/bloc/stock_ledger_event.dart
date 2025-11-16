@@ -16,6 +16,7 @@
 //     this.categoryId,
 //   });
 // }
+// lib/screen/stock_ledger/bloc/stock_ledger_event.dart
 abstract class StockLedgerEvent {}
 
 class FetchFilterOptions extends StockLedgerEvent {}

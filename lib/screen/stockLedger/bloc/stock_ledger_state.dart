@@ -31,6 +31,8 @@
 //     required this.categoryMap,
 //   });
 // }
+// lib/screen/stock_ledger/bloc/stock_ledger_state.dart
+// lib/screen/stock_ledger/bloc/stock_ledger_state.dart
 import 'package:saleup_app/model/product_category_response.dart';
 import 'package:saleup_app/model/stock_ledger_response.dart';
 
@@ -42,7 +44,8 @@ class StockLedgerLoading extends StockLedgerState {}
 
 class StockLedgerSuccess extends StockLedgerState {
   final StockLedgerReport report;
-  StockLedgerSuccess(this.report);
+  final Map<String, dynamic> rawJson;
+  StockLedgerSuccess(this.report, this.rawJson);
 }
 
 class StockLedgerFailure extends StockLedgerState {

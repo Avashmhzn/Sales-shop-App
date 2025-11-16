@@ -116,7 +116,292 @@
 //       emit(StockLedgerFailure('Check internet'));
 //     }
 //   }
-// }import 'dart:convert';import 'dart:convert';
+// // }import 'dart:convert';import 'dart:convert';
+// import 'dart:convert';
+// import 'dart:developer';
+// import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:intl/intl.dart';
+// import 'package:saleup_app/core/network/dio_client.dart';
+// import 'package:saleup_app/model/product_category_response.dart';
+// import 'package:saleup_app/model/stock_ledger_response.dart';
+// import 'stock_ledger_event.dart';
+// import 'stock_ledger_state.dart';
+
+// class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
+//   final DioClient dioClient;
+
+//   StockLedgerBloc({required this.dioClient}) : super(StockLedgerInitial()) {
+//     on<FetchFilterOptions>(_loadFilters);
+//     on<FetchStockLedgerReport>(_loadReport);
+//   }
+
+//   Future<void> _loadFilters(
+//       FetchFilterOptions event, Emitter<StockLedgerState> emit) async {
+//     emit(StockLedgerLoading());
+//     try {
+//       final catResp = await dioClient.dio.get('/category/get_categories');
+//       final prodResp = await dioClient.dio
+//           .get('/product/get_products/', queryParameters: {'limit': 5000});
+
+//       final cats = <CategoryData>[];
+//       final catMap = <int, String>{};
+//       final prods = <ProductData>[];
+//       final prodMap = <int, String>{};
+
+//       for (var c in catResp.data['data']) {
+//         final cat = CategoryData(id: c['id'], name: c['name']);
+//         cats.add(cat);
+//         catMap[cat.id] = cat.name;
+//       }
+
+//       for (var p in prodResp.data['data']['results']) {
+//         final prod = ProductData(id: p['id'], name: p['name']);
+//         prods.add(prod);
+//         prodMap[prod.id] = prod.name;
+//       }
+
+//       emit(FilterOptionsLoaded(
+//         products: prods,
+//         categories: cats,
+//         productMap: prodMap,
+//         categoryMap: catMap,
+//       ));
+//     } catch (e) {
+//       emit(StockLedgerFailure('Failed to load filters: $e'));
+//     }
+//   }
+
+//   Future<void> _loadReport(
+//       FetchStockLedgerReport event, Emitter<StockLedgerState> emit) async {
+//     emit(StockLedgerLoading());
+
+//     if (event.productId == null && event.categoryId == null) {
+//       emit(StockLedgerFailure('Select Product or Category'));
+//       return;
+//     }
+
+//     final from = event.startDate ??
+//         DateFormat('yyyy-MM-dd')
+//             .format(DateTime.now().subtract(const Duration(days: 30)));
+//     final to = event.endDate ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+//     final params = <String, String>{
+//       'start_date': from,
+//       'end_date': to,
+//       if (event.productId != null) 'product_id': event.productId.toString(),
+//       if (event.categoryId != null) 'category_id': event.categoryId.toString(),
+//     };
+
+//     log('SENDING → $params');
+
+//     try {
+//       final resp = await dioClient.dio.get(
+//         '/ledger/get_stock_ledger/',
+//         queryParameters: params,
+//       );
+
+//       dynamic raw = resp.data;
+
+//       if (raw is String) {
+//         try {
+//           raw = jsonDecode(raw);
+//         } catch (e) {
+//           log('JSON DECODE FAILED → $e');
+//           emit(StockLedgerFailure('Invalid JSON from server'));
+//           return;
+//         }
+//       }
+
+//       if (raw is! Map<String, dynamic>) {
+//         log('NOT A MAP → $raw');
+//         emit(StockLedgerFailure('Unexpected response format'));
+//         return;
+//       }
+
+//       log('PARSED JSON → $raw');
+
+//       final bool success = raw['success'] as bool? ?? false;
+//       final String message = raw['message'] as String? ?? 'Unknown error';
+
+//       if (!success) {
+//         emit(StockLedgerFailure(message));
+//         return;
+//       }
+
+//       final dataJson = raw['data'];
+//       if (dataJson is! Map<String, dynamic>) {
+//         log('data is not a map: $dataJson');
+//         emit(StockLedgerFailure('Invalid data structure'));
+//         return;
+//       }
+
+//       // ---------- Extract product name ----------
+//       String? productName;
+//       for (final list in [
+//         dataJson['purchases'],
+//         dataJson['purchase_returns'],
+//         dataJson['sales'],
+//         dataJson['sale_returns'],
+//       ]) {
+//         if (list is List && list.isNotEmpty) {
+//           productName = list.first['product_name'] as String?;
+//           break;
+//         }
+//       }
+
+//       final Map<String, StockLedgerEntry> ledgerMap = {};
+
+//       void addEntry(
+//         String date, {
+//         double? opening,
+//         double? purchase,
+//         double? purchaseReturn,
+//         double? sale,
+//         double? saleReturn,
+//         double? costPrice,
+//         double? sellingPrice,
+//       }) {
+//         final key = date.split('T').first;
+//         final existing = ledgerMap[key] ?? StockLedgerEntry(date: key);
+//         ledgerMap[key] = StockLedgerEntry(
+//           date: key,
+//           opening: opening ?? existing.opening,
+//           purchase: (existing.purchase ?? 0) + (purchase ?? 0),
+//           sales: (existing.sales ?? 0) + (sale ?? 0),
+//           closing: existing.closing,
+//           costPrice: costPrice ?? existing.costPrice,
+//           sellingPrice: sellingPrice ?? existing.sellingPrice,
+//         );
+//       }
+
+//       // ---------- Helper that returns **double** ----------
+//       void processList(
+//         List<dynamic>? list, {
+//         required double Function(Map<String, dynamic>) getQty,
+//         double Function(Map<String, dynamic>)? getCost,
+//         double Function(Map<String, dynamic>)? getSelling,
+//         required bool isPurchase,
+//       }) {
+//         if (list == null) return;
+//         for (final item in list) {
+//           if (item is! Map<String, dynamic>) continue;
+//           final date =
+//               item['date'] as String? ?? item['voucher_date'] as String?;
+//           if (date == null) continue;
+
+//           final qty = getQty(item);
+//           final cost = getCost?.call(item) ?? 0.0;
+//           final sell = getSelling?.call(item) ?? 0.0;
+
+//           addEntry(
+//             date,
+//             purchase: isPurchase ? qty : null,
+//             purchaseReturn: isPurchase ? null : (qty > 0 ? qty : null),
+//             sale: !isPurchase && qty < 0 ? -qty : null,
+//             saleReturn: !isPurchase && qty > 0 ? qty : null,
+//             costPrice: cost,
+//             sellingPrice: sell,
+//           );
+//         }
+//       }
+
+//       // ---------- Process all transaction types ----------
+//       processList(
+//         dataJson['purchases'] as List<dynamic>?,
+//         getQty: (m) => (m['quantity'] as num?)?.toDouble() ?? 0.0,
+//         getCost: (m) => (m['cost_price'] as num?)?.toDouble() ?? 0.0,
+//         isPurchase: true,
+//       );
+//       processList(
+//         dataJson['purchase_returns'] as List<dynamic>?,
+//         getQty: (m) => -((m['quantity'] as num?)?.toDouble() ?? 0.0),
+//         getCost: (m) => (m['cost_price'] as num?)?.toDouble() ?? 0.0,
+//         isPurchase: true,
+//       );
+//       processList(
+//         dataJson['sales'] as List<dynamic>?,
+//         getQty: (m) => -((m['quantity'] as num?)?.toDouble() ?? 0.0),
+//         getCost: (m) => (m['cost_price'] as num?)?.toDouble() ?? 0.0,
+//         getSelling: (m) => (m['selling_price'] as num?)?.toDouble() ?? 0.0,
+//         isPurchase: false,
+//       );
+//       processList(
+//         dataJson['sale_returns'] as List<dynamic>?,
+//         getQty: (m) => (m['quantity'] as num?)?.toDouble() ?? 0.0,
+//         getCost: (m) => (m['cost_price'] as num?)?.toDouble() ?? 0.0,
+//         getSelling: (m) => (m['selling_price'] as num?)?.toDouble() ?? 0.0,
+//         isPurchase: false,
+//       );
+
+//       // ---------- Opening stock ----------
+//       final openingStock = dataJson['opening_stock'] as Map<String, dynamic>?;
+//       if (openingStock != null) {
+//         final summary = openingStock['summary'] as List<dynamic>?;
+//         if (summary != null && summary.isNotEmpty) {
+//           final item = summary.first as Map<String, dynamic>;
+//           addEntry(
+//             from,
+//             opening: (item['quantity'] as num?)?.toDouble() ?? 0.0,
+//             costPrice: (item['cost_price'] as num?)?.toDouble() ?? 0.0,
+//           );
+//         }
+//       }
+
+//       // ---------- Closing stock ----------
+//       final closingStock = dataJson['closing_stock'] as Map<String, dynamic>?;
+//       if (closingStock != null) {
+//         final summary = closingStock['summary'] as List<dynamic>?;
+//         if (summary != null && summary.isNotEmpty) {
+//           final item = summary.first as Map<String, dynamic>;
+//           final entry = ledgerMap[to] ?? StockLedgerEntry(date: to);
+//           ledgerMap[to] = StockLedgerEntry(
+//             date: to,
+//             opening: entry.opening,
+//             purchase: entry.purchase,
+//             sales: entry.sales,
+//             closing: (item['quantity'] as num?)?.toDouble() ?? 0.0,
+//             costPrice: (item['cost_price'] as num?)?.toDouble() ?? 0.0,
+//             sellingPrice: (item['selling_price'] as num?)?.toDouble() ?? 0.0,
+//           );
+//         }
+//       }
+
+//       // ---------- Sort by date ----------
+//       final sortedEntries = ledgerMap.values.toList()
+//         ..sort((a, b) => (a.date ?? '').compareTo(b.date ?? ''));
+
+//       // ---------- Compute running closing ----------
+//       double running = 0.0;
+//       for (final e in sortedEntries) {
+//         final open = e.opening ?? 0.0;
+//         final inflow = e.purchase ?? 0.0;
+//         final outflow = e.sales ?? 0.0;
+//         running = open + inflow - outflow;
+//         e.closing = running;
+//       }
+
+//       final account = StockLedgerAccount(
+//         productName: productName ?? 'Unknown Product',
+//         ledger: sortedEntries,
+//       );
+
+//       final report = StockLedgerReport(
+//         success: true,
+//         message: message,
+//         data: [account],
+//       );
+
+//       log('REPORT → 1 account, ${sortedEntries.length} ledger entries');
+//       emit(StockLedgerSuccess(report));
+//     } catch (e, s) {
+//       log('UNEXPECTED ERROR', error: e, stackTrace: s);
+//       emit(StockLedgerFailure('Failed to process data'));
+//     }
+//   }
+// }
+
+// lib/screen/stock_ledger/bloc/stock_ledger_bloc.dart
+// lib/screen/stock_ledger/bloc/stock_ledger_bloc.dart
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -171,8 +456,240 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
     }
   }
 
+  // Future<void> _loadReport(
+  //     FetchStockLedgerReport event, Emitter<StockLedgerState> emit) async {
+  //   emit(StockLedgerLoading());
+
+  //   if (event.productId == null && event.categoryId == null) {
+  //     emit(StockLedgerFailure('Select Product or Category'));
+  //     return;
+  //   }
+
+  //   final from = event.startDate ??
+  //       DateFormat('yyyy-MM-dd')
+  //           .format(DateTime.now().subtract(const Duration(days: 30)));
+  //   final to = event.endDate ?? DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+  //   final params = <String, String>{
+  //     'start_date': from,
+  //     'end_date': to,
+  //     if (event.productId != null) 'product_id': event.productId.toString(),
+  //     if (event.categoryId != null) 'category_id': event.categoryId.toString(),
+  //   };
+
+  //   log('SENDING → $params');
+
+  //   try {
+  //     final resp = await dioClient.dio.get(
+  //       '/ledger/get_stock_ledger/',
+  //       queryParameters: params,
+  //     );
+
+  //     dynamic raw = resp.data;
+  //     if (raw is String) raw = jsonDecode(raw);
+  //     if (raw is! Map<String, dynamic>) {
+  //       emit(StockLedgerFailure('Invalid response'));
+  //       return;
+  //     }
+
+  //     final success = raw['success'] as bool? ?? false;
+  //     final message = raw['message'] as String? ?? 'Error';
+  //     if (!success) {
+  //       emit(StockLedgerFailure(message));
+  //       return;
+  //     }
+
+  //     final dataJson = raw['data'] as Map<String, dynamic>;
+
+  //     // Extract product name
+  //     String? productName;
+  //     for (final list in [
+  //       dataJson['purchases'],
+  //       dataJson['purchase_returns'],
+  //       dataJson['sales'],
+  //       dataJson['sale_returns'],
+  //     ]) {
+  //       if (list is List && list.isNotEmpty) {
+  //         productName = list.first['product_name'] as String?;
+  //         break;
+  //       }
+  //     }
+
+  //     final ledgerMap = <String, StockLedgerEntry>{};
+
+  //     void addEntry(String date,
+  //         {double? opening,
+  //         double? purchase,
+  //         double? sale,
+  //         double? costPrice,
+  //         double? sellingPrice}) {
+  //       final key = date.split('T').first;
+  //       final existing = ledgerMap[key] ?? StockLedgerEntry(date: key);
+
+  //       ledgerMap[key] = StockLedgerEntry(
+  //         date: key,
+  //         opening: opening ?? existing.opening,
+  //         purchase: (existing.purchase ?? 0) + (purchase ?? 0),
+  //         sales: (existing.sales ?? 0) + (sale ?? 0),
+  //         closing: existing.closing,
+  //         costPrice: costPrice ?? existing.costPrice,
+  //         sellingPrice: sellingPrice ?? existing.sellingPrice,
+  //       );
+  //     }
+
+  //     void processList(
+  //       List<dynamic>? list, {
+  //       required double Function(Map<String, dynamic>) getQty,
+  //       double Function(Map<String, dynamic>)? getCost,
+  //       double Function(Map<String, dynamic>)? getSelling,
+  //       required bool isPurchase,
+  //     }) {
+  //       if (list == null) return;
+  //       for (final item in list) {
+  //         if (item is! Map<String, dynamic>) continue;
+  //         final date =
+  //             item['date'] as String? ?? item['voucher_date'] as String?;
+  //         if (date == null) continue;
+
+  //         final qty = getQty(item);
+  //         final cost = getCost?.call(item) ?? 0.0;
+  //         final sell = getSelling?.call(item) ?? 0.0;
+
+  //         addEntry(
+  //           date,
+  //           purchase: isPurchase ? qty : null,
+  //           sale: !isPurchase ? (qty < 0 ? -qty : qty) : null,
+  //           costPrice: cost > 0 ? cost : null,
+  //           sellingPrice: sell > 0 ? sell : null,
+  //         );
+  //       }
+  //     }
+
+  //     // GLOBAL RATE FROM closing_stock (weighted average)
+  //     double globalCostPrice = 0.0;
+  //     double globalSellingPrice = 0.0;
+
+  //     final closingStock = dataJson['closing_stock'] as Map<String, dynamic>?;
+  //     if (closingStock != null) {
+  //       final summary = closingStock['summary'] as List<dynamic>?;
+  //       if (summary != null && summary.isNotEmpty) {
+  //         final item = summary.first;
+  //         final cost = (item['cost_price'] as num?)?.toDouble();
+  //         final sell = (item['selling_price'] as num?)?.toDouble();
+  //         if (cost != null && cost > 0) globalCostPrice = cost;
+  //         if (sell != null && sell > 0) globalSellingPrice = sell;
+  //       }
+  //     }
+
+  //     log('GLOBAL RATES → cost: $globalCostPrice, sell: $globalSellingPrice');
+
+  //     // PROCESS ALL TRANSACTIONS WITH FORCED GLOBAL RATE
+  //     processList(
+  //       dataJson['purchases'] as List<dynamic>?,
+  //       getQty: (m) => (m['quantity'] as num?)?.toDouble() ?? 0.0,
+  //       getCost: (m) => globalCostPrice > 0
+  //           ? globalCostPrice
+  //           : ((m['cost_price'] as num?)?.toDouble() ?? 0.0),
+  //       isPurchase: true,
+  //     );
+
+  //     processList(
+  //       dataJson['purchase_returns'] as List<dynamic>?,
+  //       getQty: (m) => -((m['quantity'] as num?)?.toDouble() ?? 0.0),
+  //       getCost: (m) =>
+  //           globalCostPrice ?? ((m['cost_price'] as num?)?.toDouble() ?? 0.0),
+  //       isPurchase: true,
+  //     );
+
+  //     processList(
+  //       dataJson['sales'] as List<dynamic>?,
+  //       getQty: (m) => -((m['quantity'] as num?)?.toDouble() ?? 0.0),
+  //       getCost: (m) =>
+  //           globalCostPrice ?? ((m['cost_price'] as num?)?.toDouble() ?? 0.0),
+  //       getSelling: (m) =>
+  //           globalSellingPrice ??
+  //           ((m['selling_price'] as num?)?.toDouble() ?? 0.0),
+  //       isPurchase: false,
+  //     );
+
+  //     processList(
+  //       dataJson['sale_returns'] as List<dynamic>?,
+  //       getQty: (m) => (m['quantity'] as num?)?.toDouble() ?? 0.0,
+  //       getCost: (m) =>
+  //           globalCostPrice ?? ((m['cost_price'] as num?)?.toDouble() ?? 0.0),
+  //       getSelling: (m) =>
+  //           globalSellingPrice ??
+  //           ((m['selling_price'] as num?)?.toDouble() ?? 0.0),
+  //       isPurchase: false,
+  //     );
+
+  //     // OPENING STOCK
+  //     final openingStock = dataJson['opening_stock'] as Map<String, dynamic>?;
+  //     if (openingStock != null) {
+  //       final summary = openingStock['summary'] as List<dynamic>?;
+  //       if (summary != null && summary.isNotEmpty) {
+  //         final item = summary.first;
+  //         final qty = (item['quantity'] as num?)?.toDouble() ?? 0.0;
+  //         final cost = globalCostPrice;
+  //         addEntry(from, opening: qty, costPrice: cost);
+  //       }
+  //     }
+
+  //     // CLOSING STOCK
+  //     if (closingStock != null) {
+  //       final summary = closingStock['summary'] as List<dynamic>?;
+  //       if (summary != null && summary.isNotEmpty) {
+  //         final item = summary.first;
+  //         final qty = (item['quantity'] as num?)?.toDouble() ?? 0.0;
+  //         final cost = globalCostPrice;
+  //         final sell = globalSellingPrice;
+
+  //         final entry = ledgerMap[to] ?? StockLedgerEntry(date: to);
+  //         ledgerMap[to] = StockLedgerEntry(
+  //           date: to,
+  //           opening: entry.opening,
+  //           purchase: entry.purchase,
+  //           sales: entry.sales,
+  //           closing: qty,
+  //           costPrice: cost,
+  //           sellingPrice: sell,
+  //         );
+  //       }
+  //     }
+
+  //     // Sort by date
+  //     final sorted = ledgerMap.values.toList()
+  //       ..sort((a, b) => (a.date ?? '').compareTo(b.date ?? ''));
+
+  //     // Compute closing balance
+  //     double running = 0.0;
+  //     for (final e in sorted) {
+  //       running = (e.opening ?? 0) + (e.purchase ?? 0) - (e.sales ?? 0);
+  //       e.closing = running;
+  //     }
+
+  //     final account = StockLedgerAccount(
+  //       productName: productName ?? 'Unknown',
+  //       ledger: sorted,
+  //     );
+
+  //     final report = StockLedgerReport(
+  //       success: true,
+  //       message: message,
+  //       data: [account],
+  //     );
+
+  //     emit(StockLedgerSuccess(report));
+  //   } catch (e, s) {
+  //     log('ERROR', error: e, stackTrace: s);
+  //     emit(StockLedgerFailure('Failed: $e'));
+  //   }
+  // }
+  // stock_ledger_bloc.dart
   Future<void> _loadReport(
-      FetchStockLedgerReport event, Emitter<StockLedgerState> emit) async {
+    FetchStockLedgerReport event,
+    Emitter<StockLedgerState> emit,
+  ) async {
     emit(StockLedgerLoading());
 
     if (event.productId == null && event.categoryId == null) {
@@ -201,41 +718,22 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
       );
 
       dynamic raw = resp.data;
-
-      if (raw is String) {
-        try {
-          raw = jsonDecode(raw);
-        } catch (e) {
-          log('JSON DECODE FAILED → $e');
-          emit(StockLedgerFailure('Invalid JSON from server'));
-          return;
-        }
-      }
-
+      if (raw is String) raw = jsonDecode(raw);
       if (raw is! Map<String, dynamic>) {
-        log('NOT A MAP → $raw');
-        emit(StockLedgerFailure('Unexpected response format'));
+        emit(StockLedgerFailure('Invalid response format'));
         return;
       }
 
-      log('PARSED JSON → $raw');
-
-      final bool success = raw['success'] as bool? ?? false;
-      final String message = raw['message'] as String? ?? 'Unknown error';
-
+      final success = raw['success'] as bool? ?? false;
+      final message = raw['message'] as String? ?? 'Unknown error';
       if (!success) {
         emit(StockLedgerFailure(message));
         return;
       }
 
-      final dataJson = raw['data'];
-      if (dataJson is! Map<String, dynamic>) {
-        log('data is not a map: $dataJson');
-        emit(StockLedgerFailure('Invalid data structure'));
-        return;
-      }
+      final dataJson = raw['data'] as Map<String, dynamic>;
 
-      // ---------- Extract product name ----------
+      // Extract product name
       String? productName;
       for (final list in [
         dataJson['purchases'],
@@ -249,20 +747,17 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
         }
       }
 
-      final Map<String, StockLedgerEntry> ledgerMap = {};
+      final ledgerMap = <String, StockLedgerEntry>{};
 
-      void addEntry(
-        String date, {
-        double? opening,
-        double? purchase,
-        double? purchaseReturn,
-        double? sale,
-        double? saleReturn,
-        double? costPrice,
-        double? sellingPrice,
-      }) {
+      void addEntry(String date,
+          {double? opening,
+          double? purchase,
+          double? sale,
+          double? costPrice,
+          double? sellingPrice}) {
         final key = date.split('T').first;
         final existing = ledgerMap[key] ?? StockLedgerEntry(date: key);
+
         ledgerMap[key] = StockLedgerEntry(
           date: key,
           opening: opening ?? existing.opening,
@@ -274,7 +769,19 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
         );
       }
 
-      // ---------- Helper that returns **double** ----------
+      // Global cost price from closing stock
+      double globalCostPrice = 0.0;
+      final closingStock = dataJson['closing_stock'] as Map<String, dynamic>?;
+      if (closingStock != null) {
+        final summary = closingStock['summary'] as List<dynamic>?;
+        if (summary != null && summary.isNotEmpty) {
+          final item = summary.first;
+          globalCostPrice = (item['cost_price'] as num?)?.toDouble() ?? 0.0;
+        }
+      }
+      log('GLOBAL COST PRICE → $globalCostPrice');
+
+      // Process transactions
       void processList(
         List<dynamic>? list, {
         required double Function(Map<String, dynamic>) getQty,
@@ -285,117 +792,116 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
         if (list == null) return;
         for (final item in list) {
           if (item is! Map<String, dynamic>) continue;
-          final date =
-              item['date'] as String? ?? item['voucher_date'] as String?;
-          if (date == null) continue;
-
+          final date = item['date'] as String? ?? from;
           final qty = getQty(item);
           final cost = getCost?.call(item) ?? 0.0;
           final sell = getSelling?.call(item) ?? 0.0;
 
-          addEntry(
-            date,
-            purchase: isPurchase ? qty : null,
-            purchaseReturn: isPurchase ? null : (qty > 0 ? qty : null),
-            sale: !isPurchase && qty < 0 ? -qty : null,
-            saleReturn: !isPurchase && qty > 0 ? qty : null,
-            costPrice: cost,
-            sellingPrice: sell,
-          );
+          if (isPurchase) {
+            addEntry(date, purchase: qty, costPrice: cost);
+          } else {
+            addEntry(date, sale: qty < 0 ? -qty : qty, sellingPrice: sell);
+          }
         }
       }
 
-      // ---------- Process all transaction types ----------
+      // Purchases
       processList(
         dataJson['purchases'] as List<dynamic>?,
         getQty: (m) => (m['quantity'] as num?)?.toDouble() ?? 0.0,
-        getCost: (m) => (m['cost_price'] as num?)?.toDouble() ?? 0.0,
+        getCost: (m) => globalCostPrice,
         isPurchase: true,
       );
+
+      // Purchase Returns
       processList(
         dataJson['purchase_returns'] as List<dynamic>?,
         getQty: (m) => -((m['quantity'] as num?)?.toDouble() ?? 0.0),
-        getCost: (m) => (m['cost_price'] as num?)?.toDouble() ?? 0.0,
+        getCost: (m) => globalCostPrice,
         isPurchase: true,
       );
+
+      // Sales
       processList(
         dataJson['sales'] as List<dynamic>?,
         getQty: (m) => -((m['quantity'] as num?)?.toDouble() ?? 0.0),
-        getCost: (m) => (m['cost_price'] as num?)?.toDouble() ?? 0.0,
-        getSelling: (m) => (m['selling_price'] as num?)?.toDouble() ?? 0.0,
-        isPurchase: false,
-      );
-      processList(
-        dataJson['sale_returns'] as List<dynamic>?,
-        getQty: (m) => (m['quantity'] as num?)?.toDouble() ?? 0.0,
-        getCost: (m) => (m['cost_price'] as num?)?.toDouble() ?? 0.0,
-        getSelling: (m) => (m['selling_price'] as num?)?.toDouble() ?? 0.0,
+        getCost: (m) => globalCostPrice,
+        getSelling: (m) {
+          final sp = m['selling_price'];
+          return sp is String
+              ? (double.tryParse(sp) ?? 0.0)
+              : (sp as num?)?.toDouble() ?? 0.0;
+        },
         isPurchase: false,
       );
 
-      // ---------- Opening stock ----------
+      // Sale Returns
+      processList(
+        dataJson['sale_returns'] as List<dynamic>?,
+        getQty: (m) => (m['quantity'] as num?)?.toDouble() ?? 0.0,
+        getCost: (m) => globalCostPrice,
+        getSelling: (m) {
+          final sp = m['selling_price'];
+          return sp is String
+              ? (double.tryParse(sp) ?? 0.0)
+              : (sp as num?)?.toDouble() ?? 0.0;
+        },
+        isPurchase: false,
+      );
+
+      // Opening Stock
       final openingStock = dataJson['opening_stock'] as Map<String, dynamic>?;
       if (openingStock != null) {
         final summary = openingStock['summary'] as List<dynamic>?;
         if (summary != null && summary.isNotEmpty) {
-          final item = summary.first as Map<String, dynamic>;
-          addEntry(
-            from,
-            opening: (item['quantity'] as num?)?.toDouble() ?? 0.0,
-            costPrice: (item['cost_price'] as num?)?.toDouble() ?? 0.0,
-          );
+          final item = summary.first;
+          final qty = (item['quantity'] as num?)?.toDouble() ?? 0.0;
+          addEntry(from, opening: qty, costPrice: globalCostPrice);
         }
       }
 
-      // ---------- Closing stock ----------
-      final closingStock = dataJson['closing_stock'] as Map<String, dynamic>?;
+      // Closing Stock
       if (closingStock != null) {
         final summary = closingStock['summary'] as List<dynamic>?;
         if (summary != null && summary.isNotEmpty) {
-          final item = summary.first as Map<String, dynamic>;
+          final item = summary.first;
+          final qty = (item['quantity'] as num?)?.toDouble() ?? 0.0;
           final entry = ledgerMap[to] ?? StockLedgerEntry(date: to);
           ledgerMap[to] = StockLedgerEntry(
             date: to,
             opening: entry.opening,
             purchase: entry.purchase,
             sales: entry.sales,
-            closing: (item['quantity'] as num?)?.toDouble() ?? 0.0,
-            costPrice: (item['cost_price'] as num?)?.toDouble() ?? 0.0,
-            sellingPrice: (item['selling_price'] as num?)?.toDouble() ?? 0.0,
+            closing: qty,
+            costPrice: globalCostPrice,
+            sellingPrice: entry.sellingPrice,
           );
         }
       }
 
-      // ---------- Sort by date ----------
-      final sortedEntries = ledgerMap.values.toList()
+      // Sort entries
+      final sorted = ledgerMap.values.toList()
         ..sort((a, b) => (a.date ?? '').compareTo(b.date ?? ''));
 
-      // ---------- Compute running closing ----------
+      // Compute running balance
       double running = 0.0;
-      for (final e in sortedEntries) {
-        final open = e.opening ?? 0.0;
-        final inflow = e.purchase ?? 0.0;
-        final outflow = e.sales ?? 0.0;
-        running = open + inflow - outflow;
+      for (final e in sorted) {
+        final inflow = (e.opening ?? 0) + (e.purchase ?? 0);
+        final outflow = e.sales ?? 0;
+        running = inflow - outflow;
         e.closing = running;
       }
 
       final account = StockLedgerAccount(
-        productName: productName ?? 'Unknown Product',
-        ledger: sortedEntries,
-      );
+          productName: productName ?? 'Unknown', ledger: sorted);
+      final report =
+          StockLedgerReport(success: true, message: message, data: [account]);
 
-      final report = StockLedgerReport(
-        success: true,
-        message: message,
-        data: [account],
-      );
-
-      log('REPORT → 1 account, ${sortedEntries.length} ledger entries');
-      emit(StockLedgerSuccess(report));
+      log('SUCCESS → ${sorted.length} entries, closing: ${sorted.last.closing}');
+      emit(StockLedgerSuccess(report, raw));
     } catch (e, s) {
-      log('UNEXPECTED ERROR', error: e, stackTrace: s);
-      emit(StockLedgerFailure('Failed to process data'));
+      log('ERROR', error: e, stackTrace: s);
+      emit(StockLedgerFailure('Failed: $e'));
     }
   }
 }

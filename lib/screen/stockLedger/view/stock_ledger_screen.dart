@@ -57,22 +57,24 @@
 //     });
 //   }
 
-//   void _downloadPdf(StockLedgerReport report) {
+//   void _downloadPdf(Map<String, dynamic> rawJson) {
 //     DioClient().downloadStockLedgerAsPdf(
-//       report,
+//       rawJson,
 //       DateFormat('dd/MM/yyyy').format(start),
 //       DateFormat('dd/MM/yyyy').format(end),
 //     );
+
 //     ScaffoldMessenger.of(context)
 //         .showSnackBar(const SnackBar(content: Text('PDF Saved!')));
 //   }
 
-//   void _downloadExcel(StockLedgerReport report) {
+//   void _downloadExcel(Map<String, dynamic> rawJson) {
 //     DioClient().downloadStockLedgerAsExcel(
-//       report,
+//       rawJson,
 //       DateFormat('dd/MM/yyyy').format(start),
 //       DateFormat('dd/MM/yyyy').format(end),
 //     );
+
 //     ScaffoldMessenger.of(context)
 //         .showSnackBar(const SnackBar(content: Text('Excel Saved!')));
 //   }
@@ -136,112 +138,72 @@
 //             ]),
 //             const SizedBox(height: 20),
 
-//             // DOWNLOAD BUTTONS
+//             // DOWNLOAD BUTTONS + SUCCESS MESSAGE
 //             BlocBuilder<StockLedgerBloc, StockLedgerState>(
 //               builder: (_, state) {
-//                 if (state is StockLedgerSuccess) {
-//                   final hasData = state.report.data?.isNotEmpty == true;
-//                   return Row(
-//                       mainAxisAlignment: MainAxisAlignment.center,
-//                       children: [
-//                         ElevatedButton.icon(
-//                           onPressed:
-//                               hasData ? () => _downloadPdf(state.report) : null,
-//                           icon: const Icon(Icons.picture_as_pdf),
-//                           label: const Text('PDF'),
-//                           style: ElevatedButton.styleFrom(
-//                               backgroundColor: Colors.red),
-//                         ),
-//                         const SizedBox(width: 12),
-//                         ElevatedButton.icon(
-//                           onPressed: hasData
-//                               ? () => _downloadExcel(state.report)
-//                               : null,
-//                           icon: const Icon(Icons.table_chart),
-//                           label: const Text('Excel'),
-//                           style: ElevatedButton.styleFrom(
-//                               backgroundColor: Colors.green),
-//                         ),
-//                       ]);
+//                 if (state is StockLedgerLoading) {
+//                   return const Center(child: CircularProgressIndicator());
 //                 }
-//                 return const SizedBox();
+//                 if (state is StockLedgerFailure) {
+//                   return Center(
+//                     child: Column(
+//                       mainAxisSize: MainAxisSize.min,
+//                       children: [
+//                         Text(state.message,
+//                             style: const TextStyle(color: Colors.red)),
+//                         const SizedBox(height: 12),
+//                         ElevatedButton.icon(
+//                           onPressed: filter,
+//                           icon: const Icon(Icons.refresh),
+//                           label: const Text('Retry'),
+//                         ),
+//                       ],
+//                     ),
+//                   );
+//                 }
+//                 if (state is StockLedgerSuccess) {
+//                   final hasData = state.rawJson['data'] != null &&
+//                       (state.rawJson['data'] as Map).isNotEmpty;
+
+//                   return Column(
+//                     children: [
+//                       if (hasData) ...[
+//                         Row(
+//                           mainAxisAlignment: MainAxisAlignment.center,
+//                           children: [
+//                             ElevatedButton.icon(
+//                               onPressed: () => _downloadPdf(state.rawJson),
+//                               icon: const Icon(Icons.picture_as_pdf),
+//                               label: const Text('PDF'),
+//                               style: ElevatedButton.styleFrom(
+//                                   backgroundColor: Colors.red),
+//                             ),
+//                             const SizedBox(width: 12),
+//                             ElevatedButton.icon(
+//                               onPressed: () => _downloadExcel(state.rawJson),
+//                               icon: const Icon(Icons.table_chart),
+//                               label: const Text('Excel'),
+//                               style: ElevatedButton.styleFrom(
+//                                   backgroundColor: Colors.green),
+//                             ),
+//                           ],
+//                         ),
+//                         const SizedBox(height: 12),
+//                         const Text(
+//                           'Report generated successfully!',
+//                           style: TextStyle(
+//                               color: Colors.green, fontWeight: FontWeight.bold),
+//                         ),
+//                       ] else
+//                         const Text(
+//                           'No data found for the selected filters.',
+//                           style: TextStyle(color: Colors.orange),
+//                         ),
+//                     ],
+//                   );
+//                 }
+//                 return const Text('Tap Filter to load data');
 //               },
-//             ),
-//             const SizedBox(height: 20),
-
-//             // TABLE TITLE
-//             const Text('Stock Ledger Data',
-//                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-//             const SizedBox(height: 10),
-
-//             // TABLE
-//             SizedBox(
-//               height: 400,
-//               child: BlocBuilder<StockLedgerBloc, StockLedgerState>(
-//                 builder: (_, state) {
-//                   if (state is StockLedgerLoading) {
-//                     return const Center(child: CircularProgressIndicator());
-//                   }
-//                   if (state is StockLedgerFailure) {
-//                     return Center(
-//                       child: Column(
-//                         mainAxisSize: MainAxisSize.min,
-//                         children: [
-//                           Text(state.message,
-//                               style: const TextStyle(color: Colors.red)),
-//                           const SizedBox(height: 12),
-//                           ElevatedButton.icon(
-//                             onPressed: filter,
-//                             icon: const Icon(Icons.refresh),
-//                             label: const Text('Retry'),
-//                           ),
-//                         ],
-//                       ),
-//                     );
-//                   }
-//                   if (state is StockLedgerSuccess &&
-//                       state.report.data?.isNotEmpty == true) {
-//                     final entries = state.report.data!.first.ledger!;
-//                     final name = product?.name ?? category?.name ?? 'All';
-//                     return SingleChildScrollView(
-//                       scrollDirection: Axis.horizontal,
-//                       child: DataTable(
-//                         columns: const [
-//                           DataColumn(label: Text('Date')),
-//                           DataColumn(label: Text('Product')),
-//                           DataColumn(label: Text('Open')),
-//                           DataColumn(label: Text('In')),
-//                           DataColumn(label: Text('Out')),
-//                           DataColumn(label: Text('Close')),
-//                           DataColumn(label: Text('Rate')),
-//                         ],
-//                         rows: entries
-//                             .map((e) => DataRow(cells: [
-//                                   DataCell(
-//                                       Text(e.date?.split('T').first ?? '')),
-//                                   DataCell(Text(name)),
-//                                   DataCell(Text(
-//                                       e.opening?.toStringAsFixed(2) ?? '0.00')),
-//                                   DataCell(Text(
-//                                       e.purchase?.toStringAsFixed(2) ??
-//                                           '0.00')),
-//                                   DataCell(Text(
-//                                       e.sales?.toStringAsFixed(2) ?? '0.00')),
-//                                   DataCell(Text(
-//                                       e.closing?.toStringAsFixed(2) ?? '0.00')),
-//                                   DataCell(Text(rateField == 'Cost Price'
-//                                       ? e.costPrice?.toStringAsFixed(2) ??
-//                                           '0.00'
-//                                       : e.sellingPrice?.toStringAsFixed(2) ??
-//                                           '0.00')),
-//                                 ]))
-//                             .toList(),
-//                       ),
-//                     );
-//                   }
-//                   return const Center(child: Text('Tap Filter to load data'));
-//                 },
-//               ),
 //             ),
 //           ],
 //         ),
@@ -253,7 +215,7 @@
 //   Widget _productDropdown() => BlocBuilder<StockLedgerBloc, StockLedgerState>(
 //         builder: (_, s) => s is FilterOptionsLoaded
 //             ? DropdownButtonFormField<ProductData>(
-//                 initialValue: product,
+//                 value: product,
 //                 hint: const Text('Select Product'),
 //                 decoration: const InputDecoration(
 //                     labelText: 'Product', border: OutlineInputBorder()),
@@ -271,7 +233,7 @@
 //   Widget _categoryDropdown() => BlocBuilder<StockLedgerBloc, StockLedgerState>(
 //         builder: (_, s) => s is FilterOptionsLoaded
 //             ? DropdownButtonFormField<CategoryData>(
-//                 initialValue: category,
+//                 value: category,
 //                 hint: const Text('None'),
 //                 decoration: const InputDecoration(
 //                     labelText: 'Category', border: OutlineInputBorder()),
@@ -287,7 +249,7 @@
 //       );
 
 //   Widget _rateDropdown() => DropdownButtonFormField<String>(
-//         initialValue: rateField,
+//         value: rateField,
 //         decoration: const InputDecoration(
 //             labelText: 'Balance Rate Field', border: OutlineInputBorder()),
 //         items: ['Cost Price', 'Selling Price']
@@ -351,7 +313,8 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
   DateTime end = DateTime.now();
   ProductData? product;
   CategoryData? category;
-  String rateField = 'Cost Price';
+  String rateField = 'Cost Price'; // UI Label
+  String rateType = 'cost'; // Internal: 'cost' or 'selling'
 
   void filter() {
     final from = DateFormat('yyyy-MM-dd').format(start);
@@ -372,25 +335,30 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
       start = DateTime.now().subtract(const Duration(days: 30));
       end = DateTime.now();
       rateField = 'Cost Price';
+      rateType = 'cost';
     });
   }
 
-  void _downloadPdf(StockLedgerReport report) {
+  void _downloadPdf(Map<String, dynamic> rawJson) {
     DioClient().downloadStockLedgerAsPdf(
-      report,
+      rawJson,
       DateFormat('dd/MM/yyyy').format(start),
       DateFormat('dd/MM/yyyy').format(end),
+      rateType, // FIXED: Added missing argument
     );
+
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('PDF Saved!')));
   }
 
-  void _downloadExcel(StockLedgerReport report) {
+  void _downloadExcel(Map<String, dynamic> rawJson) {
     DioClient().downloadStockLedgerAsExcel(
-      report,
+      rawJson,
       DateFormat('dd/MM/yyyy').format(start),
       DateFormat('dd/MM/yyyy').format(end),
+      rateType, // FIXED: Added missing argument
     );
+
     ScaffoldMessenger.of(context)
         .showSnackBar(const SnackBar(content: Text('Excel Saved!')));
   }
@@ -454,112 +422,72 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
             ]),
             const SizedBox(height: 20),
 
-            // DOWNLOAD BUTTONS
+            // DOWNLOAD BUTTONS + SUCCESS MESSAGE
             BlocBuilder<StockLedgerBloc, StockLedgerState>(
               builder: (_, state) {
-                if (state is StockLedgerSuccess) {
-                  final hasData = state.report.data?.isNotEmpty == true;
-                  return Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed:
-                              hasData ? () => _downloadPdf(state.report) : null,
-                          icon: const Icon(Icons.picture_as_pdf),
-                          label: const Text('PDF'),
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red),
-                        ),
-                        const SizedBox(width: 12),
-                        ElevatedButton.icon(
-                          onPressed: hasData
-                              ? () => _downloadExcel(state.report)
-                              : null,
-                          icon: const Icon(Icons.table_chart),
-                          label: const Text('Excel'),
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green),
-                        ),
-                      ]);
+                if (state is StockLedgerLoading) {
+                  return const Center(child: CircularProgressIndicator());
                 }
-                return const SizedBox();
+                if (state is StockLedgerFailure) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(state.message,
+                            style: const TextStyle(color: Colors.red)),
+                        const SizedBox(height: 12),
+                        ElevatedButton.icon(
+                          onPressed: filter,
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                if (state is StockLedgerSuccess) {
+                  final hasData = state.rawJson['data'] != null &&
+                      (state.rawJson['data'] as Map).isNotEmpty;
+
+                  return Column(
+                    children: [
+                      if (hasData) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () => _downloadPdf(state.rawJson),
+                              icon: const Icon(Icons.picture_as_pdf),
+                              label: const Text('PDF'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red),
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              onPressed: () => _downloadExcel(state.rawJson),
+                              icon: const Icon(Icons.table_chart),
+                              label: const Text('Excel'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Report generated successfully! ($rateField)',
+                          style: const TextStyle(
+                              color: Colors.green, fontWeight: FontWeight.bold),
+                        ),
+                      ] else
+                        const Text(
+                          'No data found for the selected filters.',
+                          style: TextStyle(color: Colors.orange),
+                        ),
+                    ],
+                  );
+                }
+                return const Text('Tap Filter to load data');
               },
-            ),
-            const SizedBox(height: 20),
-
-            // TABLE TITLE
-            const Text('Stock Ledger Data',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-
-            // TABLE
-            SizedBox(
-              height: 400,
-              child: BlocBuilder<StockLedgerBloc, StockLedgerState>(
-                builder: (_, state) {
-                  if (state is StockLedgerLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (state is StockLedgerFailure) {
-                    return Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(state.message,
-                              style: const TextStyle(color: Colors.red)),
-                          const SizedBox(height: 12),
-                          ElevatedButton.icon(
-                            onPressed: filter,
-                            icon: const Icon(Icons.refresh),
-                            label: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  if (state is StockLedgerSuccess &&
-                      state.report.data?.isNotEmpty == true) {
-                    final entries = state.report.data!.first.ledger!;
-                    final name = product?.name ?? category?.name ?? 'All';
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: DataTable(
-                        columns: const [
-                          DataColumn(label: Text('Date')),
-                          DataColumn(label: Text('Product')),
-                          DataColumn(label: Text('Open')),
-                          DataColumn(label: Text('In')),
-                          DataColumn(label: Text('Out')),
-                          DataColumn(label: Text('Close')),
-                          DataColumn(label: Text('Rate')),
-                        ],
-                        rows: entries
-                            .map((e) => DataRow(cells: [
-                                  DataCell(
-                                      Text(e.date?.split('T').first ?? '')),
-                                  DataCell(Text(name)),
-                                  DataCell(Text(
-                                      e.opening?.toStringAsFixed(2) ?? '0.00')),
-                                  DataCell(Text(
-                                      e.purchase?.toStringAsFixed(2) ??
-                                          '0.00')),
-                                  DataCell(Text(
-                                      e.sales?.toStringAsFixed(2) ?? '0.00')),
-                                  DataCell(Text(
-                                      e.closing?.toStringAsFixed(2) ?? '0.00')),
-                                  DataCell(Text(rateField == 'Cost Price'
-                                      ? e.costPrice?.toStringAsFixed(2) ??
-                                          '0.00'
-                                      : e.sellingPrice?.toStringAsFixed(2) ??
-                                          '0.00')),
-                                ]))
-                            .toList(),
-                      ),
-                    );
-                  }
-                  return const Center(child: Text('Tap Filter to load data'));
-                },
-              ),
             ),
           ],
         ),
@@ -571,7 +499,7 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
   Widget _productDropdown() => BlocBuilder<StockLedgerBloc, StockLedgerState>(
         builder: (_, s) => s is FilterOptionsLoaded
             ? DropdownButtonFormField<ProductData>(
-                initialValue: product,
+                value: product,
                 hint: const Text('Select Product'),
                 decoration: const InputDecoration(
                     labelText: 'Product', border: OutlineInputBorder()),
@@ -589,7 +517,7 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
   Widget _categoryDropdown() => BlocBuilder<StockLedgerBloc, StockLedgerState>(
         builder: (_, s) => s is FilterOptionsLoaded
             ? DropdownButtonFormField<CategoryData>(
-                initialValue: category,
+                value: category,
                 hint: const Text('None'),
                 decoration: const InputDecoration(
                     labelText: 'Category', border: OutlineInputBorder()),
@@ -605,13 +533,18 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
       );
 
   Widget _rateDropdown() => DropdownButtonFormField<String>(
-        initialValue: rateField,
+        value: rateField,
         decoration: const InputDecoration(
             labelText: 'Balance Rate Field', border: OutlineInputBorder()),
         items: ['Cost Price', 'Selling Price']
             .map((e) => DropdownMenuItem(value: e, child: Text(e)))
             .toList(),
-        onChanged: (v) => setState(() => rateField = v!),
+        onChanged: (v) {
+          setState(() {
+            rateField = v!;
+            rateType = v == 'Cost Price' ? 'cost' : 'selling'; // Sync
+          });
+        },
       );
 
   Widget _dateField(bool isStart) => InkWell(
