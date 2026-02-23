@@ -32,7 +32,8 @@
 //   });
 // }
 // lib/screen/stock_ledger/bloc/stock_ledger_state.dart
-// lib/screen/stock_ledger/bloc/stock_ledger_state.dart
+// lib/screen/stockLedger/bloc/stock_ledger_state.dart
+
 import 'package:saleup_app/model/product_category_response.dart';
 import 'package:saleup_app/model/stock_ledger_response.dart';
 

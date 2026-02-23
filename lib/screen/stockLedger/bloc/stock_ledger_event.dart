@@ -17,6 +17,7 @@
 //   });
 // }
 // lib/screen/stock_ledger/bloc/stock_ledger_event.dart
+// stock_ledger_event.dart
 abstract class StockLedgerEvent {}
 
 class FetchFilterOptions extends StockLedgerEvent {}
@@ -26,11 +27,13 @@ class FetchStockLedgerReport extends StockLedgerEvent {
   final String? endDate;
   final int? productId;
   final int? categoryId;
+  final String rateType; // 'cost' or 'selling'
 
   FetchStockLedgerReport({
     this.startDate,
     this.endDate,
     this.productId,
     this.categoryId,
+    required this.rateType,
   });
 }

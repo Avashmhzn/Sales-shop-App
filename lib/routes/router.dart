@@ -1,8 +1,10 @@
 // import 'package:flutter/material.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
 // import 'package:go_router/go_router.dart';
+// import 'package:saleup_app/auth/view/companySelect/view/select_company_screen.dart';
 // import 'package:saleup_app/auth/view/forgetpasword/view/forget_pasword.dart';
 // import 'package:saleup_app/auth/view/login/view/login_screen.dart';
+// import 'package:saleup_app/auth/view/signup/view/sign_up_screen.dart';
 // import 'package:saleup_app/screen/accountHead/view/account_head.dart';
 // import 'package:saleup_app/screen/categories/bloc/category_bloc.dart';
 // import 'package:saleup_app/screen/categories/view/categories_screen.dart';
@@ -50,6 +52,11 @@
 // import 'package:saleup_app/utility/bottomnav.dart';
 // import 'package:saleup_app/utility/drawer.dart';
 // import 'package:saleup_app/utility/splash_screen.dart';
+
+// // ──────────────────────────────────────────────────────────────
+// // ROOT NAVIGATOR KEY — THIS IS THE ONLY NEW LINE
+// // ──────────────────────────────────────────────────────────────
+// final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
 
 // final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 // final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -132,12 +139,17 @@
 //   Widget build(BuildContext context) {
 //     const double bottomNavHeight = 80.0;
 //     final currentRoute = GoRouterState.of(context).uri.toString();
+//     int currentIndex = 0;
 
-//     Widget body = Column(
-//       children: [
-//         const Divider(thickness: 1, height: 1, color: Colors.grey),
-//         Expanded(child: widget.child),
-//       ],
+//     // Widget body = Column(
+//     //   children: [
+//     //     const Divider(thickness: 1, height: 1, color: Colors.grey),
+//     //     Expanded(child: widget.child),
+//     //   ],
+//     // );
+//     Widget body = NotificationListener<ScrollNotification>(
+//       onNotification: _handleScrollNotification,
+//       child: widget.child,
 //     );
 
 //     body = RefreshIndicator(
@@ -150,25 +162,39 @@
 
 //     return Scaffold(
 //       key: _scaffoldKey,
-//       appBar: CustomAppBar(
-//         onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
-//         notificationCount: _notificationCount,
-//         onNotificationTap: () async {
-//           final result = await Navigator.push(
-//             context,
-//             MaterialPageRoute(
-//               builder: (context) => const NotificationsScreen(),
-//             ),
-//           );
-//           if (result != null && result is int) {
-//             setState(() => _notificationCount = result);
-//           }
+//       backgroundColor: Colors.white,
+//       extendBodyBehindAppBar: true,
+//       appBar: PreferredSize(
+//         preferredSize: const Size.fromHeight(120),
+//         child: CustomAppBar(
+//           onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
+//           notificationCount: _notificationCount,
+//           onNotificationTap: () async {
+//             final result = await Navigator.push(
+//               context,
+//               MaterialPageRoute(
+//                 builder: (context) => const NotificationsScreen(),
+//               ),
+//             );
+//             if (result != null && result is int) {
+//               setState(() => _notificationCount = result);
+//             }
+//           },
+//         ),
+//       ),
+//       drawer: AppDrawer(
+//         onNavigate: (index) {
+//           setState(() {
+//             currentIndex = index;
+//           });
+//           handleNavigation(context, index);
 //         },
 //       ),
-//       drawer:
-//           AppDrawer(onNavigate: (index) => handleNavigation(context, index)),
-//       backgroundColor: Colors.white,
-//       body: SafeArea(child: body),
+//       body: NotificationListener<ScrollNotification>(
+//         // ← no Column, no Divider
+//         onNotification: _handleScrollNotification,
+//         child: widget.child,
+//       ),
 //       bottomNavigationBar: _isBottomNavVisible
 //           ? SizedBox(
 //               height: bottomNavHeight,
@@ -177,7 +203,7 @@
 //                 onTap: (index) {
 //                   setState(() {
 //                     _selectedIndex = index;
-//                     _currentIndex = index;
+//                     currentIndex = index;
 //                     handleNavigation(context, index);
 //                   });
 //                 },
@@ -188,7 +214,7 @@
 //   }
 // }
 
-// // ✅ FIXED: removed '/error' invalid route reference
+// // FIXED: removed '/error' invalid route reference
 // void handleNavigation(BuildContext context, int index) {
 //   String? route;
 //   switch (index) {
@@ -267,17 +293,32 @@
 //   context.go(route);
 // }
 
+// // ──────────────────────────────────────────────────────────────
+// // ONLY CHANGE: navigatorKey → _rootNavigatorKey
+// // ──────────────────────────────────────────────────────────────
 // final GoRouter router = GoRouter(
 //   initialLocation: '/splash',
-//   navigatorKey: navigatorKey,
+//   navigatorKey: rootNavigatorKey, // ← CHANGED THIS LINE
 //   routes: [
 //     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
 //     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+//     // ─── ADD THIS ───────────────────────────────────────
 //     GoRoute(
-//         path: '/signup', builder: (context, state) => const OnboardingScreen()),
+//       path: '/onboarding',
+//       builder: (context, state) =>
+//           const OnboardingScreen(), // your gradient screen
+//     ),
+//     // ─────────────────────────────────────────────────────
+
+//     GoRoute(path: '/signup', builder: (context, state) => const SignUpScreen()),
 //     GoRoute(
 //         path: '/forgot-password',
 //         builder: (context, state) => const ForgotPasswordScreen()),
+
+//     GoRoute(
+//       path: '/select_company',
+//       builder: (context, state) => const CompanySelectionScreen(),
+//     ),
 //     ShellRoute(
 //       builder: (context, state, child) => ShellScaffold(child: child),
 //       routes: [
@@ -419,11 +460,14 @@
 //   errorBuilder: (context, state) =>
 //       Scaffold(body: Center(child: Text('Route not found: ${state.uri}'))),
 // );
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:saleup_app/auth/view/companySelect/view/select_company_screen.dart';
 import 'package:saleup_app/auth/view/forgetpasword/view/forget_pasword.dart';
 import 'package:saleup_app/auth/view/login/view/login_screen.dart';
+import 'package:saleup_app/auth/view/signup/view/sign_up_screen.dart';
 import 'package:saleup_app/screen/accountHead/view/account_head.dart';
 import 'package:saleup_app/screen/categories/bloc/category_bloc.dart';
 import 'package:saleup_app/screen/categories/view/categories_screen.dart';
@@ -472,11 +516,7 @@ import 'package:saleup_app/utility/bottomnav.dart';
 import 'package:saleup_app/utility/drawer.dart';
 import 'package:saleup_app/utility/splash_screen.dart';
 
-// ──────────────────────────────────────────────────────────────
-// ROOT NAVIGATOR KEY — THIS IS THE ONLY NEW LINE
-// ──────────────────────────────────────────────────────────────
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
-
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -494,8 +534,11 @@ class _ShellScaffoldState extends State<ShellScaffold> {
   bool _isBottomNavVisible = true;
   int _selectedIndex = 0;
 
-  int _getIndexForRoute(String route) {
-    switch (route) {
+  int _getIndexForRoute(String uriString) {
+    final path = Uri.parse(uriString).path;
+
+    switch (path) {
+      // Bottom nav
       case '/home':
         return 0;
       case '/purchase':
@@ -504,6 +547,49 @@ class _ShellScaffoldState extends State<ShellScaffold> {
         return 2;
       case '/settings':
         return 3;
+
+      // Setup
+      case '/account-heads':
+        return 4;
+      case '/parties':
+        return 5;
+      case '/locations':
+        return 6;
+      case '/categories':
+        return 7;
+      case '/products':
+        return 8;
+      case '/units':
+        return 9;
+      case '/expiry':
+        return 10;
+
+      // Daily Transaction
+      case '/purchase-return':
+        return 11;
+      case '/sales-return':
+        return 12;
+
+      // Transaction Reports
+      case '/voucher':
+        return 13;
+      case '/receipt':
+        return 14;
+      case '/payment':
+        return 15;
+      case '/day-closing':
+        return 17;
+      case '/product-report':
+        return 18;
+
+      // Accounting Reports
+      case '/ledger-report':
+        return 19;
+      case '/stock-ledger-report':
+        return 20;
+      case '/trial-balace-report':
+        return 21;
+
       default:
         return -1;
     }
@@ -513,14 +599,16 @@ class _ShellScaffoldState extends State<ShellScaffold> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        final route = GoRouterState.of(context).uri.toString();
-        setState(() {
-          _currentIndex = _getIndexForRoute(route);
-          _selectedIndex = _currentIndex;
-          _isBottomNavVisible = _getIndexForRoute(route) != -1;
-        });
-      }
+      if (!mounted) return;
+
+      final uri = GoRouterState.of(context).uri.toString();
+      final index = _getIndexForRoute(uri);
+
+      setState(() {
+        _currentIndex = index >= 0 ? index : 0; // fallback to 0 instead of -1
+        _selectedIndex = (index >= 0 && index <= 3) ? index : _selectedIndex;
+        _isBottomNavVisible = index >= 0 && index <= 3;
+      });
     });
   }
 
@@ -556,14 +644,14 @@ class _ShellScaffoldState extends State<ShellScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    const double bottomNavHeight = 80.0;
-    final currentRoute = GoRouterState.of(context).uri.toString();
+    // Optional: remove this print after testing
+    // print('Shell build → currentIndex: $_currentIndex   route: ${GoRouterState.of(context).uri}');
 
-    Widget body = Column(
-      children: [
-        const Divider(thickness: 1, height: 1, color: Colors.grey),
-        Expanded(child: widget.child),
-      ],
+    const double bottomNavHeight = 80.0;
+
+    Widget body = NotificationListener<ScrollNotification>(
+      onNotification: _handleScrollNotification,
+      child: widget.child,
     );
 
     body = RefreshIndicator(
@@ -576,25 +664,39 @@ class _ShellScaffoldState extends State<ShellScaffold> {
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: CustomAppBar(
-        onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        notificationCount: _notificationCount,
-        onNotificationTap: () async {
-          final result = await Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const NotificationsScreen(),
-            ),
-          );
-          if (result != null && result is int) {
-            setState(() => _notificationCount = result);
-          }
-        },
-      ),
-      drawer:
-          AppDrawer(onNavigate: (index) => handleNavigation(context, index)),
       backgroundColor: Colors.white,
-      body: SafeArea(child: body),
+      extendBodyBehindAppBar: true,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(120),
+        child: CustomAppBar(
+          onMenuPressed: () => _scaffoldKey.currentState?.openDrawer(),
+          notificationCount: _notificationCount,
+          onNotificationTap: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationsScreen(),
+              ),
+            );
+            if (result != null && result is int) {
+              setState(() => _notificationCount = result);
+            }
+          },
+        ),
+      ),
+      drawer: AppDrawer(
+        onNavigate: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+          handleNavigation(context, index);
+        },
+        currentIndex: _currentIndex,
+      ),
+      body: NotificationListener<ScrollNotification>(
+        onNotification: _handleScrollNotification,
+        child: widget.child,
+      ),
       bottomNavigationBar: _isBottomNavVisible
           ? SizedBox(
               height: bottomNavHeight,
@@ -614,7 +716,6 @@ class _ShellScaffoldState extends State<ShellScaffold> {
   }
 }
 
-// FIXED: removed '/error' invalid route reference
 void handleNavigation(BuildContext context, int index) {
   String? route;
   switch (index) {
@@ -693,20 +794,24 @@ void handleNavigation(BuildContext context, int index) {
   context.go(route);
 }
 
-// ──────────────────────────────────────────────────────────────
-// ONLY CHANGE: navigatorKey → _rootNavigatorKey
-// ──────────────────────────────────────────────────────────────
 final GoRouter router = GoRouter(
   initialLocation: '/splash',
-  navigatorKey: rootNavigatorKey, // ← CHANGED THIS LINE
+  navigatorKey: rootNavigatorKey,
   routes: [
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
-        path: '/signup', builder: (context, state) => const OnboardingScreen()),
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingScreen(),
+    ),
+    GoRoute(path: '/signup', builder: (context, state) => const SignUpScreen()),
     GoRoute(
         path: '/forgot-password',
         builder: (context, state) => const ForgotPasswordScreen()),
+    GoRoute(
+      path: '/select_company',
+      builder: (context, state) => const CompanySelectionScreen(),
+    ),
     ShellRoute(
       builder: (context, state, child) => ShellScaffold(child: child),
       routes: [
