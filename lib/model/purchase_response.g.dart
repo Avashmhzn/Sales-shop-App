@@ -22,23 +22,23 @@ Map<String, dynamic> _$PurchaseResponseToJson(PurchaseResponse instance) =>
 
 PurchaseData _$PurchaseDataFromJson(Map<String, dynamic> json) => PurchaseData(
       id: (json['id'] as num?)?.toInt(),
-      voucherNumber: (json['voucher_number'] as num?)?.toInt(),
+      voucherNumber: json['voucher_number'] as String?,
       invoiceNumber: json['invoice_number'] as String?,
       billType: json['bill_type'] as String?,
       chequeNumber: json['cheque_number'] as String?,
       chequeDate: json['cheque_date'] as String?,
       party: json['party'] as String?,
-      subTotal: json['sub_total'] as String?,
-      vatableAmount: json['vatable_amount'] as String?,
-      vat: json['vat'] as String?,
-      discount: json['discount'] as String?,
-      total: json['total'] as String?,
-      tenderAmount: json['tender_amount'] as String?,
+      subTotal: _parseDouble(json['sub_total']),
+      vatableAmount: _parseDouble(json['vatable_amount']),
+      vat: _parseDouble(json['vat']),
+      discount: _parseDouble(json['discount']),
+      total: _parseDouble(json['total']),
+      tenderAmount: _parseDouble(json['tender_amount']),
       purchaseItems: (json['items'] as List<dynamic>?)
           ?.map((e) => PurchaseItem.fromJson(e as Map<String, dynamic>))
           .toList(),
-      createdOn: PurchaseData._dateTimeFromJson(json['created_on'] as String?),
-      updatedOn: PurchaseData._dateTimeFromJson(json['updated_on'] as String?),
+      createdOn: _parseDateTime(json['created_on'] as String?),
+      updatedOn: _parseDateTime(json['updated_on'] as String?),
     );
 
 Map<String, dynamic> _$PurchaseDataToJson(PurchaseData instance) =>
@@ -66,10 +66,10 @@ PurchaseItem _$PurchaseItemFromJson(Map<String, dynamic> json) => PurchaseItem(
       product: json['product'] as String?,
       quantity: (json['quantity'] as num?)?.toInt(),
       unit: json['unit'] as String?,
-      costPrice: json['cost_price'] as String?,
-      sellingPrice: json['selling_price'] as String?,
-      total: json['total'] as String?,
-      expiryDate: PurchaseItem._dateFromJson(json['expiry_date'] as String?),
+      costPrice: _parseDouble(json['cost_price']),
+      sellingPrice: _parseDouble(json['selling_price']),
+      total: _parseDouble(json['total']),
+      expiryDate: _parseDateTime(json['expiry_date'] as String?),
       batchNumber: json['batch_number'] as String?,
       isComplementary: json['is_complementary'] as bool? ?? false,
     );

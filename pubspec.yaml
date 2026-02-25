@@ -65,6 +65,8 @@ dependencies:
   dio_cookie_manager: ^3.3.0
   cookie_jar: ^4.0.8
   collection: ^1.19.1
+  nepali_date_picker: ^7.0.1
+  nepali_utils: ^3.0.8
 
 
 dev_dependencies:
