@@ -161,6 +161,38 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'purchase_response.g.dart';
 
+// Safe parsers
+double? _parseDouble(dynamic v) {
+  if (v == null) return null;
+  if (v is double) return v;
+  if (v is int) return v.toDouble();
+  if (v is String) return double.tryParse(v.trim());
+  return null;
+}
+
+DateTime? _parseDateTime(dynamic value) {
+  if (value == null) return null;
+  final s = value.toString().trim();
+  if (s.isEmpty) return null;
+  try {
+    return DateTime.parse(s);
+  } catch (_) {
+    return null;
+  }
+}
+
+// Prevents "Null is not a subtype of type 'bool'" crash
+bool _parseBool(dynamic v) {
+  if (v == null) return false;
+  if (v is bool) return v;
+  if (v is int) return v != 0;
+  if (v is String) {
+    final lower = v.trim().toLowerCase();
+    return lower == 'true' || lower == '1';
+  }
+  return false;
+}
+
 @JsonSerializable()
 class PurchaseResponse {
   final bool success;
@@ -179,29 +211,12 @@ class PurchaseResponse {
   Map<String, dynamic> toJson() => _$PurchaseResponseToJson(this);
 }
 
-double? _parseDouble(dynamic v) {
-  if (v == null) return null;
-  if (v is double) return v;
-  if (v is int) return v.toDouble();
-  if (v is String) return double.tryParse(v.trim());
-  return null;
-}
-
-DateTime? _parseDateTime(String? value) {
-  if (value == null || value.trim().isEmpty) return null;
-  try {
-    return DateTime.parse(value.trim());
-  } catch (_) {
-    return null;
-  }
-}
-
 @JsonSerializable()
 class PurchaseData extends Equatable {
   final int? id;
 
   @JsonKey(name: 'voucher_number')
-  final String? voucherNumber; // ← Changed to String?
+  final String? voucherNumber;
 
   @JsonKey(name: 'invoice_number')
   final String? invoiceNumber;
@@ -311,7 +326,8 @@ class PurchaseItem extends Equatable {
   @JsonKey(name: 'batch_number')
   final String? batchNumber;
 
-  @JsonKey(name: 'is_complementary', defaultValue: false)
+  // Safe bool with default false if null or invalid
+  @JsonKey(name: 'is_complementary', fromJson: _parseBool)
   final bool isComplementary;
 
   const PurchaseItem({

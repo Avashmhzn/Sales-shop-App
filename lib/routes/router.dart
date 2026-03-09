@@ -468,6 +468,7 @@ import 'package:saleup_app/auth/view/companySelect/view/select_company_screen.da
 import 'package:saleup_app/auth/view/forgetpasword/view/forget_pasword.dart';
 import 'package:saleup_app/auth/view/login/view/login_screen.dart';
 import 'package:saleup_app/auth/view/signup/view/sign_up_screen.dart';
+import 'package:saleup_app/core/network/dio_client.dart';
 import 'package:saleup_app/screen/accountHead/view/account_head.dart';
 import 'package:saleup_app/screen/categories/bloc/category_bloc.dart';
 import 'package:saleup_app/screen/categories/view/categories_screen.dart';
@@ -493,6 +494,7 @@ import 'package:saleup_app/screen/product/view/products_screen.dart';
 import 'package:saleup_app/screen/purchase/bloc/purchase_bloc.dart';
 import 'package:saleup_app/screen/purchase/view/purchase_screen.dart';
 import 'package:saleup_app/screen/purchaseReturn/bloc/purchase_return_bloc.dart';
+import 'package:saleup_app/screen/purchaseReturn/view/add_purchase_return_screen.dart';
 import 'package:saleup_app/screen/purchaseReturn/view/purchase_return_screen.dart';
 import 'package:saleup_app/screen/productReport/view/product_report.dart';
 import 'package:saleup_app/screen/receipts/bloc/receipt_bloc.dart';
@@ -888,8 +890,19 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/purchase-return',
           builder: (context, state) => BlocProvider(
-            create: (context) => PurchaseReturnBloc(),
+            create: (context) => PurchaseReturnBloc(
+              dio: DioClient().dio,
+            ),
             child: const PurchaseReturnScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/add-purchase-return',
+          builder: (context, state) => BlocProvider(
+            create: (context) => PurchaseReturnBloc(
+              dio: DioClient().dio,
+            ),
+            child: const AddPurchaseReturnScreen(),
           ),
         ),
         GoRoute(

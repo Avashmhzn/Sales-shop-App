@@ -37,8 +37,8 @@ PurchaseData _$PurchaseDataFromJson(Map<String, dynamic> json) => PurchaseData(
       purchaseItems: (json['items'] as List<dynamic>?)
           ?.map((e) => PurchaseItem.fromJson(e as Map<String, dynamic>))
           .toList(),
-      createdOn: _parseDateTime(json['created_on'] as String?),
-      updatedOn: _parseDateTime(json['updated_on'] as String?),
+      createdOn: _parseDateTime(json['created_on']),
+      updatedOn: _parseDateTime(json['updated_on']),
     );
 
 Map<String, dynamic> _$PurchaseDataToJson(PurchaseData instance) =>
@@ -69,9 +69,11 @@ PurchaseItem _$PurchaseItemFromJson(Map<String, dynamic> json) => PurchaseItem(
       costPrice: _parseDouble(json['cost_price']),
       sellingPrice: _parseDouble(json['selling_price']),
       total: _parseDouble(json['total']),
-      expiryDate: _parseDateTime(json['expiry_date'] as String?),
+      expiryDate: _parseDateTime(json['expiry_date']),
       batchNumber: json['batch_number'] as String?,
-      isComplementary: json['is_complementary'] as bool? ?? false,
+      isComplementary: json['is_complementary'] == null
+          ? false
+          : _parseBool(json['is_complementary']),
     );
 
 Map<String, dynamic> _$PurchaseItemToJson(PurchaseItem instance) =>

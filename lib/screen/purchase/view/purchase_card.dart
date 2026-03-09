@@ -15,8 +15,6 @@ class PurchaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final w = MediaQuery.of(context).size.width;
-
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 0),
       child: Material(
@@ -36,7 +34,7 @@ class PurchaseCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      purchase.party ?? "Lorem (Party)",
+                      purchase.party ?? "Unknown Party",
                       style: const TextStyle(
                         fontSize: 15.5,
                         fontWeight: FontWeight.w600,

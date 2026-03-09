@@ -8,7 +8,8 @@ import 'package:saleup_app/routes/router.dart';
 import 'package:saleup_app/screen/accountHead/bloc/account_head_bloc.dart';
 import 'package:saleup_app/screen/accountHead/bloc/account_head_event.dart';
 import 'package:saleup_app/screen/chat/bloc/chat_bloc.dart';
-import 'package:saleup_app/services/auth_service.dart'; // ← add this import
+import 'package:saleup_app/screen/purchase/bloc/purchase_bloc.dart'; // ← added
+import 'package:saleup_app/services/auth_service.dart';
 import 'package:saleup_app/services/user_services.dart';
 
 void main() async {
@@ -21,7 +22,7 @@ void main() async {
   ]);
 
   // Clear tokens on every cold start (prevents stale token 401 errors)
-  // Remove this line after testing if you don't want it in production
+  // Remove or comment this line in production if not desired
   await AuthService().clearTokens();
   log('Cleared tokens on app cold start (prevents stale auth issues)');
 
@@ -51,7 +52,13 @@ class MyApp extends StatelessWidget {
         BlocProvider<ChatBloc>(
           create: (context) => ChatBloc(),
         ),
-        // Add more Blocs here if needed in the future
+        BlocProvider<PurchaseBloc>(
+          create: (context) => PurchaseBloc(),
+          // You can optionally auto-fetch purchases here if you want it globally:
+          // lazy: false,
+          // child: null,  // not needed
+        ),
+        // Add more global Blocs/Cubits here in the future if needed
       ],
       child: MaterialApp.router(
         title: 'Sales Shop App',

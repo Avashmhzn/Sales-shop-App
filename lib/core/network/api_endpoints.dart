@@ -66,7 +66,7 @@ class Api {
   static String get publicBaseUrl {
     if (kDebugMode) {
       // Development: your local laptop + Django dev server port
-      return "http://192.168.1.64:8000/api";
+      return "http://192.168.1.65:8000/api";
     } else {
       // Production: change this to your real live domain
       // Option A: single domain style (simplest)
