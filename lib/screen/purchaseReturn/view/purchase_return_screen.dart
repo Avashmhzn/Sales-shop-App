@@ -560,6 +560,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen> {
 
   List<PurchaseReturn> _filtered(List<PurchaseReturn> list) {
     final q = _searchCtrl.text.trim().toLowerCase();
+
     return list.where((r) {
       bool dateMatch = true;
       if (_appliedStart != null) {
@@ -568,12 +569,21 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen> {
       if (_appliedEnd != null) {
         dateMatch = dateMatch && !r.returnDate.isAfter(_appliedEnd!);
       }
+
+      // Safe handling for partyName
+      final partyNameLower = r.partyName?.toLowerCase() ?? '';
       bool partyMatch = _appliedParty == null ||
-          (r.partyName.toLowerCase() == _appliedParty!.toLowerCase());
+          (partyNameLower == _appliedParty!.toLowerCase());
+
+      // Safe handling for invoiceNumber and reason
+      final invoiceLower = r.invoiceNumber?.toLowerCase() ?? '';
+      final reasonLower = r.reason?.toLowerCase() ?? '';
+
       bool searchMatch = q.isEmpty ||
-          (r.partyName.toLowerCase().contains(q) ?? false) ||
-          (r.invoiceNumber.toLowerCase().contains(q) ?? false) ||
-          (r.reason.toLowerCase().contains(q) ?? false);
+          partyNameLower.contains(q) ||
+          invoiceLower.contains(q) ||
+          reasonLower.contains(q);
+
       return dateMatch && partyMatch && searchMatch;
     }).toList();
   }
@@ -609,7 +619,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen> {
 
     try {
       final res = await DioClient().dio.delete(
-        '/purchase-return/delete_purchase_return/', // adjust endpoint if needed
+        '/purchase-return/delete_purchase_return/',
         queryParameters: {'return_id': r.id},
       );
 
@@ -648,7 +658,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Header - same gradient as Purchase screen
+              // Header
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 2, 16, 16),
                 child: Row(
@@ -759,7 +769,7 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen> {
                 ),
               ),
 
-              // Filter Section (exact same layout as your Purchase screen)
+              // Filter Section
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -982,7 +992,6 @@ class _PurchaseReturnScreenState extends State<PurchaseReturnScreen> {
                     itemBuilder: (context, i) => PurchaseReturnCard(
                       purchaseReturn: filtered[i],
                       onEdit: () {
-                        // TODO: Implement edit screen navigation
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(content: Text('Edit coming soon')),
                         );

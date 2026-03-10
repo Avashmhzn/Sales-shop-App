@@ -2,10 +2,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'purchase_return.g.dart';
 
-// ────────────────────────────────────────────────
-// Safe number parsing helpers (fixes String → num crash)
-// ────────────────────────────────────────────────
-
+// Safe number parsing helpers
 double _parseDouble(dynamic value) {
   if (value == null) return 0.0;
   if (value is double) return value;
@@ -22,19 +19,22 @@ int _parseInt(dynamic value) {
   return 0;
 }
 
-DateTime _parseDate(String value) => DateTime.parse(value);
+DateTime _parseDate(String? value) {
+  if (value == null) return DateTime.now();
+  return DateTime.parse(value);
+}
 
 @JsonSerializable(fieldRename: FieldRename.snake, explicitToJson: true)
 class PurchaseReturn {
   final int id;
   final int purchase;
-  final String invoiceNumber;
-  final String partyName;
+  final String? invoiceNumber;
+  final String? partyName;
 
   @JsonKey(fromJson: _parseDate)
   final DateTime returnDate;
 
-  final String reason;
+  final String? reason;
 
   @JsonKey(fromJson: _parseDouble)
   final double subTotal;
@@ -49,12 +49,12 @@ class PurchaseReturn {
   final double total;
 
   final List<PurchaseReturnItem> items;
-  final String staff;
-  final String companyName;
-  final String address;
-  final String contactNumber;
-  final String panNumber;
-  final String tagline;
+  final String? staff;
+  final String? companyName;
+  final String? address;
+  final String? contactNumber;
+  final String? panNumber;
+  final String? tagline;
 
   @JsonKey(fromJson: _parseDouble, defaultValue: 0.0)
   final double taxPercent;
@@ -62,21 +62,21 @@ class PurchaseReturn {
   PurchaseReturn({
     required this.id,
     required this.purchase,
-    required this.invoiceNumber,
-    required this.partyName,
+    this.invoiceNumber,
+    this.partyName,
     required this.returnDate,
-    required this.reason,
+    this.reason,
     required this.subTotal,
     required this.discount,
     required this.vat,
     required this.total,
     required this.items,
-    required this.staff,
-    required this.companyName,
-    required this.address,
-    required this.contactNumber,
-    required this.panNumber,
-    required this.tagline,
+    this.staff,
+    this.companyName,
+    this.address,
+    this.contactNumber,
+    this.panNumber,
+    this.tagline,
     this.taxPercent = 0.0,
   });
 
@@ -89,9 +89,9 @@ class PurchaseReturn {
 @JsonSerializable(fieldRename: FieldRename.snake)
 class PurchaseReturnItem {
   final int id;
-  final String product;
-  final String productName;
-  final String batchNumber;
+  final String? product;
+  final String? productName;
+  final String? batchNumber;
 
   @JsonKey(fromJson: _parseInt)
   final int quantity;
@@ -109,9 +109,9 @@ class PurchaseReturnItem {
 
   PurchaseReturnItem({
     required this.id,
-    required this.product,
-    required this.productName,
-    required this.batchNumber,
+    this.product,
+    this.productName,
+    this.batchNumber,
     required this.quantity,
     required this.rate,
     required this.total,

@@ -1,152 +1,95 @@
-// import 'package:dio/dio.dart';
+// import 'package:equatable/equatable.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:saleup_app/core/network/dio_client.dart';
-// import 'package:saleup_app/model/purchase_return_response.dart';
-// import 'purchase_return_event.dart';
-// import 'purchase_return_state.dart';
+// import 'package:dio/dio.dart';
+// import 'package:saleup_app/screen/purchaseReturn/model/purchase.dart';
+// import 'package:saleup_app/screen/purchaseReturn/model/purchase_return.dart';
+
+// part 'purchase_return_event.dart';
+// part 'purchase_return_state.dart';
 
 // class PurchaseReturnBloc
 //     extends Bloc<PurchaseReturnEvent, PurchaseReturnState> {
-//   final DioClient dioClient;
+//   final Dio dio; // ← this was missing in your last version
 
-//   PurchaseReturnBloc({DioClient? dioClient})
-//       : dioClient = dioClient ?? DioClient(),
-//         super(PurchaseReturnState.initial()) {
-//     on<FetchPurchaseReturns>(_onFetchPurchaseReturns);
-//     on<FetchPurchaseReturnById>(_onFetchPurchaseReturnById);
+//   PurchaseReturnBloc({required this.dio}) : super(PurchaseReturnInitial()) {
+//     on<LoadPurchaseReturns>(_onLoadReturns);
+//     on<LoadPurchasesForReturn>(_onLoadPurchases);
+//     on<CreatePurchaseReturn>(_onCreateReturn);
 //   }
 
-//   Future<void> _onFetchPurchaseReturns(
-//       FetchPurchaseReturns event, Emitter<PurchaseReturnState> emit) async {
-//     emit(state.copyWith(isLoading: true, errorMessage: null));
+//   Future<void> _onLoadReturns(
+//     LoadPurchaseReturns event,
+//     Emitter<PurchaseReturnState> emit,
+//   ) async {
+//     emit(PurchaseReturnsLoading());
 //     try {
-//       final response =
-//           await dioClient.dio.get('/purchase-return/get_purchase_returns/');
-//       print('FetchPurchaseReturns raw response: ${response.data}');
-//       if (response.data is! Map<String, dynamic>) {
-//         emit(state.copyWith(
-//             isLoading: false, errorMessage: 'Invalid API response format'));
-//         return;
-//       }
-//       final purchaseReturnResponse =
-//           PurchaseReturnResponse.fromJson(response.data);
-//       if (purchaseReturnResponse.success &&
-//           purchaseReturnResponse.data != null) {
-//         if (purchaseReturnResponse.data is! List<dynamic>) {
-//           emit(state.copyWith(
-//               isLoading: false,
-//               errorMessage: 'Expected a list of purchase returns'));
-//           return;
-//         }
-//         final purchaseReturns = (purchaseReturnResponse.data as List<dynamic>)
-//             .map((json) =>
-//                 PurchaseReturnData.fromJson(json as Map<String, dynamic>))
+//       final res = await dio.get('/purchase-return/get_purchase_returns/');
+//       if (res.data['success'] == true) {
+//         final list = (res.data['data'] as List<dynamic>? ?? [])
+//             .map((e) => PurchaseReturn.fromJson(e as Map<String, dynamic>))
 //             .toList();
-//         emit(state.copyWith(
-//             isLoading: false,
-//             purchaseReturns: purchaseReturns,
-//             errorMessage: null));
+//         emit(PurchaseReturnsLoaded(list));
 //       } else {
-//         emit(state.copyWith(
-//             isLoading: false,
-//             errorMessage: purchaseReturnResponse.message ??
-//                 'Failed to fetch purchase returns'));
+//         emit(PurchaseReturnError(
+//             res.data['message'] ?? 'Failed to load returns'));
 //       }
-//     } on DioException catch (e, stackTrace) {
-//       print(
-//           'DioException in FetchPurchaseReturns: ${e.message}, Status: ${e.response?.statusCode}, Data: ${e.response?.data}\nStackTrace: $stackTrace');
-//       emit(state.copyWith(
-//           isLoading: false, errorMessage: 'Network error: ${e.message}'));
-//     } catch (e, stackTrace) {
-//       print('Exception in FetchPurchaseReturns: $e\nStackTrace: $stackTrace');
-//       emit(state.copyWith(
-//           isLoading: false,
-//           errorMessage: 'Failed to fetch purchase returns: $e'));
+//     } catch (e) {
+//       emit(PurchaseReturnError(e.toString()));
 //     }
 //   }
 
-//   Future<void> _onFetchPurchaseReturnById(
-//       FetchPurchaseReturnById event, Emitter<PurchaseReturnState> emit) async {
-//     emit(state.copyWith(
-//         isLoading: true, errorMessage: null, purchaseReturnDetail: null));
+//   Future<void> _onLoadPurchases(
+//     LoadPurchasesForReturn event,
+//     Emitter<PurchaseReturnState> emit,
+//   ) async {
+//     emit(PurchasesLoading());
 //     try {
-//       print('Fetching purchase return with ID: ${event.purchaseReturnId}');
-//       final response = await dioClient.dio.get(
-//           '/purchase-return/get_purchase_return/?purchase_return_id=${event.purchaseReturnId}');
-//       print(
-//           'FetchPurchaseReturnById raw response for ID ${event.purchaseReturnId}: ${response.data}');
-
-//       if (response.data == null) {
-//         print('Null response data');
-//         emit(state.copyWith(
-//             isLoading: false, errorMessage: 'No data returned from API'));
-//         return;
-//       }
-
-//       if (response.data is! Map<String, dynamic>) {
-//         print('Invalid response format: ${response.data}');
-//         emit(state.copyWith(
-//             isLoading: false, errorMessage: 'Invalid API response format'));
-//         return;
-//       }
-
-//       final purchaseReturnResponse =
-//           PurchaseReturnResponse.fromJson(response.data);
-//       print(
-//           'PurchaseReturnResponse: success=${purchaseReturnResponse.success}, message=${purchaseReturnResponse.message}, data=${purchaseReturnResponse.data}');
-//       if (purchaseReturnResponse.success &&
-//           purchaseReturnResponse.data != null) {
-//         if (purchaseReturnResponse.data is! Map<String, dynamic>) {
-//           print('Unexpected data format: ${purchaseReturnResponse.data}');
-//           emit(state.copyWith(
-//               isLoading: false, errorMessage: 'Unexpected data format'));
-//           return;
-//         }
-
-//         try {
-//           final purchaseReturnDetail = PurchaseReturnData.fromJson(
-//               purchaseReturnResponse.data as Map<String, dynamic>);
-//           print('Parsed purchaseReturnDetail: $purchaseReturnDetail');
-//           emit(state.copyWith(
-//               isLoading: false,
-//               purchaseReturnDetail: purchaseReturnDetail,
-//               errorMessage: null));
-//         } catch (e, stackTrace) {
-//           print(
-//               'Parsing error in PurchaseReturnData.fromJson: $e, StackTrace: $stackTrace');
-//           emit(state.copyWith(
-//               isLoading: false,
-//               errorMessage: 'Failed to parse purchase return details: $e'));
-//         }
+//       final res = await dio.get('/purchase/get_purchases/');
+//       if (res.data['success'] == true) {
+//         final list = (res.data['data'] as List<dynamic>? ?? [])
+//             .map((e) => Purchase.fromJson(e as Map<String, dynamic>))
+//             .toList();
+//         emit(PurchasesLoaded(list));
 //       } else {
-//         print(
-//             'Purchase return response failure: ${purchaseReturnResponse.message}');
-//         emit(state.copyWith(
-//             isLoading: false,
-//             errorMessage: purchaseReturnResponse.message ??
-//                 'No purchase return details found'));
+//         emit(PurchaseReturnError(
+//             res.data['message'] ?? 'Failed to load purchases'));
 //       }
-//     } on DioException catch (e, stackTrace) {
-//       print(
-//           'DioException in FetchPurchaseReturnById: ${e.message}, Status: ${e.response?.statusCode}, Data: ${e.response?.data}, StackTrace: $stackTrace');
-//       String errorMessage = 'Network error: ${e.message}';
-//       if (e.response?.statusCode == 401) {
-//         errorMessage = 'Unauthorized: Please log in again';
+//     } catch (e) {
+//       emit(PurchaseReturnError(e.toString()));
+//     }
+//   }
+
+//   Future<void> _onCreateReturn(
+//     CreatePurchaseReturn event,
+//     Emitter<PurchaseReturnState> emit,
+//   ) async {
+//     emit(PurchaseReturnCreating());
+//     try {
+//       final res = await dio.post(
+//         '/purchase-return/create_purchase_return/',
+//         data: {
+//           'purchase': event.purchaseId,
+//           'return_date': event.returnDate,
+//           'reason': event.reason,
+//           'items': event.items,
+//         },
+//       );
+
+//       if (res.data['success'] == true) {
+//         final created = PurchaseReturn.fromJson(res.data['data']);
+//         emit(PurchaseReturnCreated(created));
+//         add(const LoadPurchaseReturns()); // refresh list
+//       } else {
+//         emit(PurchaseReturnError(res.data['message'] ?? 'Creation failed'));
 //       }
-//       emit(state.copyWith(isLoading: false, errorMessage: errorMessage));
-//     } catch (e, stackTrace) {
-//       print(
-//           'Exception in FetchPurchaseReturnById: $e, StackTrace: $stackTrace');
-//       emit(state.copyWith(
-//           isLoading: false,
-//           errorMessage: 'Failed to fetch purchase return detail: $e'));
+//     } catch (e) {
+//       emit(PurchaseReturnError(e.toString()));
 //     }
 //   }
 // }
-
+import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:dio/dio.dart';
 import 'package:saleup_app/screen/purchaseReturn/model/purchase.dart';
 import 'package:saleup_app/screen/purchaseReturn/model/purchase_return.dart';
 
@@ -155,7 +98,7 @@ part 'purchase_return_state.dart';
 
 class PurchaseReturnBloc
     extends Bloc<PurchaseReturnEvent, PurchaseReturnState> {
-  final Dio dio; // ← this was missing in your last version
+  final Dio dio;
 
   PurchaseReturnBloc({required this.dio}) : super(PurchaseReturnInitial()) {
     on<LoadPurchaseReturns>(_onLoadReturns);
@@ -170,17 +113,24 @@ class PurchaseReturnBloc
     emit(PurchaseReturnsLoading());
     try {
       final res = await dio.get('/purchase-return/get_purchase_returns/');
-      if (res.data['success'] == true) {
-        final list = (res.data['data'] as List<dynamic>? ?? [])
-            .map((e) => PurchaseReturn.fromJson(e as Map<String, dynamic>))
-            .toList();
-        emit(PurchaseReturnsLoaded(list));
-      } else {
+      print('GET returns raw: ${res.data.runtimeType} → $res.data');
+
+      if (res.data is! Map<String, dynamic> || res.data['success'] != true) {
         emit(PurchaseReturnError(
-            res.data['message'] ?? 'Failed to load returns'));
+            'Invalid response or failed: ${res.data['message'] ?? 'No data'}'));
+        return;
       }
+
+      final rawList = res.data['data'] as List<dynamic>? ?? [];
+      final returns = rawList
+          .map((e) => PurchaseReturn.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      emit(PurchaseReturnsLoaded(returns));
+    } on DioException catch (e) {
+      emit(PurchaseReturnError('Network error: ${e.message}'));
     } catch (e) {
-      emit(PurchaseReturnError(e.toString()));
+      emit(PurchaseReturnError('Unexpected error: $e'));
     }
   }
 
@@ -191,17 +141,24 @@ class PurchaseReturnBloc
     emit(PurchasesLoading());
     try {
       final res = await dio.get('/purchase/get_purchases/');
-      if (res.data['success'] == true) {
-        final list = (res.data['data'] as List<dynamic>? ?? [])
-            .map((e) => Purchase.fromJson(e as Map<String, dynamic>))
-            .toList();
-        emit(PurchasesLoaded(list));
-      } else {
+      print('GET purchases raw: ${res.data.runtimeType} → $res.data');
+
+      if (res.data is! Map<String, dynamic> || res.data['success'] != true) {
         emit(PurchaseReturnError(
-            res.data['message'] ?? 'Failed to load purchases'));
+            'Invalid response or failed: ${res.data['message'] ?? 'No data'}'));
+        return;
       }
+
+      final rawList = res.data['data'] as List<dynamic>? ?? [];
+      final purchases = rawList
+          .map((e) => Purchase.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      emit(PurchasesLoaded(purchases));
+    } on DioException catch (e) {
+      emit(PurchaseReturnError('Network error: ${e.message}'));
     } catch (e) {
-      emit(PurchaseReturnError(e.toString()));
+      emit(PurchaseReturnError('Unexpected error: $e'));
     }
   }
 
@@ -211,6 +168,9 @@ class PurchaseReturnBloc
   ) async {
     emit(PurchaseReturnCreating());
     try {
+      print(
+          'Creating return → payload: purchaseId=${event.purchaseId}, date=${event.returnDate}, items=${event.items.length}');
+
       final res = await dio.post(
         '/purchase-return/create_purchase_return/',
         data: {
@@ -221,15 +181,29 @@ class PurchaseReturnBloc
         },
       );
 
-      if (res.data['success'] == true) {
-        final created = PurchaseReturn.fromJson(res.data['data']);
-        emit(PurchaseReturnCreated(created));
-        add(const LoadPurchaseReturns()); // refresh list
-      } else {
+      print('POST create raw response: ${res.data.runtimeType} → $res.data');
+
+      if (res.data is! Map<String, dynamic> || res.data['success'] != true) {
         emit(PurchaseReturnError(res.data['message'] ?? 'Creation failed'));
+        return;
       }
+
+      final rawData = res.data['data'];
+      if (rawData is! Map<String, dynamic>) {
+        emit(const PurchaseReturnError('Invalid data format in response'));
+        return;
+      }
+
+      final created = PurchaseReturn.fromJson(rawData);
+      emit(PurchaseReturnCreated(created));
+
+      // Auto-refresh list
+      add(const LoadPurchaseReturns());
+    } on DioException catch (e) {
+      final msg = e.response?.data?['message'] ?? e.message ?? 'Network error';
+      emit(PurchaseReturnError(msg));
     } catch (e) {
-      emit(PurchaseReturnError(e.toString()));
+      emit(PurchaseReturnError('Unexpected error during creation: $e'));
     }
   }
 }

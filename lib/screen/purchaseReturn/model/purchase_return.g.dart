@@ -10,10 +10,10 @@ PurchaseReturn _$PurchaseReturnFromJson(Map<String, dynamic> json) =>
     PurchaseReturn(
       id: (json['id'] as num).toInt(),
       purchase: (json['purchase'] as num).toInt(),
-      invoiceNumber: json['invoice_number'] as String,
-      partyName: json['party_name'] as String,
-      returnDate: _parseDate(json['return_date'] as String),
-      reason: json['reason'] as String,
+      invoiceNumber: json['invoice_number'] as String?,
+      partyName: json['party_name'] as String?,
+      returnDate: _parseDate(json['return_date'] as String?),
+      reason: json['reason'] as String?,
       subTotal: _parseDouble(json['sub_total']),
       discount: _parseDouble(json['discount']),
       vat: _parseDouble(json['vat']),
@@ -21,12 +21,12 @@ PurchaseReturn _$PurchaseReturnFromJson(Map<String, dynamic> json) =>
       items: (json['items'] as List<dynamic>)
           .map((e) => PurchaseReturnItem.fromJson(e as Map<String, dynamic>))
           .toList(),
-      staff: json['staff'] as String,
-      companyName: json['company_name'] as String,
-      address: json['address'] as String,
-      contactNumber: json['contact_number'] as String,
-      panNumber: json['pan_number'] as String,
-      tagline: json['tagline'] as String,
+      staff: json['staff'] as String?,
+      companyName: json['company_name'] as String?,
+      address: json['address'] as String?,
+      contactNumber: json['contact_number'] as String?,
+      panNumber: json['pan_number'] as String?,
+      tagline: json['tagline'] as String?,
       taxPercent:
           json['tax_percent'] == null ? 0.0 : _parseDouble(json['tax_percent']),
     );
@@ -56,9 +56,9 @@ Map<String, dynamic> _$PurchaseReturnToJson(PurchaseReturn instance) =>
 PurchaseReturnItem _$PurchaseReturnItemFromJson(Map<String, dynamic> json) =>
     PurchaseReturnItem(
       id: (json['id'] as num).toInt(),
-      product: json['product'] as String,
-      productName: json['product_name'] as String,
-      batchNumber: json['batch_number'] as String,
+      product: json['product'] as String?,
+      productName: json['product_name'] as String?,
+      batchNumber: json['batch_number'] as String?,
       quantity: _parseInt(json['quantity']),
       rate: _parseDouble(json['rate']),
       total: _parseDouble(json['total']),
