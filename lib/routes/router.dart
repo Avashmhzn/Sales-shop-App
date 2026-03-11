@@ -505,6 +505,8 @@ import 'package:saleup_app/screen/sales/view/sales_screen.dart';
 import 'package:saleup_app/screen/salesReturn/bloc/sale_return_bloc.dart';
 import 'package:saleup_app/screen/salesReturn/view/sale_return_screen.dart';
 import 'package:saleup_app/screen/dayClosing/view/day_closing.dart';
+import 'package:saleup_app/screen/setting/bloc/profile_bloc.dart';
+import 'package:saleup_app/screen/setting/bloc/profile_event.dart';
 import 'package:saleup_app/screen/setting/view/setting_screen.dart';
 import 'package:saleup_app/screen/stockLedger/view/stock_ledger_screen.dart';
 import 'package:saleup_app/screen/trialBalance/view/trial_balance_screen.dart';
@@ -787,6 +789,9 @@ void handleNavigation(BuildContext context, int index) {
     case 21:
       route = '/trial-balace-report';
       break;
+    case 27:
+      route = '/settings';
+      break;
     default:
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Invalid navigation index: $index')),
@@ -840,8 +845,16 @@ final GoRouter router = GoRouter(
           ),
         ),
         GoRoute(
-            path: '/settings',
-            builder: (context, state) => const SettingsScreen()),
+          path: '/settings',
+          builder: (context, state) => BlocProvider<ProfileBloc>(
+            create: (context) => ProfileBloc(
+              dio: DioClient().dio,
+            )
+              ..add(const LoadProfile())
+              ..add(const LoadManagers()),
+            child: const SettingsScreen(),
+          ),
+        ),
         GoRoute(
             path: '/account-heads',
             builder: (context, state) => const AccountHead()),

@@ -464,6 +464,7 @@ class AppDrawer extends StatelessWidget {
                   'Products', // index 8
                   'Units', // index 9
                   'Expiry', // index 10
+                  'Settings', // ← NEW line (will map to index 27)
                 ],
                 onNavigate: (index) => onNavigate(index + 4),
                 currentIndex: currentIndex,
@@ -808,7 +809,8 @@ class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
   int? _getGlobalIndex(int subIndex) {
     switch (widget.title) {
       case 'Setup':
-        return subIndex + 4;
+        const setupIndices = [4, 5, 6, 7, 8, 9, 10, 27]; // ← Settings = 27
+        return subIndex < setupIndices.length ? setupIndices[subIndex] : null;
 
       case 'Daily Transation':
         const indices = [2, 12, 1, 11];
