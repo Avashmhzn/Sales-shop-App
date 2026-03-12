@@ -1,146 +1,237 @@
 // import 'dart:developer' as developer;
-
+// import 'package:flutter/foundation.dart' show kReleaseMode;
 // import 'package:saleup_app/core/network/dio_client.dart';
 
 // class Api {
-//   // Public base URL – used before login and during company selection
-//   static const String publicBaseUrl = "http://192.168.1.8:8000/api";
+//   // ─────────────────────────────────────────────────────────────
+//   // TOGGLE: set true  → use production URLs (real server)
+//   //         set false → use local dev server (192.168.x.x)
+//   // ─────────────────────────────────────────────────────────────
+//   static const bool forceProduction = true;
 
-//   // Production (uncomment when ready)
-//   // static const String publicBaseUrl = "https://salesshopnepal.com/api";
+//   static bool get _useProduction => kReleaseMode || forceProduction;
 
-//   // Private base URL – updated dynamically after company selection
-//   static String privateBaseUrl = "http://192.168.1.8:8000/api";
+//   // ─────────────────────────────────────────────────────────────
+//   // FIXED domains — do NOT add subdomain, protocol, or /api here
+//   // Subdomain is added dynamically in switchToPrivate()
+//   // ─────────────────────────────────────────────────────────────
+//   static const String _productionMainDomain = "salesshopnepal.com";
+//   static const String _devBaseUrl = "http://192.168.1.65:8000/api";
 
-//   // Internal flag: true = after company selection → use private
+//   // ─────────────────────────────────────────────────────────────
+//   // PUBLIC base URL — used before login and company selection
+//   // Production → https://salesshopnepal.com/api
+//   // Dev        → http://192.168.1.65:8000/api
+//   // ─────────────────────────────────────────────────────────────
+//   static String get publicBaseUrl {
+//     if (_useProduction) {
+//       return "https://$_productionMainDomain/api";
+//     } else {
+//       return _devBaseUrl;
+//     }
+//   }
+
+//   // ─────────────────────────────────────────────────────────────
+//   // PRIVATE base URL — updated after company/tenant selection
+//   // ─────────────────────────────────────────────────────────────
+//   static String privateBaseUrl = publicBaseUrl;
+
+//   // Flag: true = company selected → use tenant subdomain URL
 //   static bool _isPrivateMode = false;
 
-//   // Current active base URL (used mainly for logging & debugging)
+//   // Currently active base URL (for logging & debugging)
 //   static String get currentBaseUrl =>
 //       _isPrivateMode ? privateBaseUrl : publicBaseUrl;
 
-//   // Call this after selecting a company
-//   static void switchToPrivate(String? selectedDomain) {
+//   // ─────────────────────────────────────────────────────────────
+//   // Switch to tenant/company subdomain after company selection
+//   //
+//   // DB stores SUBDOMAIN ONLY — examples:
+//   //   "flutter"  → https://flutter.salesshopnepal.com/api
+//   //   "demo"     → https://demo.salesshopnepal.com/api
+//   //   "company1" → https://company1.salesshopnepal.com/api
+//   // ─────────────────────────────────────────────────────────────
+//   static void switchToPrivate(String? subdomain) {
 //     _isPrivateMode = true;
 
-//     if (selectedDomain != null && selectedDomain.trim().isNotEmpty) {
-//       // FIXED: Always include the port in development
-//       privateBaseUrl = "http://$selectedDomain:8000/api";
+//     if (subdomain != null && subdomain.trim().isNotEmpty) {
+//       final cleanSubdomain = subdomain.trim().toLowerCase();
+
+//       if (_useProduction) {
+//         // https://flutter.salesshopnepal.com/api
+//         privateBaseUrl = "https://$cleanSubdomain.$_productionMainDomain/api";
+//       } else {
+//         // Dev: local server handles all tenants
+//         privateBaseUrl = _devBaseUrl;
+//       }
+
 //       developer.log(
-//         'API → Switched to PRIVATE: $privateBaseUrl (domain: $selectedDomain)',
+//         'API → Switched to PRIVATE: $privateBaseUrl  (subdomain: $cleanSubdomain)',
 //         name: 'Api',
 //       );
 //     } else {
-//       // Fallback also with port
-//       privateBaseUrl = "http://192.168.1.8:8000/api";
+//       // No subdomain → safe fallback
+//       privateBaseUrl = publicBaseUrl;
+
 //       developer.log(
-//         'API → No domain provided → using default private: $privateBaseUrl',
+//         'API → No subdomain → fallback to PUBLIC: $privateBaseUrl',
 //         name: 'Api',
 //       );
 //     }
 
-//     // This line updates Dio — very important
+//     // Update Dio with new base URL
 //     DioClient().updateBaseUrl(privateBaseUrl);
 //   }
 
-//   // Call on logout or when going back to public mode
+//   // ─────────────────────────────────────────────────────────────
+//   // Reset to public mode — call on logout or company switch
+//   // ─────────────────────────────────────────────────────────────
 //   static void resetToPublic() {
 //     _isPrivateMode = false;
 //     privateBaseUrl = publicBaseUrl;
-//     developer.log('API → Reset to PUBLIC: $publicBaseUrl', name: 'Api');
+
+//     developer.log(
+//       'API → Reset to PUBLIC: $publicBaseUrl',
+//       name: 'Api',
+//     );
 
 //     DioClient().updateBaseUrl(publicBaseUrl);
 //   }
+
+//   // ─────────────────────────────────────────────────────────────
+//   // Helpers
+//   // ─────────────────────────────────────────────────────────────
+//   static bool get isProduction => _useProduction;
+//   static bool get isDevelopment => !_useProduction;
+//   static bool get isPrivateMode => _isPrivateMode;
+
+//   static void logEnvironment() {
+//     developer.log(
+//       '─────────────────────────────────────────\n'
+//       'Environment : ${isDevelopment ? "DEVELOPMENT" : "PRODUCTION"}\n'
+//       'Public URL  : $publicBaseUrl\n'
+//       'Current URL : $currentBaseUrl\n'
+//       'Private Mode: $_isPrivateMode\n'
+//       '─────────────────────────────────────────',
+//       name: 'Api',
+//     );
+//   }
 // }
 
-//production and dev code
 import 'dart:developer' as developer;
-import 'package:flutter/foundation.dart' show kDebugMode, kReleaseMode;
-
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:saleup_app/core/network/dio_client.dart';
 
 class Api {
   // ─────────────────────────────────────────────────────────────
-  // Public base URL – used before login and company selection
+  // TOGGLE: true  → production URLs
+  //         false → local dev server
+  // ─────────────────────────────────────────────────────────────
+  static const bool forceProduction = true;
+
+  static bool get _useProduction => kReleaseMode || forceProduction;
+
+  // ─────────────────────────────────────────────────────────────
+  // Base domain — no protocol, no subdomain, no /api
+  // ─────────────────────────────────────────────────────────────
+  static const String _productionMainDomain = "salesshopnepal.com";
+  static const String _devBaseUrl = "http://192.168.1.65:8000/api";
+
+  // ─────────────────────────────────────────────────────────────
+  // PUBLIC base URL — used before login and company selection
+  //   Production → https://salesshopnepal.com/api
+  //   Dev        → http://192.168.1.65:8000/api
   // ─────────────────────────────────────────────────────────────
   static String get publicBaseUrl {
-    if (kDebugMode) {
-      // Development: your local laptop + Django dev server port
-      return "http://192.168.1.65:8000/api";
+    if (_useProduction) {
+      return "https://$_productionMainDomain/api";
     } else {
-      // Production: change this to your real live domain
-      // Option A: single domain style (simplest)
-      return "https://salesshopnepal.com/api";
-
-      // Option B: if you use API subdomain (recommended for multi-tenant)
-      // return "https://api.salesshopnepal.com";
+      return _devBaseUrl;
     }
   }
 
-  // Private base URL – updated dynamically after company selection
+  // ─────────────────────────────────────────────────────────────
+  // PRIVATE base URL — set after company selection
+  // ─────────────────────────────────────────────────────────────
   static String privateBaseUrl = publicBaseUrl;
-
-  // Flag: true = after company selection → use tenant-specific domain
   static bool _isPrivateMode = false;
 
-  // Current active base URL (for logging & debugging)
   static String get currentBaseUrl =>
       _isPrivateMode ? privateBaseUrl : publicBaseUrl;
 
   // ─────────────────────────────────────────────────────────────
-  // Switch to tenant/company-specific (private) base URL
+  // Switch to tenant subdomain after company selection
+  //
+  // Handles BOTH cases automatically:
+  //   DB stores "flutter"                    → https://flutter.salesshopnepal.com/api
+  //   DB stores "flutter.salesshopnepal.com" → https://flutter.salesshopnepal.com/api
   // ─────────────────────────────────────────────────────────────
-  static void switchToPrivate(String? selectedDomain) {
+  static void switchToPrivate(String? subdomain) {
     _isPrivateMode = true;
 
-    if (selectedDomain != null && selectedDomain.trim().isNotEmpty) {
-      // Build URL intelligently based on environment
-      const protocol = kDebugMode ? 'http' : 'https';
-      const portPart = kDebugMode ? ':8000' : ''; // No port in production
+    if (subdomain != null && subdomain.trim().isNotEmpty) {
+      final clean = subdomain.trim().toLowerCase();
 
-      // Use the domain exactly as stored in DB
-      // In production DB should contain: flutter.salesshopnepal.com, public.salesshopnepal.com, etc.
-      privateBaseUrl = "$protocol://$selectedDomain$portPart/api";
+      if (_useProduction) {
+        String finalUrl;
+
+        if (clean.contains(_productionMainDomain)) {
+          // DB stored full domain like "flutter.salesshopnepal.com"
+          // Strip any accidental https:// or /api prefix/suffix
+          final domainOnly = clean
+              .replaceAll('https://', '')
+              .replaceAll('http://', '')
+              .replaceAll('/api', '')
+              .trim();
+          finalUrl = "https://$domainOnly/api";
+        } else {
+          // DB stored subdomain only like "flutter"
+          finalUrl = "https://$clean.$_productionMainDomain/api";
+        }
+
+        privateBaseUrl = finalUrl;
+      } else {
+        // Dev: single local server handles all tenants
+        privateBaseUrl = _devBaseUrl;
+      }
 
       developer.log(
-        'API → Switched to PRIVATE: $privateBaseUrl (original domain: $selectedDomain)',
+        'API → Switched to PRIVATE: $privateBaseUrl  (input: $clean)',
         name: 'Api',
       );
     } else {
-      // Fallback to public base (safe default)
       privateBaseUrl = publicBaseUrl;
       developer.log(
-        'API → No domain provided → fallback to: $privateBaseUrl',
+        'API → No subdomain provided → fallback to PUBLIC: $privateBaseUrl',
         name: 'Api',
       );
     }
 
-    // Critical: update Dio with the new base URL
     DioClient().updateBaseUrl(privateBaseUrl);
   }
 
   // ─────────────────────────────────────────────────────────────
-  // Reset to public mode (logout, etc.)
+  // Reset to public — call on logout
   // ─────────────────────────────────────────────────────────────
   static void resetToPublic() {
     _isPrivateMode = false;
     privateBaseUrl = publicBaseUrl;
-
-    developer.log(
-      'API → Reset to PUBLIC: $publicBaseUrl',
-      name: 'Api',
-    );
-
+    developer.log('API → Reset to PUBLIC: $publicBaseUrl', name: 'Api');
     DioClient().updateBaseUrl(publicBaseUrl);
   }
 
-  // Optional helpers for debugging
-  static bool get isProduction => kReleaseMode;
-  static bool get isDevelopment => kDebugMode;
+  static bool get isProduction => _useProduction;
+  static bool get isDevelopment => !_useProduction;
+  static bool get isPrivateMode => _isPrivateMode;
 
   static void logEnvironment() {
     developer.log(
-      'Api initialized in ${isDevelopment ? "DEVELOPMENT" : "PRODUCTION"} mode',
+      '─────────────────────────────────────────\n'
+      'Environment : ${isDevelopment ? "DEVELOPMENT" : "PRODUCTION"}\n'
+      'Public URL  : $publicBaseUrl\n'
+      'Current URL : $currentBaseUrl\n'
+      'Private Mode: $_isPrivateMode\n'
+      '─────────────────────────────────────────',
       name: 'Api',
     );
   }

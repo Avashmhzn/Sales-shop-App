@@ -195,6 +195,7 @@ bool _parseBool(dynamic v) {
 
 @JsonSerializable()
 class PurchaseResponse {
+  @JsonKey(fromJson: _parseBool)
   final bool success;
   final String? message;
   final dynamic data;
