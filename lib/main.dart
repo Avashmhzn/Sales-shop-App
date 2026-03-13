@@ -9,6 +9,8 @@ import 'package:saleup_app/screen/accountHead/bloc/account_head_bloc.dart';
 import 'package:saleup_app/screen/accountHead/bloc/account_head_event.dart';
 import 'package:saleup_app/screen/chat/bloc/chat_bloc.dart';
 import 'package:saleup_app/screen/purchase/bloc/purchase_bloc.dart'; // ← added
+import 'package:saleup_app/screen/voucher/bloc/voucher_bloc.dart';
+import 'package:saleup_app/screen/voucher/bloc/voucher_event.dart';
 import 'package:saleup_app/services/auth_service.dart';
 import 'package:saleup_app/services/user_services.dart';
 
@@ -54,9 +56,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<PurchaseBloc>(
           create: (context) => PurchaseBloc(),
-          // You can optionally auto-fetch purchases here if you want it globally:
-          // lazy: false,
-          // child: null,  // not needed
+        ),
+        BlocProvider<VoucherBloc>(
+          create: (context) => VoucherBloc()..add(const FetchVouchers()),
         ),
         // Add more global Blocs/Cubits here in the future if needed
       ],

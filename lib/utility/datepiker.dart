@@ -222,7 +222,8 @@ class _NepaliDatePickerDialogState extends State<NepaliDatePickerDialog> {
                 return GestureDetector(
                   onTap: () {
                     setState(() => _selectedDate = cellDate);
-                    widget.onDateSelected(cellDate);
+                    widget.onDateSelected.call(cellDate); // optional
+                    Navigator.pop(context, cellDate); // ← ADD THIS LINE
                   },
                   child: Container(
                     margin: const EdgeInsets.all(2),

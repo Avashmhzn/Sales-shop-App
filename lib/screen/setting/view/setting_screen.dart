@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:saleup_app/core/network/dio_client.dart';
 import 'package:saleup_app/screen/setting/bloc/profile_bloc.dart';
 import 'package:saleup_app/screen/setting/bloc/profile_event.dart';
 import 'package:saleup_app/screen/setting/bloc/profile_state.dart';
@@ -475,7 +474,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 8),
           DropdownButtonFormField<String>(
-            value: value,
+            initialValue: value,
             isExpanded: true,
             decoration: InputDecoration(
               border:

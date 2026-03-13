@@ -1296,15 +1296,16 @@ class _ChartPanelState extends State<ChartPanel> {
                   spacing: 12,
                   runSpacing: 8,
                   children: List.generate(
-                      6,
-                      (_) => Container(
-                            width: 100,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          )),
+                    6,
+                    (_) => Container(
+                      width: 100,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1316,21 +1317,35 @@ class _ChartPanelState extends State<ChartPanel> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline,
-                    size: 48, color: Color(0xFF971313)),
+                const Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: Color(0xFF971313),
+                ),
                 const SizedBox(height: 16),
-                Text(state.errorMessage!,
-                    style: const TextStyle(
-                        color: Color(0xFF65636D), fontSize: 16)),
+                Text(
+                  state.errorMessage!,
+                  style: const TextStyle(
+                    color: Color(0xFF65636D),
+                    fontSize: 16,
+                    fontFamily: 'Inter',
+                  ),
+                ),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10750E)),
-                  onPressed: () => context
-                      .read<DashboardBloc>()
-                      .add(const FetchDashboardData()),
-                  child: const Text('Retry',
-                      style: TextStyle(color: Colors.white)),
+                    backgroundColor: const Color(0xFF10750E),
+                  ),
+                  onPressed: () => context.read<DashboardBloc>().add(
+                        const FetchDashboardData(),
+                      ),
+                  child: const Text(
+                    'Retry',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontFamily: 'Inter',
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1420,6 +1435,7 @@ class _ChartPanelState extends State<ChartPanel> {
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
+                                  fontFamily: 'Inter',
                                 ),
                               ),
                             ),
@@ -1431,7 +1447,8 @@ class _ChartPanelState extends State<ChartPanel> {
                           '• No sales, purchases or returns recorded yet, or\n'
                           '• The current fiscal year has no activity.\n\n'
                           'Add some transactions to see actual numbers.',
-                          style: TextStyle(color: Colors.grey[800]),
+                          style: TextStyle(
+                              color: Colors.grey[800], fontFamily: 'Inter'),
                         ),
                       ],
                     ),
@@ -1446,23 +1463,33 @@ class _ChartPanelState extends State<ChartPanel> {
                   borderRadius: BorderRadius.circular(12.0),
                   boxShadow: [
                     BoxShadow(
-                        color: Colors.grey.withOpacity(0.3),
-                        spreadRadius: 2,
-                        blurRadius: 5,
-                        offset: const Offset(0, 3))
+                      color: Colors.grey.withOpacity(0.3),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    )
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Product Sales Volume',
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF65636D))),
-                    const Text('Quantity of products sold',
-                        style:
-                            TextStyle(fontSize: 14, color: Color(0xFF65636D))),
+                    const Text(
+                      'Product Sales Volume',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF65636D),
+                        fontFamily: 'Inter',
+                      ),
+                    ),
+                    const Text(
+                      'Quantity of products sold',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF65636D),
+                        fontFamily: 'Inter',
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     SizedBox(
                       height: 300,
@@ -1503,9 +1530,11 @@ class _ChartPanelState extends State<ChartPanel> {
                                           child: Text(
                                             products[index],
                                             style: const TextStyle(
-                                                color: Color(0xFF65636D),
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 12),
+                                              color: Color(0xFF65636D),
+                                              fontWeight: FontWeight.bold,
+                                              fontFamily: 'Inter',
+                                              fontSize: 12,
+                                            ),
                                             textAlign: TextAlign.center,
                                           ),
                                         );
@@ -1523,9 +1552,11 @@ class _ChartPanelState extends State<ChartPanel> {
                                       return Text(
                                         value.toStringAsFixed(1),
                                         style: const TextStyle(
-                                            color: Color(0xFF65636D),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12),
+                                          color: Color(0xFF65636D),
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                          fontFamily: 'Inter',
+                                        ),
                                       );
                                     },
                                   ),
@@ -1567,6 +1598,7 @@ class _ChartPanelState extends State<ChartPanel> {
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
                                         fontSize: 14,
+                                        fontFamily: 'Inter',
                                       ),
                                     );
                                   },
@@ -1586,11 +1618,15 @@ class _ChartPanelState extends State<ChartPanel> {
                                     child:
                                         ColoredBox(color: Color(0xFFF4A261))),
                                 SizedBox(width: 8),
-                                Text('Quantity Sold',
-                                    style: TextStyle(
-                                        color: Color(0xFF65636D),
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500)),
+                                Text(
+                                  'Quantity Sold',
+                                  style: TextStyle(
+                                    color: Color(0xFF65636D),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -1605,22 +1641,30 @@ class _ChartPanelState extends State<ChartPanel> {
                           onTap: () => setState(() =>
                               _barVisibility[entry.key] =
                                   !(_barVisibility[entry.key] ?? true)),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Container(
-                              width: 16,
-                              height: 16,
-                              decoration: BoxDecoration(
-                                color: _barVisibility[entry.key] ?? true
-                                    ? const Color(0xFFF4A261)
-                                    : Colors.grey,
-                                borderRadius: BorderRadius.circular(2),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 16,
+                                height: 16,
+                                decoration: BoxDecoration(
+                                  color: _barVisibility[entry.key] ?? true
+                                      ? const Color(0xFFF4A261)
+                                      : Colors.grey,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(entry.key,
+                              const SizedBox(width: 6),
+                              Text(
+                                entry.key,
                                 style: const TextStyle(
-                                    fontSize: 14, color: Color(0xFF65636D))),
-                          ]),
+                                  fontSize: 14,
+                                  color: Color(0xFF65636D),
+                                  fontFamily: 'Inter',
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       }).toList(),
                     ),
@@ -1646,14 +1690,23 @@ class _ChartPanelState extends State<ChartPanel> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Purchase vs Returns Overview',
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF65636D))),
-                    const Text('Comparison in Rs.',
-                        style:
-                            TextStyle(fontSize: 14, color: Color(0xFF65636D))),
+                    const Text(
+                      'Purchase vs Returns Overview',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Inter',
+                        color: Color(0xFF65636D),
+                      ),
+                    ),
+                    const Text(
+                      'Comparison in Rs.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF65636D),
+                        fontFamily: 'Inter',
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     if (hasPurchaseData) ...[
                       SizedBox(
@@ -1691,9 +1744,11 @@ class _ChartPanelState extends State<ChartPanel> {
                                       : '',
                               radius: 120,
                               titleStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF65636D)),
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF65636D),
+                                fontFamily: 'Inter',
+                              ),
                               showTitle:
                                   _purchaseVsReturnsVisibility[e.value.key] ??
                                       true,
@@ -1703,13 +1758,18 @@ class _ChartPanelState extends State<ChartPanel> {
                       ),
                     ] else ...[
                       const SizedBox(
-                          height: 400,
-                          child: Center(
-                              child: Text(
-                                  'No purchase or returns data available',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      color: Color(0xFF65636D))))),
+                        height: 400,
+                        child: Center(
+                          child: Text(
+                            'No purchase or returns data available',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'Inter',
+                              color: Color(0xFF65636D),
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                     Wrap(
                       spacing: 12.0,
@@ -1730,23 +1790,31 @@ class _ChartPanelState extends State<ChartPanel> {
                               _purchaseVsReturnsVisibility[e.value.key] =
                                   !(_purchaseVsReturnsVisibility[e.value.key] ??
                                       true)),
-                          child: Row(mainAxisSize: MainAxisSize.min, children: [
-                            Container(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
                                 width: 16,
                                 height: 16,
                                 decoration: BoxDecoration(
-                                    color: _purchaseVsReturnsVisibility[
-                                                e.value.key] ??
-                                            true
-                                        ? chartColors[
-                                            index % chartColors.length]
-                                        : Colors.grey,
-                                    borderRadius: BorderRadius.circular(2))),
-                            const SizedBox(width: 6),
-                            Text('${e.value.key} ($percentage%)',
+                                  color: _purchaseVsReturnsVisibility[
+                                              e.value.key] ??
+                                          true
+                                      ? chartColors[index % chartColors.length]
+                                      : Colors.grey,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${e.value.key} ($percentage%)',
                                 style: const TextStyle(
-                                    fontSize: 14, color: Color(0xFF65636D))),
-                          ]),
+                                  fontSize: 14,
+                                  color: Color(0xFF65636D),
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       }).toList(),
                     ),
@@ -1759,26 +1827,37 @@ class _ChartPanelState extends State<ChartPanel> {
                 margin: const EdgeInsets.all(8.0),
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                    color: const Color(0xFFFAF5F9),
-                    borderRadius: BorderRadius.circular(12.0),
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.grey.withOpacity(0.3),
-                          spreadRadius: 2,
-                          blurRadius: 5,
-                          offset: const Offset(0, 3))
-                    ]),
+                  color: const Color(0xFFFAF5F9),
+                  borderRadius: BorderRadius.circular(12.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.3),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    )
+                  ],
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Return Reasons Breakdown',
-                        style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF65636D))),
-                    const Text('Why items are returned',
-                        style:
-                            TextStyle(fontSize: 14, color: Color(0xFF65636D))),
+                    const Text(
+                      'Return Reasons Breakdown',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Inter',
+                        color: Color(0xFF65636D),
+                      ),
+                    ),
+                    const Text(
+                      'Why items are returned',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFF65636D),
+                        fontFamily: 'Inter',
+                      ),
+                    ),
                     const SizedBox(height: 20),
                     if (returnReasons.isNotEmpty) ...[
                       SizedBox(
@@ -1813,11 +1892,15 @@ class _ChartPanelState extends State<ChartPanel> {
                                   }).toList(),
                                 ))),
                             const SizedBox(height: 16),
-                            const Text('Reason',
-                                style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF65636D))),
+                            const Text(
+                              'Reason',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Inter',
+                                color: Color(0xFF65636D),
+                              ),
+                            ),
                             Expanded(
                               child: SingleChildScrollView(
                                 child: Column(
@@ -1837,32 +1920,33 @@ class _ChartPanelState extends State<ChartPanel> {
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 8.0),
                                         child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Container(
-                                                  width: 16,
-                                                  height: 16,
-                                                  decoration: BoxDecoration(
-                                                      color:
-                                                          _returnReasonsVisibility[
-                                                                      e.key] ??
-                                                                  true
-                                                              ? chartColors[
-                                                                  index]
-                                                              : Colors.grey,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              2))),
-                                              const SizedBox(width: 8),
-                                              Flexible(
-                                                  child: Text(e.key,
-                                                      style: const TextStyle(
-                                                          fontSize: 14,
-                                                          color: Color(
-                                                              0xFF65636D)),
-                                                      overflow: TextOverflow
-                                                          .ellipsis)),
-                                            ]),
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 16,
+                                              height: 16,
+                                              decoration: BoxDecoration(
+                                                color: _returnReasonsVisibility[
+                                                            e.key] ??
+                                                        true
+                                                    ? chartColors[index]
+                                                    : Colors.grey,
+                                                borderRadius:
+                                                    BorderRadius.circular(2),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Flexible(
+                                              child: Text(e.key,
+                                                  style: const TextStyle(
+                                                      fontSize: 14,
+                                                      color: Color(0xFF65636D),
+                                                      fontFamily: 'Inter'),
+                                                  overflow:
+                                                      TextOverflow.ellipsis),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     );
                                   }).toList(),
@@ -1874,12 +1958,17 @@ class _ChartPanelState extends State<ChartPanel> {
                       ),
                     ] else ...[
                       const SizedBox(
-                          height: 300,
-                          child: Center(
-                              child: Text('No return reasons data available',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      color: Color(0xFF65636D))))),
+                        height: 300,
+                        child: Center(
+                          child: Text(
+                            'No return reasons data available',
+                            style: TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFF65636D),
+                                fontFamily: 'Inter'),
+                          ),
+                        ),
+                      ),
                     ],
                   ],
                 ),
@@ -2250,8 +2339,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     color: Colors.white),
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 14,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w600,
+                                  fontFamily: 'Inter',
                                 ),
                                 dropdownColor: const Color(0xFFFF9800),
                                 items: state.allFiscalYears!.map((fy) {

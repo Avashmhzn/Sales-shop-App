@@ -527,7 +527,7 @@ import 'package:saleup_app/screen/addPurchase/view/add_purchase_screen.dart';
 import 'package:saleup_app/screen/purchase/bloc/purchase_bloc.dart';
 import 'package:saleup_app/screen/purchase/bloc/purchase_event.dart';
 import 'package:saleup_app/screen/purchase/bloc/purchase_state.dart';
-import 'package:saleup_app/screen/purchase/view/datepiker.dart';
+import 'package:saleup_app/utility/datepiker.dart';
 import 'package:saleup_app/screen/purchase/view/edit_purchase_screen.dart';
 import 'package:saleup_app/screen/purchase/view/purchase_detail_screen.dart';
 

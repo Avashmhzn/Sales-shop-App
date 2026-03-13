@@ -514,6 +514,7 @@ import 'package:saleup_app/screen/units/bloc/unit_bloc.dart';
 import 'package:saleup_app/screen/units/view/unit_screen.dart';
 import 'package:saleup_app/screen/voucher/bloc/voucher_bloc.dart';
 import 'package:saleup_app/screen/voucher/bloc/voucher_event.dart';
+import 'package:saleup_app/screen/voucher/view/post_voucher_screen.dart';
 import 'package:saleup_app/screen/voucher/view/voucher_screen.dart';
 import 'package:saleup_app/theme/custom_app_bar.dart';
 import 'package:saleup_app/utility/bottomnav.dart';
@@ -648,9 +649,6 @@ class _ShellScaffoldState extends State<ShellScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    // Optional: remove this print after testing
-    // print('Shell build → currentIndex: $_currentIndex   route: ${GoRouterState.of(context).uri}');
-
     const double bottomNavHeight = 80.0;
 
     Widget body = NotificationListener<ScrollNotification>(
@@ -792,6 +790,9 @@ void handleNavigation(BuildContext context, int index) {
     case 27:
       route = '/settings';
       break;
+    case 22:
+      route = '/voucher/create';
+      break;
     default:
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Invalid navigation index: $index')),
@@ -931,6 +932,15 @@ final GoRouter router = GoRouter(
             create: (context) => VoucherBloc()..add(const FetchVouchers()),
             child: const VoucherScreen(),
           ),
+          routes: [
+            GoRoute(
+              path: 'create',
+              builder: (context, state) => BlocProvider.value(
+                value: BlocProvider.of<VoucherBloc>(context),
+                child: const PostVoucherScreen(),
+              ),
+            ),
+          ],
         ),
         GoRoute(
           path: '/receipt',

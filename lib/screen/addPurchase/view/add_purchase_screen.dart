@@ -848,7 +848,7 @@ import 'package:saleup_app/model/purchase_response.dart';
 import 'package:saleup_app/screen/addPurchase/bloc/purchase_form_bloc.dart';
 import 'package:saleup_app/screen/addPurchase/bloc/purchase_form_event.dart';
 import 'package:saleup_app/screen/addPurchase/bloc/purchase_form_state.dart';
-import 'package:saleup_app/screen/purchase/view/datepiker.dart';
+import 'package:saleup_app/utility/datepiker.dart';
 
 class AddPurchaseScreen extends StatelessWidget {
   final PurchaseData? purchase;

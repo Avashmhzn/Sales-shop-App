@@ -5,7 +5,7 @@ import 'package:nepali_date_picker/nepali_date_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
 import 'package:saleup_app/model/purchase_response.dart';
-import 'package:saleup_app/screen/purchase/view/datepiker.dart';
+import 'package:saleup_app/utility/datepiker.dart';
 
 class EditPurchaseScreen extends StatefulWidget {
   final PurchaseData purchase;

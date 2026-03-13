@@ -1,406 +1,26 @@
-// import 'package:flutter/material.dart';
-// import 'package:flutter_bloc/flutter_bloc.dart';
-// import 'package:intl/intl.dart';
-// import 'package:shimmer/shimmer.dart';
-// import 'package:saleup_app/model/voucher_response.dart';
-// import 'package:saleup_app/screen/voucher/bloc/voucher_bloc.dart';
-// import 'package:saleup_app/screen/voucher/bloc/voucher_event.dart';
-// import 'package:saleup_app/screen/voucher/bloc/voucher_state.dart';
-// import 'package:saleup_app/screen/voucher/widget/voucher_detail_dialog.dart';
-
-// class VoucherScreen extends StatefulWidget {
-//   const VoucherScreen({super.key});
-
-//   @override
-//   State<VoucherScreen> createState() => _VoucherScreenState();
-// }
-
-// class _VoucherScreenState extends State<VoucherScreen> {
-//   DateTime? _selectedDate;
-//   final TextEditingController _searchController = TextEditingController();
-//   String _searchQuery = '';
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _searchController.addListener(() {
-//       setState(() {
-//         _searchQuery = _searchController.text.trim();
-//       });
-//     });
-//   }
-
-//   @override
-//   void didChangeDependencies() {
-//     super.didChangeDependencies();
-//     if (!mounted) return;
-//     final bloc = BlocProvider.of<VoucherBloc>(context, listen: false);
-//     if (bloc.state.vouchers.isEmpty) {
-//       bloc.add(const FetchVouchers());
-//     }
-//   }
-
-//   @override
-//   void dispose() {
-//     _searchController.dispose();
-//     super.dispose();
-//   }
-
-//   void _clearDate() {
-//     setState(() {
-//       _selectedDate = null;
-//     });
-//   }
-
-//   void _clearSearch() {
-//     setState(() {
-//       _searchController.clear();
-//       _searchQuery = '';
-//     });
-//   }
-
-//   Future<void> _selectDate(BuildContext context) async {
-//     final DateTime? picked = await showDatePicker(
-//       context: context,
-//       initialDate: _selectedDate ?? DateTime.now(),
-//       firstDate: DateTime(2000),
-//       lastDate: DateTime(2100),
-//     );
-//     if (picked != null && picked != _selectedDate) {
-//       setState(() {
-//         _selectedDate = picked;
-//       });
-//     }
-//   }
-
-//   List<VoucherData> _filterVouchers(List<VoucherData> vouchers) {
-//     return vouchers.where((voucher) {
-//       bool dateMatch = true;
-//       bool searchMatch = true;
-
-//       if (_selectedDate != null) {
-//         try {
-//           final voucherDate = DateTime.parse(voucher.voucherDate ?? '');
-//           final voucherDateOnly =
-//               DateTime(voucherDate.year, voucherDate.month, voucherDate.day);
-//           final selectedDate = DateTime(
-//               _selectedDate!.year, _selectedDate!.month, _selectedDate!.day);
-//           dateMatch = voucherDateOnly.isAtSameMomentAs(selectedDate);
-//         } catch (e) {
-//           return false;
-//         }
-//       }
-
-//       if (_searchQuery.isNotEmpty) {
-//         searchMatch = (voucher.voucherNumber ?? '')
-//             .toLowerCase()
-//             .contains(_searchQuery.toLowerCase());
-//       }
-
-//       return dateMatch && searchMatch;
-//     }).toList();
-//   }
-
-//   Widget _buildShimmerEffect(double screenWidth, double screenHeight) {
-//     return Shimmer.fromColors(
-//       baseColor: Colors.grey[300]!,
-//       highlightColor: Colors.grey[100]!,
-//       child: ListView.builder(
-//         padding: EdgeInsets.all(screenWidth * 0.03),
-//         itemCount: 5,
-//         itemBuilder: (context, index) {
-//           return Padding(
-//             padding: const EdgeInsets.symmetric(vertical: 8.0),
-//             child: Card(
-//               elevation: 4,
-//               shape: RoundedRectangleBorder(
-//                   borderRadius: BorderRadius.circular(12)),
-//               color: Colors.white,
-//               child: Container(
-//                 padding: const EdgeInsets.all(12),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     Container(
-//                         height: 16,
-//                         width: screenWidth * 0.4,
-//                         color: Colors.white),
-//                     const SizedBox(height: 4),
-//                     Row(
-//                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                       children: [
-//                         Container(
-//                             height: 14,
-//                             width: screenWidth * 0.3,
-//                             color: Colors.white),
-//                         Container(
-//                             height: 14,
-//                             width: screenWidth * 0.2,
-//                             color: Colors.white),
-//                       ],
-//                     ),
-//                     const SizedBox(height: 4),
-//                     Row(
-//                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                       children: [
-//                         Container(
-//                             height: 14,
-//                             width: screenWidth * 0.3,
-//                             color: Colors.white),
-//                         Container(
-//                             height: 14,
-//                             width: screenWidth * 0.2,
-//                             color: Colors.white),
-//                       ],
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
-//           );
-//         },
-//       ),
-//     );
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final screenWidth = MediaQuery.of(context).size.width;
-//     final screenHeight = MediaQuery.of(context).size.height;
-
-//     return Scaffold(
-//       body: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Padding(
-//             padding: EdgeInsets.all(screenWidth * 0.02),
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(
-//                   "Vouchers",
-//                   style: TextStyle(
-//                     fontSize: screenWidth * 0.05,
-//                     fontWeight: FontWeight.bold,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 16),
-//                 Row(
-//                   children: [
-//                     Expanded(
-//                       child: Row(
-//                         children: [
-//                           Expanded(
-//                             child: GestureDetector(
-//                               onTap: () => _selectDate(context),
-//                               child: AbsorbPointer(
-//                                 child: TextField(
-//                                   controller: TextEditingController(
-//                                     text: _selectedDate == null
-//                                         ? 'yyyy-MM-dd'
-//                                         : DateFormat('yyyy-MM-dd')
-//                                             .format(_selectedDate!),
-//                                   ),
-//                                   decoration: const InputDecoration(
-//                                     labelText: 'Date',
-//                                     border: OutlineInputBorder(),
-//                                   ),
-//                                 ),
-//                               ),
-//                             ),
-//                           ),
-//                           IconButton(
-//                             icon: const Icon(Icons.clear),
-//                             onPressed: _clearDate,
-//                             tooltip: 'Clear Date',
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//                 const SizedBox(height: 8),
-//                 Row(
-//                   children: [
-//                     Expanded(
-//                       child: Row(
-//                         children: [
-//                           Expanded(
-//                             child: TextField(
-//                               controller: _searchController,
-//                               decoration: const InputDecoration(
-//                                 labelText: 'Search Voucher Number',
-//                                 border: OutlineInputBorder(),
-//                                 prefixIcon: Icon(Icons.search),
-//                               ),
-//                             ),
-//                           ),
-//                           IconButton(
-//                             icon: const Icon(Icons.clear),
-//                             onPressed: _clearSearch,
-//                             tooltip: 'Clear Search',
-//                           ),
-//                         ],
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ],
-//             ),
-//           ),
-//           Expanded(
-//             child: BlocBuilder<VoucherBloc, VoucherState>(
-//               builder: (context, state) {
-//                 if (state.isLoading && state.vouchers.isEmpty) {
-//                   return _buildShimmerEffect(screenWidth, screenHeight);
-//                 }
-//                 if (state.errorMessage != null) {
-//                   return Center(child: Text(state.errorMessage!));
-//                 }
-//                 final filteredVouchers = _filterVouchers(state.vouchers);
-
-//                 if (filteredVouchers.isEmpty) {
-//                   return const Center(child: Text('No vouchers available'));
-//                 }
-
-//                 return ListView.builder(
-//                   padding: EdgeInsets.all(screenWidth * 0.03),
-//                   itemCount: filteredVouchers.length,
-//                   itemBuilder: (context, index) {
-//                     final voucher = filteredVouchers[index];
-//                     return VoucherCard(
-//                       voucher: voucher,
-//                       screenWidth: screenWidth,
-//                       screenHeight: screenHeight,
-//                       onTap: () {
-//                         try {
-//                           context
-//                               .read<VoucherBloc>()
-//                               .add(FetchVoucherById(voucher.id));
-//                           showDialog(
-//                             context: context,
-//                             builder: (dialogContext) =>
-//                                 VoucherDetailDialog(voucherId: voucher.id),
-//                           );
-//                         } catch (e) {
-//                           ScaffoldMessenger.of(context).showSnackBar(
-//                             SnackBar(content: Text('Error: $e')),
-//                           );
-//                         }
-//                       },
-//                     );
-//                   },
-//                 );
-//               },
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// class VoucherCard extends StatelessWidget {
-//   final VoucherData voucher;
-//   final double screenWidth;
-//   final double screenHeight;
-//   final VoidCallback onTap;
-
-//   const VoucherCard({
-//     super.key,
-//     required this.voucher,
-//     required this.screenWidth,
-//     required this.screenHeight,
-//     required this.onTap,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final voucherDateStr = voucher.voucherDate ?? '';
-//     String formattedDateTime = 'Unknown';
-//     if (voucherDateStr.isNotEmpty) {
-//       try {
-//         final voucherDate = DateTime.parse(voucherDateStr);
-//         formattedDateTime =
-//             DateFormat('MMM dd, yyyy hh:mm a').format(voucherDate);
-//       } catch (e) {
-//         formattedDateTime = 'Invalid Date';
-//       }
-//     }
-
-//     return GestureDetector(
-//       onTap: onTap,
-//       child: Padding(
-//         padding: const EdgeInsets.symmetric(vertical: 8.0),
-//         child: Card(
-//           elevation: 4,
-//           shape:
-//               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//           color: Colors.white,
-//           child: Container(
-//             padding: EdgeInsets.all(screenWidth * 0.02),
-//             child: Row(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Expanded(
-//                   child: Column(
-//                     crossAxisAlignment: CrossAxisAlignment.start,
-//                     children: [
-//                       Text(
-//                         'Voucher: ${voucher.voucherNumber ?? 'N/A'}',
-//                         style: Theme.of(context)
-//                             .textTheme
-//                             .titleMedium
-//                             ?.copyWith(fontWeight: FontWeight.bold),
-//                       ),
-//                       const SizedBox(height: 4),
-//                       Row(
-//                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                         children: [
-//                           Text(
-//                             'Type: ${voucher.type ?? 'N/A'}',
-//                             style: Theme.of(context)
-//                                 .textTheme
-//                                 .bodyMedium
-//                                 ?.copyWith(color: Colors.grey),
-//                           ),
-//                           Text(
-//                             'Date: $formattedDateTime',
-//                             style: Theme.of(context)
-//                                 .textTheme
-//                                 .bodyMedium
-//                                 ?.copyWith(color: Colors.grey),
-//                           ),
-//                         ],
-//                       ),
-//                       const SizedBox(height: 6),
-//                       Text(
-//                         'Narration: ${voucher.narration ?? 'N/A'}',
-//                         style: Theme.of(context)
-//                             .textTheme
-//                             .bodyMedium
-//                             ?.copyWith(color: Colors.grey),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:saleup_app/model/voucher_response.dart';
 import 'package:saleup_app/screen/voucher/bloc/voucher_bloc.dart';
 import 'package:saleup_app/screen/voucher/bloc/voucher_event.dart';
 import 'package:saleup_app/screen/voucher/bloc/voucher_state.dart';
 import 'package:saleup_app/screen/voucher/widget/voucher_detail_dialog.dart';
+
+const double _kCheckboxW = 24;
+const double _kGapW = 12;
+const double _kIdW = 50;
+const double _kActionW = 80;
+const double _kMinTableWidth = 520.0;
+const int _kPageSize = 10;
+const List<(String, int)> _kFlexCols = [
+  ('Voucher Number', 3),
+  ('Type', 2),
+  ('Debit', 2),
+  ('Credit', 2),
+];
+const int _kTotalFlex = 9;
 
 class VoucherScreen extends StatefulWidget {
   const VoucherScreen({super.key});
@@ -410,10 +30,11 @@ class VoucherScreen extends StatefulWidget {
 }
 
 class _VoucherScreenState extends State<VoucherScreen> {
-  DateTime? _selectedDate;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _hasFetchedVouchers = false;
+  final Set<int> _selectedIds = {};
+  int _currentPage = 1;
 
   @override
   void initState() {
@@ -421,8 +42,8 @@ class _VoucherScreenState extends State<VoucherScreen> {
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.trim();
+        _currentPage = 1;
       });
-      print('Search query updated: $_searchQuery');
     });
   }
 
@@ -431,8 +52,7 @@ class _VoucherScreenState extends State<VoucherScreen> {
     super.didChangeDependencies();
     if (!mounted) return;
     final bloc = BlocProvider.of<VoucherBloc>(context, listen: false);
-    print('VoucherBloc in didChangeDependencies: $bloc');
-    if (!_hasFetchedVouchers && bloc.state.vouchers.isEmpty) {
+    if (!_hasFetchedVouchers) {
       bloc.add(const FetchVouchers());
       _hasFetchedVouchers = true;
     }
@@ -444,144 +64,48 @@ class _VoucherScreenState extends State<VoucherScreen> {
     super.dispose();
   }
 
-  void _clearDate() {
-    setState(() {
-      _selectedDate = null;
-    });
-    print('Date cleared: _selectedDate is now $_selectedDate');
-  }
-
-  void _clearSearch() {
-    setState(() {
-      _searchController.clear();
-      _searchQuery = '';
-    });
-    print('Search cleared: _searchQuery is now $_searchQuery');
-  }
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-      print('Date selected: $_selectedDate');
-    }
-  }
-
   List<VoucherData> _filterVouchers(List<VoucherData> vouchers) {
-    return vouchers.where((voucher) {
-      bool dateMatch = true;
-      bool searchMatch = true;
-
-      if (_selectedDate != null) {
-        try {
-          final voucherDateStr = voucher.voucherDate ?? '';
-          print('Raw voucherDate before parsing: $voucherDateStr');
-          if (voucherDateStr.isEmpty) return false;
-          final voucherDate = DateTime.parse(voucherDateStr);
-          final originalDate = DateTime.parse(voucherDateStr.split('T')[0]);
-          final adjustedVoucherDate = DateTime(
-              originalDate.year,
-              originalDate.month,
-              originalDate.day,
-              voucherDate.hour,
-              voucherDate.minute);
-          final voucherDateOnly = DateTime(adjustedVoucherDate.year,
-              adjustedVoucherDate.month, adjustedVoucherDate.day);
-          final selectedDate = DateTime(
-              _selectedDate!.year, _selectedDate!.month, _selectedDate!.day);
-          dateMatch = voucherDateOnly.isAtSameMomentAs(selectedDate);
-          print(
-              'Filtering: voucherDateStr=$voucherDateStr, voucherDate=$voucherDate, '
-              'adjusted=$adjustedVoucherDate, voucherDateOnly=$voucherDateOnly, '
-              'selectedDate=$selectedDate, match=$dateMatch');
-        } catch (e) {
-          print('Error parsing voucherDate ${voucher.voucherDate}: $e');
-          return false;
-        }
-      }
-
-      if (_searchQuery.isNotEmpty) {
-        searchMatch = (voucher.voucherNumber ?? '')
-            .toLowerCase()
-            .contains(_searchQuery.toLowerCase());
-      }
-
-      return dateMatch && searchMatch;
-    }).toList();
+    final filtered = _searchQuery.isEmpty
+        ? List<VoucherData>.from(vouchers)
+        : vouchers
+            .where((v) => (v.voucherNumber ?? '')
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase()))
+            .toList();
+    filtered.sort((a, b) => a.id.compareTo(b.id));
+    return filtered;
   }
 
-  Widget _buildShimmerEffect(double screenWidth, double screenHeight) {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[300]!,
-      highlightColor: Colors.grey[100]!,
-      child: ListView.builder(
-        padding: EdgeInsets.all(screenWidth * 0.03),
-        itemCount: 5,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              color: Colors.white,
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                        height: 16,
-                        width: screenWidth * 0.4,
-                        color: Colors.white),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                            height: 14,
-                            width: screenWidth * 0.3,
-                            color: Colors.white),
-                        Container(
-                            height: 14,
-                            width: screenWidth * 0.2,
-                            color: Colors.white),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                            height: 14,
-                            width: screenWidth * 0.3,
-                            color: Colors.white),
-                        Container(
-                            height: 14,
-                            width: screenWidth * 0.2,
-                            color: Colors.white),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
+  List<VoucherData> _pageSlice(List<VoucherData> filtered) {
+    final start = (_currentPage - 1) * _kPageSize;
+    if (start >= filtered.length) return [];
+    return filtered.sublist(
+        start, (start + _kPageSize).clamp(0, filtered.length));
+  }
+
+  int _totalPages(int count) => (count / _kPageSize).ceil().clamp(1, 9999);
+
+  void _toggleSelectAll(List<VoucherData> pageItems, bool? value) {
+    setState(() {
+      if (value == true) {
+        _selectedIds.addAll(pageItems.map((v) => v.id));
+      } else {
+        _selectedIds.removeAll(pageItems.map((v) => v.id));
+      }
+    });
+  }
+
+  void _toggleSelect(int id, bool? value) {
+    setState(() {
+      if (value == true) {
+        _selectedIds.add(id);
+      } else {
+        _selectedIds.remove(id);
+      }
+    });
   }
 
   void _showDetailsPopup(BuildContext parentContext, VoucherData voucher) {
-    print('Initiating _showDetailsPopup for voucherId: ${voucher.id}');
-    // Only trigger FetchVoucherById if voucherDetail doesn't match
     final bloc = BlocProvider.of<VoucherBloc>(parentContext, listen: false);
     if (bloc.state.voucherDetail?.id != voucher.id) {
       bloc.add(FetchVoucherById(voucher.id));
@@ -595,135 +119,533 @@ class _VoucherScreenState extends State<VoucherScreen> {
     );
   }
 
+  Widget _buildShimmerTable() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[200]!,
+      highlightColor: Colors.grey[50]!,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFEEEEEE)),
+        ),
+        child: Column(
+          children: List.generate(
+            6,
+            (_) => Column(children: [
+              Container(height: 48, color: Colors.white),
+              const Divider(height: 1, color: Color(0xFFEEEEEE)),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: BlocListener<VoucherBloc, VoucherState>(
+          listener: (context, state) {
+            if (state.errorMessage != null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.errorMessage!)),
+              );
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Header ──────────────────────────────────────
+                const Text(
+                  'Post Vouchers',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1A1A1A),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Manage and review posted vouchers',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF888888)),
+                ),
+                const SizedBox(height: 20),
 
-    return Scaffold(
-      body: BlocListener<VoucherBloc, VoucherState>(
-        listener: (context, state) {
-          if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
-          }
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: EdgeInsets.all(screenWidth * 0.02),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Vouchers",
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.05,
-                      fontWeight: FontWeight.bold,
+                // ── Search + New Voucher ─────────────────────────
+                Row(
+                  children: [
+                    Container(
+                      width: 190,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(200),
+                        border: Border.all(color: const Color(0xFFE0E0E0)),
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        style: const TextStyle(fontSize: 13),
+                        decoration: const InputDecoration(
+                          hintText: 'Search...',
+                          hintStyle:
+                              TextStyle(color: Color(0xFFAAAAAA), fontSize: 13),
+                          prefixIcon: Icon(Icons.search,
+                              color: Color(0xFFAAAAAA), size: 18),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () => _selectDate(context),
-                                child: AbsorbPointer(
-                                  child: TextField(
-                                    controller: TextEditingController(
-                                      text: _selectedDate == null
-                                          ? 'yyyy-MM-dd'
-                                          : DateFormat('yyyy-MM-dd')
-                                              .format(_selectedDate!),
-                                    ),
-                                    decoration: const InputDecoration(
-                                      labelText: 'Date',
-                                      border: OutlineInputBorder(),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: _clearDate,
-                              tooltip: 'Clear Date',
-                            ),
-                          ],
-                        ),
+                    const Spacer(),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await context.push('/voucher/create');
+                        // Refresh list when returning from create screen
+                        if (mounted) {
+                          context
+                              .read<VoucherBloc>()
+                              .add(const FetchVouchers());
+                        }
+                      },
+                      icon:
+                          const Icon(Icons.add, size: 18, color: Colors.white),
+                      label: const Text(
+                        'New\nVoucher',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            height: 1.2),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: TextField(
-                                controller: _searchController,
-                                decoration: const InputDecoration(
-                                  labelText: 'Search Voucher Number',
-                                  border: OutlineInputBorder(),
-                                  prefixIcon: Icon(Icons.search),
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: _clearSearch,
-                              tooltip: 'Clear Search',
-                            ),
-                          ],
-                        ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE8891A),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 15, vertical: 5),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8)),
+                        elevation: 0,
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // ── Delete All ───────────────────────────────────
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: _selectedIds.isEmpty
+                        ? null
+                        : () {
+                            // TODO: delete selected
+                          },
+                    icon: Icon(Icons.delete_outline,
+                        size: 16,
+                        color: _selectedIds.isEmpty
+                            ? Colors.grey
+                            : const Color(0xFFD9534F)),
+                    label: Text(
+                      'Delete All',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _selectedIds.isEmpty
+                            ? Colors.grey
+                            : const Color(0xFFD9534F),
+                      ),
+                    ),
+                    style: TextButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap),
                   ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: BlocBuilder<VoucherBloc, VoucherState>(
-                builder: (context, state) {
-                  print('BlocBuilder state: isLoading=${state.isLoading}, '
-                      'vouchers.length=${state.vouchers.length}, '
-                      'error=${state.errorMessage}');
-                  if (state.isLoading && state.vouchers.isEmpty) {
-                    return _buildShimmerEffect(screenWidth, screenHeight);
-                  }
-                  if (state.errorMessage != null) {
-                    return Center(child: Text(state.errorMessage!));
-                  }
-                  final filteredVouchers = _filterVouchers(state.vouchers);
-                  print('Filtered vouchers count: ${filteredVouchers.length}, '
-                      '_selectedDate: $_selectedDate, _searchQuery: $_searchQuery');
+                ),
+                const SizedBox(height: 8),
 
-                  if (filteredVouchers.isEmpty) {
-                    return const Center(child: Text('No vouchers available'));
-                  }
+                // ── Table ────────────────────────────────────────
+                Expanded(
+                  child: BlocBuilder<VoucherBloc, VoucherState>(
+                    builder: (context, state) {
+                      if (state.isLoading && state.vouchers.isEmpty) {
+                        return _buildShimmerTable();
+                      }
+                      if (state.errorMessage != null &&
+                          state.vouchers.isEmpty) {
+                        return const Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.receipt_long_outlined,
+                                  size: 48, color: Color(0xFFCCCCCC)),
+                              SizedBox(height: 12),
+                              Text(
+                                'No vouchers available',
+                                style: TextStyle(
+                                    color: Color(0xFF888888), fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
 
-                  return ListView.builder(
-                    padding: EdgeInsets.all(screenWidth * 0.03),
-                    itemCount: filteredVouchers.length,
-                    itemBuilder: (context, index) {
-                      final voucher = filteredVouchers[index];
-                      return VoucherCard(
-                        key: ValueKey(voucher.id),
-                        voucher: voucher,
-                        screenWidth: screenWidth,
-                        screenHeight: screenHeight,
-                        onTap: () => _showDetailsPopup(context, voucher),
+                      final filtered = _filterVouchers(state.vouchers);
+                      final totalPages = _totalPages(filtered.length);
+
+                      if (_currentPage > totalPages) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) {
+                            setState(() => _currentPage = totalPages);
+                          }
+                        });
+                      }
+
+                      final pageItems = _pageSlice(filtered);
+                      final pageAllSelected = pageItems.isNotEmpty &&
+                          pageItems.every((v) => _selectedIds.contains(v.id));
+
+                      return _ResponsiveTable(
+                        pageItems: pageItems,
+                        filteredCount: filtered.length,
+                        selectAll: pageAllSelected,
+                        currentPage: _currentPage,
+                        totalPages: totalPages,
+                        onSelectAll: (v) => _toggleSelectAll(pageItems, v),
+                        isSelected: (id) => _selectedIds.contains(id),
+                        onSelect: _toggleSelect,
+                        onView: (v) => _showDetailsPopup(context, v),
+                        onDelete: (_) {},
+                        onPageChanged: (p) => setState(() => _currentPage = p),
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// _ResponsiveTable
+// ─────────────────────────────────────────────────────────────────
+class _ResponsiveTable extends StatelessWidget {
+  final List<VoucherData> pageItems;
+  final int filteredCount;
+  final bool selectAll;
+  final int currentPage;
+  final int totalPages;
+  final void Function(bool?) onSelectAll;
+  final bool Function(int) isSelected;
+  final void Function(int, bool?) onSelect;
+  final void Function(VoucherData) onView;
+  final void Function(VoucherData) onDelete;
+  final void Function(int) onPageChanged;
+
+  const _ResponsiveTable({
+    required this.pageItems,
+    required this.filteredCount,
+    required this.selectAll,
+    required this.currentPage,
+    required this.totalPages,
+    required this.onSelectAll,
+    required this.isSelected,
+    required this.onSelect,
+    required this.onView,
+    required this.onDelete,
+    required this.onPageChanged,
+  });
+
+  List<double> _colWidths(double availW) {
+    const fixed = _kCheckboxW + _kGapW + _kIdW + _kActionW + 32.0 + 4.0;
+    final flex = (availW < _kMinTableWidth ? _kMinTableWidth : availW) - fixed;
+    return _kFlexCols.map((c) => flex * c.$2 / _kTotalFlex).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (ctx, constraints) {
+      final availW = constraints.maxWidth;
+      final colWidths = _colWidths(availW);
+      final needsHScroll = availW < _kMinTableWidth;
+
+      Widget tableBox = Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFEEEEEE)),
+        ),
+        child: Column(
+          children: [
+            _TableHeader(
+              selectAll: selectAll,
+              onSelectAll: onSelectAll,
+              colWidths: colWidths,
+            ),
+            const Divider(height: 1, color: Color(0xFFEEEEEE)),
+            Expanded(
+              child: pageItems.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No vouchers available',
+                        style:
+                            TextStyle(color: Color(0xFF888888), fontSize: 14),
+                      ),
+                    )
+                  : ListView.separated(
+                      physics: const ClampingScrollPhysics(),
+                      itemCount: pageItems.length,
+                      separatorBuilder: (_, __) =>
+                          const Divider(height: 1, color: Color(0xFFEEEEEE)),
+                      itemBuilder: (context, i) {
+                        final v = pageItems[i];
+                        return _VoucherRow(
+                          voucher: v,
+                          isSelected: isSelected(v.id),
+                          onSelect: (val) => onSelect(v.id, val),
+                          onView: () => onView(v),
+                          onDelete: () => onDelete(v),
+                          colWidths: colWidths,
+                        );
+                      },
+                    ),
+            ),
+            const Divider(height: 1, color: Color(0xFFEEEEEE)),
+            _PaginationBar(
+              currentPage: currentPage,
+              totalPages: totalPages,
+              onPageChanged: onPageChanged,
+            ),
+          ],
+        ),
+      );
+
+      if (needsHScroll) {
+        return NotificationListener<ScrollNotification>(
+          onNotification: (notification) =>
+              notification.metrics.axis == Axis.horizontal,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const ClampingScrollPhysics(),
+            child: SizedBox(
+              width: _kMinTableWidth,
+              height: constraints.maxHeight,
+              child: tableBox,
+            ),
+          ),
+        );
+      }
+
+      return tableBox;
+    });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// _TableHeader
+// ─────────────────────────────────────────────────────────────────
+class _TableHeader extends StatelessWidget {
+  final bool selectAll;
+  final ValueChanged<bool?> onSelectAll;
+  final List<double> colWidths;
+
+  const _TableHeader({
+    required this.selectAll,
+    required this.onSelectAll,
+    required this.colWidths,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const s = TextStyle(
+        fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF555555));
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          SizedBox(
+            width: _kCheckboxW,
+            child: Checkbox(
+              value: selectAll,
+              onChanged: onSelectAll,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4)),
+              side: const BorderSide(color: Color(0xFFCCCCCC)),
+            ),
+          ),
+          const SizedBox(width: _kGapW),
+          const SizedBox(width: _kIdW, child: Text('ID', style: s)),
+          SizedBox(
+              width: colWidths[0],
+              child: const Text('Voucher Number', style: s)),
+          SizedBox(width: colWidths[1], child: const Text('Type', style: s)),
+          SizedBox(width: colWidths[2], child: const Text('Debit', style: s)),
+          SizedBox(width: colWidths[3], child: const Text('Credit', style: s)),
+          const SizedBox(
+            width: _kActionW,
+            child: Text('Action', style: s, textAlign: TextAlign.center),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// _VoucherRow
+// ─────────────────────────────────────────────────────────────────
+class _VoucherRow extends StatelessWidget {
+  final VoucherData voucher;
+  final bool isSelected;
+  final ValueChanged<bool?> onSelect;
+  final VoidCallback onView;
+  final VoidCallback onDelete;
+  final List<double> colWidths;
+
+  const _VoucherRow({
+    required this.voucher,
+    required this.isSelected,
+    required this.onSelect,
+    required this.onView,
+    required this.onDelete,
+    required this.colWidths,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const s = TextStyle(fontSize: 13, color: Color(0xFF333333));
+    return Container(
+      color: isSelected ? const Color(0xFFFFF8F0) : Colors.transparent,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          SizedBox(
+            width: _kCheckboxW,
+            child: Checkbox(
+              value: isSelected,
+              onChanged: onSelect,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4)),
+              activeColor: const Color(0xFFE8891A),
+              side: const BorderSide(color: Color(0xFFCCCCCC)),
+            ),
+          ),
+          const SizedBox(width: _kGapW),
+          SizedBox(width: _kIdW, child: Text('${voucher.id}', style: s)),
+          SizedBox(
+            width: colWidths[0],
+            child: Text(voucher.voucherNumber ?? 'N/A', style: s),
+          ),
+          SizedBox(
+            width: colWidths[1],
+            child: Text(voucher.type ?? 'N/A', style: s),
+          ),
+          SizedBox(
+            width: colWidths[2],
+            child: Text(voucher.totalDebit.toStringAsFixed(2), style: s),
+          ),
+          SizedBox(
+            width: colWidths[3],
+            child: Text(voucher.totalCredit.toStringAsFixed(2), style: s),
+          ),
+          SizedBox(
+            width: _kActionW,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: onView,
+                  child: const Icon(Icons.remove_red_eye_outlined,
+                      size: 18, color: Color(0xFF888888)),
+                ),
+                const SizedBox(width: 14),
+                GestureDetector(
+                  onTap: onDelete,
+                  child: const Icon(Icons.delete_outline,
+                      size: 18, color: Color(0xFF888888)),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// _PaginationBar
+// ─────────────────────────────────────────────────────────────────
+class _PaginationBar extends StatelessWidget {
+  final int currentPage;
+  final int totalPages;
+  final void Function(int) onPageChanged;
+
+  const _PaginationBar({
+    required this.currentPage,
+    required this.totalPages,
+    required this.onPageChanged,
+  });
+
+  List<int> _pages() {
+    if (totalPages <= 7) return List.generate(totalPages, (i) => i + 1);
+    final result = <int>[1];
+    if (currentPage > 3) result.add(-1);
+    for (int p = (currentPage - 1).clamp(2, totalPages - 1);
+        p <= (currentPage + 1).clamp(2, totalPages - 1);
+        p++) {
+      result.add(p);
+    }
+    if (currentPage < totalPages - 2) result.add(-1);
+    result.add(totalPages);
+    return result;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pages = _pages();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _PageBtn(
+              icon: Icons.chevron_left,
+              onTap:
+                  currentPage > 1 ? () => onPageChanged(currentPage - 1) : null,
+            ),
+            const SizedBox(width: 4),
+            for (final p in pages) ...[
+              if (p == -1)
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 2),
+                  child: Text('…',
+                      style: TextStyle(color: Color(0xFF888888), fontSize: 13)),
+                )
+              else
+                _PagePill(
+                  page: p,
+                  isActive: p == currentPage,
+                  onTap: () => onPageChanged(p),
+                ),
+              const SizedBox(width: 2),
+            ],
+            _PageBtn(
+              icon: Icons.chevron_right,
+              onTap: currentPage < totalPages
+                  ? () => onPageChanged(currentPage + 1)
+                  : null,
             ),
           ],
         ),
@@ -732,100 +654,65 @@ class _VoucherScreenState extends State<VoucherScreen> {
   }
 }
 
-class VoucherCard extends StatelessWidget {
-  final VoucherData voucher;
-  final double screenWidth;
-  final double screenHeight;
+// ─────────────────────────────────────────────────────────────────
+// _PagePill
+// ─────────────────────────────────────────────────────────────────
+class _PagePill extends StatelessWidget {
+  final int page;
+  final bool isActive;
   final VoidCallback onTap;
 
-  const VoucherCard({
-    super.key,
-    required this.voucher,
-    required this.screenWidth,
-    required this.screenHeight,
+  const _PagePill({
+    required this.page,
+    required this.isActive,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final voucherDateStr = voucher.voucherDate ?? '';
-    String formattedDateTime = 'Unknown';
-    if (voucherDateStr.isNotEmpty) {
-      try {
-        final voucherDate = DateTime.parse(voucherDateStr);
-        formattedDateTime =
-            DateFormat('MMM dd, yyyy hh:mm a').format(voucherDate);
-        print(
-            'Card voucherDateStr: $voucherDateStr, voucherDate: $voucherDate, '
-            'formatted: $formattedDateTime');
-      } catch (e) {
-        print('Error formatting voucher date: $e');
-        formattedDateTime = 'Invalid Date';
-      }
-    }
-
     return GestureDetector(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Card(
-          elevation: 4,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          color: Colors.white,
-          child: Container(
-            padding: EdgeInsets.all(screenWidth * 0.02),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Voucher: ${voucher.voucherNumber ?? 'N/A'}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Type: ${voucher.type ?? 'N/A'}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: Colors.grey),
-                            ),
-                            Text(
-                              'Date: $formattedDateTime',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Narration: ${voucher.narration ?? 'N/A'}',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isActive ? const Color(0xFFAAAAAA) : Colors.transparent,
+          ),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          '$page',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+            color: isActive ? const Color(0xFF1A1A1A) : const Color(0xFF555555),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// _PageBtn
+// ─────────────────────────────────────────────────────────────────
+class _PageBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+
+  const _PageBtn({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Icon(
+        icon,
+        size: 20,
+        color:
+            onTap == null ? const Color(0xFFCCCCCC) : const Color(0xFF555555),
       ),
     );
   }

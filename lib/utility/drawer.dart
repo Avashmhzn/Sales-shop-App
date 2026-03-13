@@ -466,7 +466,10 @@ class AppDrawer extends StatelessWidget {
                   'Expiry', // index 10
                   'Settings', // ← NEW line (will map to index 27)
                 ],
-                onNavigate: (index) => onNavigate(index + 4),
+                onNavigate: (index) {
+                  const indices = [4, 5, 6, 7, 8, 9, 10, 27];
+                  onNavigate(indices[index]);
+                },
                 currentIndex: currentIndex,
               ),
 

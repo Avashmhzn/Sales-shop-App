@@ -19,3 +19,12 @@ class FetchVoucherById extends VoucherEvent {
   @override
   List<Object?> get props => [voucherId];
 }
+
+class CreateVoucher extends VoucherEvent {
+  final Map<String, dynamic> payload;
+
+  const CreateVoucher(this.payload);
+
+  @override
+  List<Object?> get props => [payload];
+}
