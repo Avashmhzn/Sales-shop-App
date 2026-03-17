@@ -501,6 +501,7 @@ import 'package:saleup_app/screen/receipts/bloc/receipt_bloc.dart';
 import 'package:saleup_app/screen/receipts/bloc/receipt_event.dart';
 import 'package:saleup_app/screen/receipts/view/receipt_screen.dart';
 import 'package:saleup_app/screen/sales/bloc/sale_bloc.dart';
+import 'package:saleup_app/screen/sales/view/add_sale_screen.dart';
 import 'package:saleup_app/screen/sales/view/sales_screen.dart';
 import 'package:saleup_app/screen/salesReturn/bloc/sale_return_bloc.dart';
 import 'package:saleup_app/screen/salesReturn/view/sale_return_screen.dart';
@@ -844,6 +845,11 @@ final GoRouter router = GoRouter(
             create: (context) => SaleBloc(),
             child: const SaleScreen(),
           ),
+        ),
+        GoRoute(
+          path: '/add-sales',
+          builder: (context, state) =>
+              const AddSaleScreen(), // ← your new add sales screen
         ),
         GoRoute(
           path: '/settings',

@@ -8,7 +8,7 @@ part of 'purchase_response.dart';
 
 PurchaseResponse _$PurchaseResponseFromJson(Map<String, dynamic> json) =>
     PurchaseResponse(
-      success: json['success'] as bool,
+      success: _parseBool(json['success']),
       message: json['message'] as String?,
       data: json['data'],
     );
