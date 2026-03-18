@@ -127,7 +127,11 @@ class Api {
   // TOGGLE: true  → production URLs
   //         false → local dev server
   // ─────────────────────────────────────────────────────────────
-  static const bool forceProduction = true;
+  // static const bool forceProduction = true;
+  static const bool forceProduction = bool.fromEnvironment(
+    'FORCE_PRODUCTION',
+    defaultValue: true,
+  );
 
   static bool get _useProduction => kReleaseMode || forceProduction;
 

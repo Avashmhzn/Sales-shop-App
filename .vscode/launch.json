@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🚀 Run - DEVELOPMENT (Local Server)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define",
+        "FORCE_PRODUCTION=false"
+      ]
+    },
+    {
+      "name": "🌐 Run - PRODUCTION",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define",
+        "FORCE_PRODUCTION=true"
+      ]
+    },
+    {
+      "name": "📦 Build Release APK (Production)",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": ["--release"]
+    }
+  ]
+}
