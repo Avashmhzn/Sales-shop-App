@@ -1667,8 +1667,9 @@ ${jsonEncode(payload)}
                               );
                             }).toList(),
                             onChanged: (selected) {
-                              if (selected != null)
+                              if (selected != null) {
                                 _addItemFromSelection(selected);
+                              }
                             },
                           ),
                         ),
@@ -2093,7 +2094,9 @@ ${jsonEncode(payload)}
                                   ),
                                   const SizedBox(width: 8),
                                   _fixedDataCell(
-                                    '${(item['total'] as double?)?.toStringAsFixed(2) ?? '0.00'}',
+                                    (item['total'] as double?)
+                                            ?.toStringAsFixed(2) ??
+                                        '0.00',
                                     width: 90,
                                   ),
                                   SizedBox(

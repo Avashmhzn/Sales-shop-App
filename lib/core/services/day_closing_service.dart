@@ -240,6 +240,8 @@
 // file: lib/core/services/day_closing_service.dart
 // lib/core/services/day_closing_service.dart (updated)
 
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
@@ -417,6 +419,28 @@ class DayClosingService {
     } on DioException catch (e) {
       debugPrint('closeToday error: ${e.response?.data}');
       return false;
+    }
+  }
+
+  // ── BULK CLOSE DAYS (UPDATED) ─────────────────────────────────
+  Future<String?> bulkCloseDays() async {
+    const String endpoint = '/day-closing/bulk_close_days/';
+
+    try {
+      final res = await DioClient().dio.post(endpoint);
+
+      if (res.statusCode == 200) {
+        final responseData = res.data as Map<String, dynamic>;
+        if (responseData['success'] == true) {
+          log('Bulk day close success: ${responseData['message']}');
+          return responseData['message'];
+        }
+      }
+      log('Bulk close failed — status: ${res.statusCode}');
+      return null;
+    } catch (e, stack) {
+      log('Bulk day close error: $e\n$stack');
+      return null;
     }
   }
 
