@@ -1,3 +1,4 @@
+// product_event.dart
 import 'package:equatable/equatable.dart';
 
 abstract class ProductEvent extends Equatable {

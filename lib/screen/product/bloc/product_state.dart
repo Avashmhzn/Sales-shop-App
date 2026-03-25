@@ -1,3 +1,4 @@
+// product_state.dart
 import 'package:equatable/equatable.dart';
 import 'package:saleup_app/model/product_response.dart';
 import 'package:saleup_app/model/unit_response.dart';
@@ -15,7 +16,7 @@ class ProductState extends Equatable {
   final bool isFiltersCleared;
   final List<UnitData> units;
   final String selectedUnitFilter;
-  final String sortBy; // New field for sorting
+  final String sortBy;
 
   const ProductState({
     this.isLoading = false,
@@ -30,7 +31,7 @@ class ProductState extends Equatable {
     this.isFiltersCleared = false,
     this.units = const [],
     this.selectedUnitFilter = 'All',
-    this.sortBy = 'No Sorting', // Default sorting
+    this.sortBy = 'No Sorting',
   });
 
   ProductState copyWith({
@@ -46,7 +47,7 @@ class ProductState extends Equatable {
     bool? isFiltersCleared,
     List<UnitData>? units,
     String? selectedUnitFilter,
-    String? sortBy, // New parameter for sorting
+    String? sortBy,
   }) {
     return ProductState(
       isLoading: isLoading ?? this.isLoading,
@@ -67,25 +68,29 @@ class ProductState extends Equatable {
   }
 
   List<ProductData> getFilteredData() {
-    var filteredList = products
-        .where((product) =>
-            product.name.toLowerCase().contains(searchQuery.toLowerCase()))
-        .toList();
+    // Safe search filtering
+    var filteredList = products.where((product) {
+      final nameLower = (product.name ?? '').toLowerCase();
+      final queryLower = searchQuery.toLowerCase();
+      return nameLower.contains(queryLower);
+    }).toList();
 
     if (!isFiltersCleared) {
       if (selectedCategoryFilter != 'All') {
-        filteredList = filteredList
-            .where((product) => product.category == selectedCategoryFilter)
-            .toList();
+        filteredList = filteredList.where((product) {
+          final cat = product.category ?? '';
+          return cat == selectedCategoryFilter;
+        }).toList();
       }
       if (selectedUnitFilter != 'All') {
-        filteredList = filteredList
-            .where((product) => product.unit == selectedUnitFilter)
-            .toList();
+        filteredList = filteredList.where((product) {
+          final unit = product.unit ?? '';
+          return unit == selectedUnitFilter;
+        }).toList();
       }
     }
 
-    // Apply sorting
+    // Safe sorting
     switch (sortBy) {
       case 'Stock Quantity: High to Low':
         filteredList.sort(
@@ -96,10 +101,18 @@ class ProductState extends Equatable {
             (a, b) => (a.stockQuantity ?? 0).compareTo(b.stockQuantity ?? 0));
         break;
       case 'Name: A to Z':
-        filteredList.sort((a, b) => (a.name).compareTo(b.name));
+        filteredList.sort((a, b) {
+          final nameA = a.name ?? '';
+          final nameB = b.name ?? '';
+          return nameA.compareTo(nameB);
+        });
         break;
       case 'Name: Z to A':
-        filteredList.sort((a, b) => (b.name).compareTo(a.name));
+        filteredList.sort((a, b) {
+          final nameA = a.name ?? '';
+          final nameB = b.name ?? '';
+          return nameB.compareTo(nameA);
+        });
         break;
       case 'No Sorting':
       case 'Clear Sorting':

@@ -240,6 +240,7 @@
 //     ));
 //   }
 // }
+// product_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
 import 'package:saleup_app/model/product_response.dart';
@@ -268,7 +269,6 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
     try {
       final response = await DioClient().dio.get('/product/get_products/');
 
-      // Validate top-level response structure
       if (response.data is! Map<String, dynamic>) {
         emit(state.copyWith(
           isLoading: false,
@@ -289,7 +289,6 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         return;
       }
 
-      // Extract the wrapper object: data.results
       final dynamic dataWrapper = responseData['data'];
       if (dataWrapper is! Map<String, dynamic>) {
         emit(state.copyWith(
@@ -308,12 +307,10 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         return;
       }
 
-      // Safely parse each product in 'results'
       final List<ProductData> productList = [];
       for (var item in results) {
         if (item is Map<String, dynamic>) {
           try {
-            // Map API field 'stock_quantity' to model's 'stockQuantity'
             final Map<String, dynamic> adaptedItem = {
               ...item,
               'stockQuantity': item['stock_quantity'],
@@ -325,10 +322,20 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         }
       }
 
-      // Extract unique categories
-      final categories = {
+      // Debug: log null fields to find problematic products
+      for (var p in productList) {
+        if (p.name == null) developer.log('Product ${p.id} has null name');
+        if (p.category == null)
+          developer.log('Product ${p.id} has null category');
+        if (p.unit == null) developer.log('Product ${p.id} has null unit');
+        if (p.location == null)
+          developer.log('Product ${p.id} has null location');
+      }
+
+      // Safe category extraction
+      final categories = <String>{
         'All',
-        ...productList.map((p) => p.category).where((c) => c.isNotEmpty),
+        ...productList.map((p) => p.category ?? '').where((c) => c.isNotEmpty),
       };
 
       emit(state.copyWith(
@@ -485,9 +492,10 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
         }
       }
 
-      final categories = {
+      // Safe category extraction
+      final categories = <String>{
         'All',
-        ...productList.map((p) => p.category).where((c) => c.isNotEmpty),
+        ...productList.map((p) => p.category ?? '').where((c) => c.isNotEmpty),
       };
 
       emit(state.copyWith(

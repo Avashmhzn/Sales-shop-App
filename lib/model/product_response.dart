@@ -24,10 +24,11 @@ class ProductResponse {
 @JsonSerializable()
 class ProductData extends Equatable {
   final int? id;
-  final String name;
-  final String category;
-  final String unit;
-  final String location;
+  final String? name;
+  final String? category;
+  final bool? service;
+  final String? unit;
+  final String? location;
   final int? stockQuantity;
   final bool? isVat; // Changed to nullable
   @JsonKey(name: 'created_on')
@@ -45,6 +46,7 @@ class ProductData extends Equatable {
     this.isVat, // Updated to handle null
     this.createdOn,
     this.updatedOn,
+    this.service,
   });
 
   factory ProductData.fromJson(Map<String, dynamic> json) =>

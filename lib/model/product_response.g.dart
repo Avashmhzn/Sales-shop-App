@@ -24,10 +24,10 @@ Map<String, dynamic> _$ProductResponseToJson(ProductResponse instance) =>
 
 ProductData _$ProductDataFromJson(Map<String, dynamic> json) => ProductData(
       id: (json['id'] as num?)?.toInt(),
-      name: json['name'] as String,
-      category: json['category'] as String,
-      unit: json['unit'] as String,
-      location: json['location'] as String,
+      name: json['name'] as String?,
+      category: json['category'] as String?,
+      unit: json['unit'] as String?,
+      location: json['location'] as String?,
       stockQuantity: (json['stockQuantity'] as num?)?.toInt(),
       isVat: json['isVat'] as bool?,
       createdOn: json['created_on'] == null
@@ -36,6 +36,7 @@ ProductData _$ProductDataFromJson(Map<String, dynamic> json) => ProductData(
       updatedOn: json['updated_on'] == null
           ? null
           : DateTime.parse(json['updated_on'] as String),
+      service: json['service'] as bool?,
     );
 
 Map<String, dynamic> _$ProductDataToJson(ProductData instance) =>
@@ -43,6 +44,7 @@ Map<String, dynamic> _$ProductDataToJson(ProductData instance) =>
       'id': instance.id,
       'name': instance.name,
       'category': instance.category,
+      'service': instance.service,
       'unit': instance.unit,
       'location': instance.location,
       'stockQuantity': instance.stockQuantity,

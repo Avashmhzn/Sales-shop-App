@@ -23,7 +23,6 @@
 //               // ─── New Header using only your assets ───────────────────────────────
 //               Stack(
 //                 children: [
-//                   // Background image (your drawer_header.png)
 //                   SizedBox(
 //                     height: 200,
 //                     width: double.infinity,
@@ -32,15 +31,12 @@
 //                       fit: BoxFit.cover,
 //                     ),
 //                   ),
-
-//                   // Logo + Title + Close button
 //                   Padding(
 //                     padding: const EdgeInsets.symmetric(
 //                         horizontal: 60, vertical: 30),
 //                     child: Column(
 //                       crossAxisAlignment: CrossAxisAlignment.start,
 //                       children: [
-//                         // Your logo
 //                         Image.asset(
 //                           'assets/images/sales_up_logo.png',
 //                           height: 60,
@@ -50,39 +46,22 @@
 //                       ],
 //                     ),
 //                   ),
-
-//                   // // Close button (white + circle border for visibility)
-//                   // Positioned(
-//                   //   top: 8,
-//                   //   right: 8,
-//                   //   child: IconButton(
-//                   //     icon: Container(
-//                   //       decoration: BoxDecoration(
-//                   //         shape: BoxShape.circle,
-//                   //         border: Border.all(color: Colors.white70, width: 1.8),
-//                   //       ),
-//                   //       padding: const EdgeInsets.all(5),
-//                   //       child: const Icon(Icons.close,
-//                   //           color: Colors.white, size: 22),
-//                   //     ),
-//                   //     onPressed: () => Navigator.pop(context),
-//                   //   ),
-//                   // ),
 //                 ],
 //               ),
 
 //               const SizedBox(height: 8),
 
-//               // ─── The rest of your original items (unchanged) ─────────────────────
 //               DrawerItem(
 //                 title: "Dashboard",
 //                 assetPath: 'assets/images/dashboard.png',
+//                 isActive: currentIndex == 0,
 //                 onTap: () {
 //                   print('Navigating to Dashboard (/home)');
 //                   onNavigate(0);
 //                   Navigator.pop(context);
 //                 },
 //               ),
+
 //               ExpandableDrawerItem(
 //                 title: "Setup",
 //                 assetPath: 'assets/images/settings.png',
@@ -94,9 +73,15 @@
 //                   'Products', // index 8
 //                   'Units', // index 9
 //                   'Expiry', // index 10
+//                   'Settings', // ← NEW line (will map to index 27)
 //                 ],
-//                 onNavigate: (index) => onNavigate(index + 4),
+//                 onNavigate: (index) {
+//                   const indices = [4, 5, 6, 7, 8, 9, 10, 27];
+//                   onNavigate(indices[index]);
+//                 },
+//                 currentIndex: currentIndex,
 //               ),
+
 //               ExpandableDrawerItem(
 //                 title: "Daily Transation",
 //                 assetPath: 'assets/images/transaction-history.png',
@@ -110,7 +95,9 @@
 //                   final indices = [2, 12, 1, 11];
 //                   onNavigate(indices[index]);
 //                 },
+//                 currentIndex: currentIndex,
 //               ),
+
 //               ExpandableDrawerItem(
 //                 title: "Receivable",
 //                 assetPath: 'assets/images/receivable.png',
@@ -119,10 +106,13 @@
 //                   'Create Khata',
 //                 ],
 //                 onNavigate: (index) {
-//                   final indices = [];
+//                   // TODO: replace with real indices when you add those screens
+//                   final indices = [22, 23]; // ← change these numbers later
 //                   onNavigate(indices[index]);
 //                 },
+//                 currentIndex: currentIndex,
 //               ),
+
 //               ExpandableDrawerItem(
 //                 title: "Reports",
 //                 assetPath: 'assets/images/report.png',
@@ -141,6 +131,7 @@
 //                       final indices = [13, 14, 15, 17, 18];
 //                       onNavigate(indices[index]);
 //                     },
+//                     currentIndex: currentIndex,
 //                   ),
 //                   ExpandableDrawerItem(
 //                     title: "Accounting Reports",
@@ -154,15 +145,24 @@
 //                       "Log Summary",
 //                     ],
 //                     onNavigate: (index) {
-//                       final indices = [19, 20, 21];
+//                       final indices = [
+//                         19,
+//                         20,
+//                         21,
+//                         24,
+//                         25,
+//                         26
+//                       ]; // ← extend when you add routes
 //                       onNavigate(indices[index]);
 //                     },
+//                     currentIndex: currentIndex,
 //                   ),
 //                 ],
 //                 onNavigate: (index) {
 //                   final indices = [17];
 //                   onNavigate(indices[index]);
 //                 },
+//                 currentIndex: currentIndex,
 //               ),
 //             ],
 //           ),
@@ -172,18 +172,19 @@
 //   }
 // }
 
-// // DrawerItem and ExpandableDrawerItem remain 100% unchanged
 // class DrawerItem extends StatelessWidget {
 //   final String title;
 //   final VoidCallback onTap;
 //   final String? assetPath;
 //   final IconData? icon;
+//   final bool isActive;
 
 //   const DrawerItem({
 //     required this.title,
 //     required this.onTap,
 //     this.assetPath,
 //     this.icon,
+//     required this.isActive,
 //     super.key,
 //   }) : assert(
 //           assetPath == null || icon == null,
@@ -192,6 +193,9 @@
 
 //   @override
 //   Widget build(BuildContext context) {
+//     final color = isActive ? const Color(0xFFFFA133) : const Color(0xFF464E57);
+//     final fontWeight = isActive ? FontWeight.w600 : FontWeight.normal;
+
 //     Widget iconWidget;
 
 //     if (assetPath != null) {
@@ -200,7 +204,7 @@
 //         width: 24,
 //         height: 24,
 //         fit: BoxFit.contain,
-//         color: const Color(0xFF464E57),
+//         color: color, // ← changed: now uses active color
 //         errorBuilder: (context, error, stackTrace) => const Icon(
 //           Icons.error_outline,
 //           size: 24,
@@ -210,11 +214,12 @@
 //       iconWidget = Icon(
 //         icon,
 //         size: 24,
-//         color: Colors.black87,
+//         color: color,
 //       );
 //     } else {
-//       iconWidget = const SizedBox(width: 24); // placeholder
+//       iconWidget = const SizedBox(width: 24);
 //     }
+
 //     return Column(
 //       mainAxisSize: MainAxisSize.min,
 //       children: [
@@ -232,11 +237,11 @@
 //                 Expanded(
 //                   child: Text(
 //                     title,
-//                     style: const TextStyle(
+//                     style: TextStyle(
 //                       fontSize: 14,
-//                       fontWeight: FontWeight.normal,
 //                       fontFamily: 'Inter',
-//                       color: Color(0xFF464E57),
+//                       fontWeight: fontWeight, // ← changed
+//                       color: color, // ← changed
 //                     ),
 //                   ),
 //                 ),
@@ -262,6 +267,7 @@
 //   final String? assetPath;
 //   final List<dynamic> subItems;
 //   final Function(int) onNavigate;
+//   final int currentIndex;
 
 //   const ExpandableDrawerItem({
 //     required this.title,
@@ -269,6 +275,7 @@
 //     this.assetPath,
 //     required this.subItems,
 //     required this.onNavigate,
+//     required this.currentIndex,
 //     super.key,
 //   });
 
@@ -281,6 +288,19 @@
 
 //   @override
 //   Widget build(BuildContext context) {
+//     // Check if this section has active child → color parent orange too
+//     bool sectionActive = false;
+//     for (var i = 0; i < widget.subItems.length; i++) {
+//       final globalIdx = _getGlobalIndex(i);
+//       if (globalIdx != null && widget.currentIndex == globalIdx) {
+//         sectionActive = true;
+//         break;
+//       }
+//     }
+
+//     final headerColor =
+//         sectionActive ? const Color(0xFFFFA133) : const Color(0xFF464E57);
+
 //     Widget iconWidget;
 
 //     if (widget.assetPath != null) {
@@ -289,7 +309,7 @@
 //         width: 24,
 //         height: 24,
 //         fit: BoxFit.contain,
-//         color: const Color(0xFF464E57),
+//         color: headerColor,
 //         errorBuilder: (context, error, stackTrace) => const Icon(
 //           Icons.error_outline,
 //           size: 24,
@@ -299,11 +319,12 @@
 //       iconWidget = Icon(
 //         widget.icon,
 //         size: 24,
-//         color: Colors.black87,
+//         color: headerColor,
 //       );
 //     } else {
-//       iconWidget = const SizedBox(width: 24); // placeholder
+//       iconWidget = const SizedBox(width: 24);
 //     }
+
 //     return Column(
 //       mainAxisSize: MainAxisSize.min,
 //       crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,11 +345,11 @@
 //                     const SizedBox(width: 16),
 //                     Text(
 //                       widget.title,
-//                       style: const TextStyle(
+//                       style: TextStyle(
 //                         fontSize: 14,
 //                         fontFamily: 'Inter',
 //                         fontWeight: FontWeight.normal,
-//                         color: const Color(0xFF464E57),
+//                         color: headerColor,
 //                       ),
 //                     ),
 //                   ],
@@ -353,10 +374,18 @@
 //                   child: item,
 //                 );
 //               }
+
+//               final subTitle = item.toString();
+//               final globalIndex = _getGlobalIndex(index);
+//               final isActive =
+//                   globalIndex != null && widget.currentIndex == globalIndex;
+
+//               final subColor =
+//                   isActive ? const Color(0xFFFFA133) : const Color(0xFF687582);
+
 //               return InkWell(
 //                 onTap: () {
-//                   print(
-//                       'Navigating to ${widget.subItems[index]} (index: $index)');
+//                   print('Navigating to $subTitle (index: $index)');
 //                   widget.onNavigate(index);
 //                   Navigator.pop(context);
 //                 },
@@ -365,12 +394,13 @@
 //                   padding: const EdgeInsets.only(
 //                       left: 55, right: 16, top: 8, bottom: 8),
 //                   child: Text(
-//                     widget.subItems[index].toString(),
-//                     style: const TextStyle(
+//                     subTitle,
+//                     style: TextStyle(
 //                       fontSize: 14,
 //                       fontFamily: 'Inter',
-//                       fontWeight: FontWeight.normal,
-//                       color: const Color(0xFF687582),
+//                       fontWeight:
+//                           isActive ? FontWeight.w600 : FontWeight.normal,
+//                       color: subColor,
 //                     ),
 //                   ),
 //                 ),
@@ -387,8 +417,34 @@
 //       ],
 //     );
 //   }
-// }
 
+//   int? _getGlobalIndex(int subIndex) {
+//     switch (widget.title) {
+//       case 'Setup':
+//         const setupIndices = [4, 5, 6, 7, 8, 9, 10, 27]; // ← Settings = 27
+//         return subIndex < setupIndices.length ? setupIndices[subIndex] : null;
+
+//       case 'Daily Transation':
+//         const indices = [2, 12, 1, 11];
+//         return subIndex < indices.length ? indices[subIndex] : null;
+
+//       case 'Receivable':
+//         const indices = [22, 23]; // ← replace with your real indices
+//         return subIndex < indices.length ? indices[subIndex] : null;
+
+//       case 'Transaction Reports':
+//         const indices = [13, 14, 15, 17, 18];
+//         return subIndex < indices.length ? indices[subIndex] : null;
+
+//       case 'Accounting Reports':
+//         const indices = [19, 20, 21, 24, 25, 26]; // ← extend when needed
+//         return subIndex < indices.length ? indices[subIndex] : null;
+
+//       default:
+//         return null;
+//     }
+//   }
+// }
 import 'package:flutter/material.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -411,7 +467,7 @@ class AppDrawer extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // ─── New Header using only your assets ───────────────────────────────
+              // Header
               Stack(
                 children: [
                   SizedBox(
@@ -447,7 +503,6 @@ class AppDrawer extends StatelessWidget {
                 assetPath: 'assets/images/dashboard.png',
                 isActive: currentIndex == 0,
                 onTap: () {
-                  print('Navigating to Dashboard (/home)');
                   onNavigate(0);
                   Navigator.pop(context);
                 },
@@ -457,14 +512,14 @@ class AppDrawer extends StatelessWidget {
                 title: "Setup",
                 assetPath: 'assets/images/settings.png',
                 subItems: const [
-                  'Account Heads', // index 4
-                  'Parties', // index 5
-                  'Locations', // index 6
-                  'Categories', // index 7
-                  'Products', // index 8
-                  'Units', // index 9
-                  'Expiry', // index 10
-                  'Settings', // ← NEW line (will map to index 27)
+                  'Account Heads',
+                  'Parties',
+                  'Locations',
+                  'Categories',
+                  'Products',
+                  'Units',
+                  'Expiry',
+                  'Settings',
                 ],
                 onNavigate: (index) {
                   const indices = [4, 5, 6, 7, 8, 9, 10, 27];
@@ -477,13 +532,13 @@ class AppDrawer extends StatelessWidget {
                 title: "Daily Transation",
                 assetPath: 'assets/images/transaction-history.png',
                 subItems: const [
-                  'Sales', // index 2
-                  'Sales Return', // index 12
-                  'Purchase', // index 1
-                  'Purchase Return', // index 11
+                  'Sales',
+                  'Sales Return',
+                  'Purchase',
+                  'Purchase Return'
                 ],
                 onNavigate: (index) {
-                  final indices = [2, 12, 1, 11];
+                  const indices = [2, 12, 1, 11];
                   onNavigate(indices[index]);
                 },
                 currentIndex: currentIndex,
@@ -492,13 +547,9 @@ class AppDrawer extends StatelessWidget {
               ExpandableDrawerItem(
                 title: "Receivable",
                 assetPath: 'assets/images/receivable.png',
-                subItems: const [
-                  'Khata',
-                  'Create Khata',
-                ],
+                subItems: const ['Khata', 'Create Khata'],
                 onNavigate: (index) {
-                  // TODO: replace with real indices when you add those screens
-                  final indices = [22, 23]; // ← change these numbers later
+                  const indices = [22, 23];
                   onNavigate(indices[index]);
                 },
                 currentIndex: currentIndex,
@@ -512,14 +563,14 @@ class AppDrawer extends StatelessWidget {
                     title: "Transaction Reports",
                     assetPath: 'assets/images/transactional-data.png',
                     subItems: const [
-                      'Voucher', // index 13
-                      'Receipt', // index 14
-                      'Payment', // index 15
-                      'Day Closing', // index 17
-                      "Product Report", // index 18
+                      'Voucher',
+                      'Receipt',
+                      'Payment',
+                      'Day Closing',
+                      "Product Report"
                     ],
                     onNavigate: (index) {
-                      final indices = [13, 14, 15, 17, 18];
+                      const indices = [13, 14, 15, 17, 18];
                       onNavigate(indices[index]);
                     },
                     currentIndex: currentIndex,
@@ -528,31 +579,21 @@ class AppDrawer extends StatelessWidget {
                     title: "Accounting Reports",
                     assetPath: 'assets/images/accounting.png',
                     subItems: const [
-                      "Ledger Report", // index 19
-                      "Stock-Ledger", // index 20
-                      "Trial Balance", // index 21
+                      "Ledger Report",
+                      "Stock-Ledger",
+                      "Trial Balance",
                       "Balance Sheet",
                       "Profit & Loss",
                       "Log Summary",
                     ],
                     onNavigate: (index) {
-                      final indices = [
-                        19,
-                        20,
-                        21,
-                        24,
-                        25,
-                        26
-                      ]; // ← extend when you add routes
+                      const indices = [19, 20, 21, 24, 25, 26];
                       onNavigate(indices[index]);
                     },
                     currentIndex: currentIndex,
                   ),
                 ],
-                onNavigate: (index) {
-                  final indices = [17];
-                  onNavigate(indices[index]);
-                },
+                onNavigate: (index) => onNavigate(17),
                 currentIndex: currentIndex,
               ),
             ],
@@ -563,61 +604,43 @@ class AppDrawer extends StatelessWidget {
   }
 }
 
+// ==================== DrawerItem (unchanged) ====================
 class DrawerItem extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
   final String? assetPath;
-  final IconData? icon;
   final bool isActive;
 
   const DrawerItem({
     required this.title,
     required this.onTap,
     this.assetPath,
-    this.icon,
     required this.isActive,
     super.key,
-  }) : assert(
-          assetPath == null || icon == null,
-          'Provide either assetPath or icon, not both',
-        );
+  });
 
   @override
   Widget build(BuildContext context) {
     final color = isActive ? const Color(0xFFFFA133) : const Color(0xFF464E57);
     final fontWeight = isActive ? FontWeight.w600 : FontWeight.normal;
 
-    Widget iconWidget;
-
-    if (assetPath != null) {
-      iconWidget = Image.asset(
-        assetPath!,
-        width: 24,
-        height: 24,
-        fit: BoxFit.contain,
-        color: color, // ← changed: now uses active color
-        errorBuilder: (context, error, stackTrace) => const Icon(
-          Icons.error_outline,
-          size: 24,
-        ),
-      );
-    } else if (icon != null) {
-      iconWidget = Icon(
-        icon,
-        size: 24,
-        color: color,
-      );
-    } else {
-      iconWidget = const SizedBox(width: 24);
-    }
+    final iconWidget = assetPath != null
+        ? Image.asset(
+            assetPath!,
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            color: color,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.error_outline, size: 24),
+          )
+        : const SizedBox(width: 24);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         InkWell(
           onTap: onTap,
-          splashColor: Colors.blueAccent,
-          highlightColor: Colors.transparent,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -631,8 +654,8 @@ class DrawerItem extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontFamily: 'Inter',
-                      fontWeight: fontWeight, // ← changed
-                      color: color, // ← changed
+                      fontWeight: fontWeight,
+                      color: color,
                     ),
                   ),
                 ),
@@ -641,20 +664,19 @@ class DrawerItem extends StatelessWidget {
           ),
         ),
         const Divider(
-          height: 1,
-          thickness: 1,
-          color: Colors.transparent,
-          indent: 16,
-          endIndent: 16,
-        ),
+            height: 1,
+            thickness: 1,
+            color: Colors.transparent,
+            indent: 16,
+            endIndent: 16),
       ],
     );
   }
 }
 
+// ==================== ExpandableDrawerItem - ONLY THIS PART IS FIXED ====================
 class ExpandableDrawerItem extends StatefulWidget {
   final String title;
-  final IconData? icon;
   final String? assetPath;
   final List<dynamic> subItems;
   final Function(int) onNavigate;
@@ -662,7 +684,6 @@ class ExpandableDrawerItem extends StatefulWidget {
 
   const ExpandableDrawerItem({
     required this.title,
-    this.icon,
     this.assetPath,
     required this.subItems,
     required this.onNavigate,
@@ -671,50 +692,56 @@ class ExpandableDrawerItem extends StatefulWidget {
   });
 
   @override
-  _ExpandableDrawerItemState createState() => _ExpandableDrawerItemState();
+  State<ExpandableDrawerItem> createState() => _ExpandableDrawerItemState();
 }
 
 class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
   bool _isExpanded = false;
 
   @override
-  Widget build(BuildContext context) {
-    // Check if this section has active child → color parent orange too
-    bool sectionActive = false;
-    for (var i = 0; i < widget.subItems.length; i++) {
+  void initState() {
+    super.initState();
+    _isExpanded = _shouldBeExpanded();
+  }
+
+  @override
+  void didUpdateWidget(covariant ExpandableDrawerItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.currentIndex != oldWidget.currentIndex) {
+      setState(() {
+        _isExpanded = _shouldBeExpanded();
+      });
+    }
+  }
+
+  bool _shouldBeExpanded() {
+    for (int i = 0; i < widget.subItems.length; i++) {
       final globalIdx = _getGlobalIndex(i);
       if (globalIdx != null && widget.currentIndex == globalIdx) {
-        sectionActive = true;
-        break;
+        return true;
       }
     }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool sectionActive = _shouldBeExpanded();
 
     final headerColor =
         sectionActive ? const Color(0xFFFFA133) : const Color(0xFF464E57);
 
-    Widget iconWidget;
-
-    if (widget.assetPath != null) {
-      iconWidget = Image.asset(
-        widget.assetPath!,
-        width: 24,
-        height: 24,
-        fit: BoxFit.contain,
-        color: headerColor,
-        errorBuilder: (context, error, stackTrace) => const Icon(
-          Icons.error_outline,
-          size: 24,
-        ),
-      );
-    } else if (widget.icon != null) {
-      iconWidget = Icon(
-        widget.icon,
-        size: 24,
-        color: headerColor,
-      );
-    } else {
-      iconWidget = const SizedBox(width: 24);
-    }
+    final iconWidget = widget.assetPath != null
+        ? Image.asset(
+            widget.assetPath!,
+            width: 24,
+            height: 24,
+            fit: BoxFit.contain,
+            color: headerColor,
+            errorBuilder: (_, __, ___) =>
+                const Icon(Icons.error_outline, size: 24),
+          )
+        : const SizedBox(width: 24);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -722,8 +749,6 @@ class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
       children: [
         InkWell(
           onTap: () => setState(() => _isExpanded = !_isExpanded),
-          splashColor: Colors.blueAccent,
-          highlightColor: Colors.transparent,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -739,7 +764,6 @@ class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
                       style: TextStyle(
                         fontSize: 14,
                         fontFamily: 'Inter',
-                        fontWeight: FontWeight.normal,
                         color: headerColor,
                       ),
                     ),
@@ -759,6 +783,7 @@ class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: List.generate(widget.subItems.length, (index) {
               final item = widget.subItems[index];
+
               if (item is ExpandableDrawerItem) {
                 return Padding(
                   padding: const EdgeInsets.only(left: 16),
@@ -776,7 +801,6 @@ class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
 
               return InkWell(
                 onTap: () {
-                  print('Navigating to $subTitle (index: $index)');
                   widget.onNavigate(index);
                   Navigator.pop(context);
                 },
@@ -812,15 +836,15 @@ class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
   int? _getGlobalIndex(int subIndex) {
     switch (widget.title) {
       case 'Setup':
-        const setupIndices = [4, 5, 6, 7, 8, 9, 10, 27]; // ← Settings = 27
-        return subIndex < setupIndices.length ? setupIndices[subIndex] : null;
+        const indices = [4, 5, 6, 7, 8, 9, 10, 27];
+        return subIndex < indices.length ? indices[subIndex] : null;
 
       case 'Daily Transation':
         const indices = [2, 12, 1, 11];
         return subIndex < indices.length ? indices[subIndex] : null;
 
       case 'Receivable':
-        const indices = [22, 23]; // ← replace with your real indices
+        const indices = [22, 23];
         return subIndex < indices.length ? indices[subIndex] : null;
 
       case 'Transaction Reports':
@@ -828,7 +852,7 @@ class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
         return subIndex < indices.length ? indices[subIndex] : null;
 
       case 'Accounting Reports':
-        const indices = [19, 20, 21, 24, 25, 26]; // ← extend when needed
+        const indices = [19, 20, 21, 24, 25, 26];
         return subIndex < indices.length ? indices[subIndex] : null;
 
       default:
