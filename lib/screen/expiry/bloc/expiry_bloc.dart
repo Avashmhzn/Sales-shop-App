@@ -1,46 +1,38 @@
+// lib/screen/expiry/bloc/expiry_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
 import 'package:saleup_app/model/expiry_response.dart';
-import 'package:saleup_app/screen/expiry/bloc/expiry_event.dart';
-import 'package:saleup_app/screen/expiry/bloc/expiry_state.dart';
 import 'package:dio/dio.dart' as dio;
+import 'expiry_event.dart';
+import 'expiry_state.dart';
 
 class ExpiryBloc extends Bloc<ExpiryEvent, ExpiryState> {
   ExpiryBloc() : super(const ExpiryState()) {
-    on<FetchExpiry>(_onFetchExpiry);
-    on<SortExpiry>(_onSortExpiry);
-    on<ApplyFilters>(_onApplyFilters);
+    on<FetchExpiry>(_onFetch);
+    on<SearchExpiry>(_onSearch);
+    on<ToggleProductFilter>(_onProductFilter);
+    on<SetPriceSort>(_onPriceSort);
+    on<SetQuantitySort>(_onQuantitySort);
+    on<ClearFilters>(_onClearFilters);
     on<GoToPage>(_onGoToPage);
-    on<SearchExpiry>(_onSearchExpiry);
+    on<DeleteExpiry>(_onDelete);
   }
 
-  Future<void> _onFetchExpiry(
-      FetchExpiry event, Emitter<ExpiryState> emit) async {
+  Future<void> _onFetch(FetchExpiry event, Emitter<ExpiryState> emit) async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
       final response = await DioClient().dio.get('/expiry/get_expiries/');
-      print('Parsed Response: ${response.data}');
-      if (response.data is! Map<String, dynamic>) {
-        emit(state.copyWith(
-          isLoading: false,
-          errorMessage: 'Invalid API response format',
-        ));
-        return;
-      }
       final expiryResponse = ExpiryResponse.fromJson(response.data);
-      print('Parsed ExpiryData: ${expiryResponse.data}');
-
       if (expiryResponse.success) {
         emit(state.copyWith(
           isLoading: false,
-          expiryData: expiryResponse.data,
-          totalItems: expiryResponse.data.length,
+          expiryData: expiryResponse.data ?? [],
           errorMessage: null,
         ));
       } else {
         emit(state.copyWith(
           isLoading: false,
-          errorMessage: expiryResponse.message ?? 'Failed to fetch expiry data',
+          errorMessage: expiryResponse.message ?? 'Failed to fetch',
         ));
       }
     } on dio.DioException catch (e) {
@@ -48,45 +40,61 @@ class ExpiryBloc extends Bloc<ExpiryEvent, ExpiryState> {
       if (e.response != null && e.response!.statusCode == 400) {
         errorMessage = e.response!.data['message'] ?? 'Authentication failed';
       } else if (e.response != null) {
-        errorMessage =
-            'Server error: ${e.response!.statusCode} - ${e.response!.data}';
+        errorMessage = 'Server error: ${e.response!.statusCode}';
       }
       emit(state.copyWith(isLoading: false, errorMessage: errorMessage));
     } catch (e) {
-      emit(state.copyWith(
-          isLoading: false, errorMessage: 'Failed to parse expiry data: $e'));
-      print('Parsing Error: $e');
+      emit(state.copyWith(isLoading: false, errorMessage: 'Error: $e'));
     }
   }
 
-  void _onSortExpiry(SortExpiry event, Emitter<ExpiryState> emit) {
-    var updatedTempCriteria = Map<String, String>.from(state.tempSortCriteria);
-    if (event.remove) {
-      updatedTempCriteria.remove(event.category);
-    } else {
-      updatedTempCriteria[event.category] = event.value;
-    }
-    emit(state.copyWith(tempSortCriteria: updatedTempCriteria));
+  void _onSearch(SearchExpiry event, Emitter<ExpiryState> emit) {
+    emit(state.copyWith(searchQuery: event.query, currentPage: 1));
   }
 
-  void _onApplyFilters(ApplyFilters event, Emitter<ExpiryState> emit) {
+  void _onProductFilter(ToggleProductFilter event, Emitter<ExpiryState> emit) {
+    emit(state.copyWith(selectedProduct: event.product, currentPage: 1));
+  }
+
+  void _onPriceSort(SetPriceSort event, Emitter<ExpiryState> emit) {
     emit(state.copyWith(
-      sortCriteria: Map<String, String>.from(state.tempSortCriteria),
+      priceSort: event.direction,
+      quantitySort: null, // Only one sort active
+      currentPage: 1,
+    ));
+  }
+
+  void _onQuantitySort(SetQuantitySort event, Emitter<ExpiryState> emit) {
+    emit(state.copyWith(
+      quantitySort: event.direction,
+      priceSort: null, // Only one sort active
+      currentPage: 1,
+    ));
+  }
+
+  void _onClearFilters(ClearFilters event, Emitter<ExpiryState> emit) {
+    emit(state.copyWith(
+      selectedProduct: null,
+      priceSort: null,
+      quantitySort: null,
       currentPage: 1,
     ));
   }
 
   void _onGoToPage(GoToPage event, Emitter<ExpiryState> emit) {
+    final filtered = state.getFilteredData();
     final totalPages =
-        (state.getFilteredData().length / state.itemsPerPage).ceil();
-    final newPage = event.page.clamp(1, totalPages);
-    emit(state.copyWith(currentPage: newPage));
+        (filtered.length / state.itemsPerPage).ceil().clamp(1, 999);
+    emit(state.copyWith(currentPage: event.page.clamp(1, totalPages)));
   }
 
-  void _onSearchExpiry(SearchExpiry event, Emitter<ExpiryState> emit) {
-    emit(state.copyWith(
-      searchQuery: event.query,
-      currentPage: 1,
-    ));
+  Future<void> _onDelete(DeleteExpiry event, Emitter<ExpiryState> emit) async {
+    try {
+      await DioClient().dio.delete('/expiry/delete_expiry/${event.id}/');
+      final updated = state.expiryData.where((e) => e.id != event.id).toList();
+      emit(state.copyWith(expiryData: updated));
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Delete failed: $e'));
+    }
   }
 }

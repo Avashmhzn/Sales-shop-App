@@ -6,43 +6,54 @@ abstract class ExpiryEvent extends Equatable {
 
 class FetchExpiry extends ExpiryEvent {
   const FetchExpiry();
-
   @override
   List<Object?> get props => [];
 }
 
-class SortExpiry extends ExpiryEvent {
-  final String category;
-  final String value;
-  final bool remove;
-
-  const SortExpiry(this.category, this.value, {this.remove = false});
-
+class SearchExpiry extends ExpiryEvent {
+  final String query;
+  const SearchExpiry(this.query);
   @override
-  List<Object?> get props => [category, value, remove];
+  List<Object?> get props => [query];
 }
 
-class ApplyFilters extends ExpiryEvent {
-  const ApplyFilters();
+class ToggleProductFilter extends ExpiryEvent {
+  final String? product;
+  const ToggleProductFilter(this.product);
+  @override
+  List<Object?> get props => [product];
+}
 
+class SetPriceSort extends ExpiryEvent {
+  final String? direction;
+  const SetPriceSort(this.direction);
+  @override
+  List<Object?> get props => [direction];
+}
+
+class SetQuantitySort extends ExpiryEvent {
+  final String? direction;
+  const SetQuantitySort(this.direction);
+  @override
+  List<Object?> get props => [direction];
+}
+
+class ClearFilters extends ExpiryEvent {
+  const ClearFilters();
   @override
   List<Object?> get props => [];
 }
 
 class GoToPage extends ExpiryEvent {
   final int page;
-
   const GoToPage(this.page);
-
   @override
   List<Object?> get props => [page];
 }
 
-class SearchExpiry extends ExpiryEvent {
-  final String query;
-
-  const SearchExpiry(this.query);
-
+class DeleteExpiry extends ExpiryEvent {
+  final int id;
+  const DeleteExpiry(this.id);
   @override
-  List<Object?> get props => [query];
+  List<Object?> get props => [id];
 }
