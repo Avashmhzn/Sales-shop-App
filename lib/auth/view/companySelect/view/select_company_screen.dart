@@ -851,10 +851,9 @@ class CompanySelectionScreen extends StatelessWidget {
                       FutureBuilder<Map<String, String?>>(
                         future: _getUserInfo(),
                         builder: (context, snapshot) {
-                          final username =
-                              snapshot.data?['username'] ?? 'AAVASH';
+                          final username = snapshot.data?['username'] ?? 'USER';
                           final email =
-                              snapshot.data?['email'] ?? 'aavash@gmail.com';
+                              snapshot.data?['email'] ?? 'user@gmail.com';
 
                           return Padding(
                             padding: const EdgeInsets.fromLTRB(24, 0, 24, 20),

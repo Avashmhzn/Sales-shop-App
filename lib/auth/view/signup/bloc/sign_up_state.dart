@@ -12,9 +12,14 @@ class SignUpState extends Equatable {
   final String confirmPassword;
   final bool termsAgreed;
 
+  final bool? isActive;
+  final bool? isStaff;
+  final bool? isSuperuser;
+  final List<String>? groups;
+
   final SignUpStatus status;
   final String? errorMessage;
-  final Map<String, String>? fieldErrors; // for server-side field errors
+  final Map<String, String>? fieldErrors;
 
   const SignUpState({
     this.firstName = '',
@@ -25,6 +30,10 @@ class SignUpState extends Equatable {
     this.password = '',
     this.confirmPassword = '',
     this.termsAgreed = false,
+    this.isActive,
+    this.isStaff,
+    this.isSuperuser,
+    this.groups,
     this.status = SignUpStatus.initial,
     this.errorMessage,
     this.fieldErrors,
@@ -39,6 +48,10 @@ class SignUpState extends Equatable {
     String? password,
     String? confirmPassword,
     bool? termsAgreed,
+    bool? isActive,
+    bool? isStaff,
+    bool? isSuperuser,
+    List<String>? groups,
     SignUpStatus? status,
     String? errorMessage,
     Map<String, String>? fieldErrors,
@@ -52,22 +65,25 @@ class SignUpState extends Equatable {
       password: password ?? this.password,
       confirmPassword: confirmPassword ?? this.confirmPassword,
       termsAgreed: termsAgreed ?? this.termsAgreed,
+      isActive: isActive ?? this.isActive,
+      isStaff: isStaff ?? this.isStaff,
+      isSuperuser: isSuperuser ?? this.isSuperuser,
+      groups: groups ?? this.groups,
       status: status ?? this.status,
       errorMessage: errorMessage ?? this.errorMessage,
       fieldErrors: fieldErrors ?? this.fieldErrors,
     );
   }
 
-  bool get canSubmit {
-    return firstName.trim().isNotEmpty &&
-        lastName.trim().isNotEmpty &&
-        username.trim().isNotEmpty &&
-        email.trim().isNotEmpty &&
-        phone.trim().isNotEmpty &&
-        password.trim().isNotEmpty &&
-        password == confirmPassword &&
-        termsAgreed;
-  }
+  bool get canSubmit =>
+      firstName.trim().isNotEmpty &&
+      lastName.trim().isNotEmpty &&
+      username.trim().isNotEmpty &&
+      email.trim().isNotEmpty &&
+      phone.trim().isNotEmpty &&
+      password.trim().isNotEmpty &&
+      password == confirmPassword &&
+      termsAgreed;
 
   @override
   List<Object?> get props => [
@@ -79,6 +95,10 @@ class SignUpState extends Equatable {
         password,
         confirmPassword,
         termsAgreed,
+        isActive,
+        isStaff,
+        isSuperuser,
+        groups,
         status,
         errorMessage,
         fieldErrors,

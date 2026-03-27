@@ -3,7 +3,7 @@
 // import 'package:go_router/go_router.dart';
 // import 'package:saleup_app/auth/view/signup/bloc/sign_in_up_event.dart';
 // import 'package:saleup_app/auth/view/signup/bloc/sign_up_bloc.dart';
-// import 'package:saleup_app/auth/view/signup/bloc/sign_up_state.dart'; // make sure this matches your actual event file name
+// import 'package:saleup_app/auth/view/signup/bloc/sign_up_state.dart';
 
 // class SignUpScreen extends StatelessWidget {
 //   const SignUpScreen({super.key});
@@ -30,6 +30,7 @@
 //   @override
 //   Widget build(BuildContext context) {
 //     final size = MediaQuery.of(context).size;
+//     final screenHeight = MediaQuery.of(context).size.height;
 
 //     return BlocConsumer<SignUpBloc, SignUpState>(
 //       listener: (context, state) {
@@ -58,265 +59,264 @@
 //         return Scaffold(
 //           backgroundColor: Colors.white,
 //           body: SafeArea(
-//             child: SizedBox(
-//               child: Stack(
+//             child: SingleChildScrollView(
+//               child: Column(
 //                 children: [
-//                   // Background image
-//                   Positioned(
-//                     top: 0,
-//                     left: 0,
-//                     right: 0,
-//                     height: size.height * 0.4,
-//                     child: Image.asset(
-//                       'assets/images/login_bg.png',
-//                       fit: BoxFit.cover,
-//                       alignment: Alignment.topCenter,
-//                     ),
-//                   ),
+//                   // Background image + Logo + Back button in a Stack
+//                   SizedBox(
+//                     height: screenHeight * 0.4,
+//                     child: Stack(
+//                       children: [
+//                         // Background image
+//                         Positioned.fill(
+//                           child: Image.asset(
+//                             'assets/images/login_bg.png',
+//                             fit: BoxFit.cover,
+//                             alignment: Alignment.topCenter,
+//                           ),
+//                         ),
 
-//                   // Logo
-//                   Positioned(
-//                     top: size.height * 0.04,
-//                     left: 0,
-//                     right: 0,
-//                     child: Padding(
-//                       padding: const EdgeInsets.all(10),
-//                       child: Image.asset(
-//                         'assets/images/Logo.png',
-//                         height: size.height * 0.16,
-//                         fit: BoxFit.contain,
-//                       ),
-//                     ),
-//                   ),
+//                         // Logo
+//                         Positioned(
+//                           top: size.height * 0.04,
+//                           left: 0,
+//                           right: 0,
+//                           child: Padding(
+//                             padding: const EdgeInsets.all(10),
+//                             child: Image.asset(
+//                               'assets/images/Logo.png',
+//                               height: size.height * 0.10,
+//                               fit: BoxFit.contain,
+//                             ),
+//                           ),
+//                         ),
 
-//                   // Back button
-//                   Positioned(
-//                     top: 8,
-//                     left: 4,
-//                     child: IconButton(
-//                       icon: Image.asset(
-//                         'assets/images/back_button_logo.png',
-//                         width: 50, // adjust size to match your design
-//                         height: 50,
-//                       ),
-//                       onPressed: () {
-//                         if (context.canPop()) {
-//                           context.pop(); // ← go_router friendly version
-//                         } else {
-//                           // Fallback when nothing to pop (common in go_router root-ish routes)
-//                           context.go('/onboarding');
-//                         }
-//                       },
+//                         // Back button
+//                         Positioned(
+//                           top: 8,
+//                           left: 4,
+//                           child: IconButton(
+//                             icon: Image.asset(
+//                               'assets/images/back_button_logo.png',
+//                               width: 60,
+//                               height: 60,
+//                             ),
+//                             onPressed: () {
+//                               if (context.canPop()) {
+//                                 context.pop();
+//                               } else {
+//                                 context.go('/onboarding');
+//                               }
+//                             },
+//                           ),
+//                         ),
+//                       ],
 //                     ),
 //                   ),
 
 //                   // Form content
 //                   Padding(
 //                     padding: EdgeInsets.only(
-//                       top: size.height * 0.39,
+//                       top: size.height * 0.01,
 //                       left: size.width * 0.06,
 //                       right: size.width * 0.06,
 //                     ),
-//                     child: SingleChildScrollView(
-//                       child: Form(
-//                         key: _formKey,
-//                         child: Column(
-//                           crossAxisAlignment: CrossAxisAlignment.start,
-//                           children: [
-//                             Image.asset(
-//                               'assets/images/Line.png',
-//                               height: 20,
-//                               fit: BoxFit.contain,
-//                             ),
-//                             SizedBox(height: size.height * 0.02),
+//                     child: Form(
+//                       key: _formKey,
+//                       child: Column(
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: [
+//                           Image.asset(
+//                             'assets/images/Line.png',
+//                             height: 20,
+//                             fit: BoxFit.contain,
+//                           ),
+//                           SizedBox(height: size.height * 0.02),
 
-//                             // First & Last Name
-//                             Row(
-//                               children: [
-//                                 Expanded(
-//                                   child: _field(
-//                                     label: "First Name",
-//                                     hint: "John",
-//                                     value: state.firstName,
-//                                     onChanged: (v) =>
-//                                         bloc.add(UpdateFirstName(v)),
-//                                     icon: Icons.person,
-//                                     error: state.fieldErrors?['first_name'],
-//                                   ),
+//                           // First & Last Name
+//                           Row(
+//                             children: [
+//                               Expanded(
+//                                 child: _field(
+//                                   label: "First Name",
+//                                   hint: "John",
+//                                   value: state.firstName,
+//                                   onChanged: (v) =>
+//                                       bloc.add(UpdateFirstName(v)),
+//                                   icon: Icons.person,
+//                                   error: state.fieldErrors?['first_name'],
 //                                 ),
-//                                 SizedBox(width: size.width * 0.04),
-//                                 Expanded(
-//                                   child: _field(
-//                                     label: "Last Name",
-//                                     hint: "Doe",
-//                                     value: state.lastName,
-//                                     onChanged: (v) =>
-//                                         bloc.add(UpdateLastName(v)),
-//                                     icon: Icons.person_outline,
-//                                     error: state.fieldErrors?['last_name'],
-//                                   ),
+//                               ),
+//                               SizedBox(width: size.width * 0.04),
+//                               Expanded(
+//                                 child: _field(
+//                                   label: "Last Name",
+//                                   hint: "Doe",
+//                                   value: state.lastName,
+//                                   onChanged: (v) => bloc.add(UpdateLastName(v)),
+//                                   icon: Icons.person_outline,
+//                                   error: state.fieldErrors?['last_name'],
 //                                 ),
-//                               ],
-//                             ),
-//                             SizedBox(height: size.height * 0.025),
+//                               ),
+//                             ],
+//                           ),
+//                           SizedBox(height: size.height * 0.025),
 
-//                             // Username
-//                             _field(
-//                               label: "Username",
-//                               hint: "newuser",
-//                               value: state.username,
-//                               onChanged: (v) => bloc.add(UpdateUsername(v)),
-//                               icon: Icons.alternate_email,
-//                               error: state.fieldErrors?['username'],
-//                             ),
-//                             SizedBox(height: size.height * 0.025),
+//                           // Username
+//                           _field(
+//                             label: "Username",
+//                             hint: "newuser",
+//                             value: state.username,
+//                             onChanged: (v) => bloc.add(UpdateUsername(v)),
+//                             icon: Icons.alternate_email,
+//                             error: state.fieldErrors?['username'],
+//                           ),
+//                           SizedBox(height: size.height * 0.025),
 
-//                             // Email
-//                             _field(
-//                               label: "Email",
-//                               hint: "yourname@gmail.com",
-//                               value: state.email,
-//                               onChanged: (v) => bloc.add(UpdateEmail(v)),
-//                               isEmail: true,
-//                               icon: Icons.email,
-//                               error: state.fieldErrors?['email'],
-//                             ),
-//                             SizedBox(height: size.height * 0.025),
+//                           // Email
+//                           _field(
+//                             label: "Email",
+//                             hint: "yourname@gmail.com",
+//                             value: state.email,
+//                             onChanged: (v) => bloc.add(UpdateEmail(v)),
+//                             isEmail: true,
+//                             icon: Icons.email,
+//                             error: state.fieldErrors?['email'],
+//                           ),
+//                           SizedBox(height: size.height * 0.025),
 
-//                             // Phone
-//                             _field(
-//                               label: "Phone",
-//                               hint: "9812345678",
-//                               value: state.phone,
-//                               onChanged: (v) => bloc.add(UpdatePhone(v)),
-//                               keyboard: TextInputType.phone,
-//                               icon: Icons.phone_android,
-//                               error: state.fieldErrors?['mobile'],
-//                             ),
-//                             SizedBox(height: size.height * 0.025),
+//                           // Phone
+//                           _field(
+//                             label: "Phone",
+//                             hint: "9812345678",
+//                             value: state.phone,
+//                             onChanged: (v) => bloc.add(UpdatePhone(v)),
+//                             keyboard: TextInputType.phone,
+//                             icon: Icons.phone_android,
+//                             error: state.fieldErrors?['mobile'],
+//                           ),
+//                           SizedBox(height: size.height * 0.025),
 
-//                             // Password
-//                             _field(
-//                               label: "Password",
-//                               hint: "••••••••",
-//                               value: state.password,
-//                               onChanged: (v) => bloc.add(UpdatePassword(v)),
-//                               isPassword: true,
-//                               icon: Icons.lock,
-//                               error: state.fieldErrors?['password'],
-//                             ),
-//                             SizedBox(height: size.height * 0.025),
+//                           // Password
+//                           _field(
+//                             label: "Password",
+//                             hint: "••••••••",
+//                             value: state.password,
+//                             onChanged: (v) => bloc.add(UpdatePassword(v)),
+//                             isPassword: true,
+//                             icon: Icons.lock,
+//                             error: state.fieldErrors?['password'],
+//                           ),
+//                           SizedBox(height: size.height * 0.025),
 
-//                             // Confirm Password
-//                             _field(
-//                               label: "Confirm Password",
-//                               hint: "••••••••",
-//                               value: state.confirmPassword,
-//                               onChanged: (v) =>
-//                                   bloc.add(UpdateConfirmPassword(v)),
-//                               isPassword: true,
-//                               icon: Icons.lock_outline,
-//                               error: state.password != state.confirmPassword
-//                                   ? "Passwords don't match"
-//                                   : null,
-//                             ),
-//                             SizedBox(height: size.height * 0.03),
+//                           // Confirm Password
+//                           _field(
+//                             label: "Confirm Password",
+//                             hint: "••••••••",
+//                             value: state.confirmPassword,
+//                             onChanged: (v) =>
+//                                 bloc.add(UpdateConfirmPassword(v)),
+//                             isPassword: true,
+//                             icon: Icons.lock_outline,
+//                             error: state.password != state.confirmPassword
+//                                 ? "Passwords don't match"
+//                                 : null,
+//                           ),
+//                           SizedBox(height: size.height * 0.03),
 
-//                             // Terms & Privacy Checkbox
-//                             Row(
-//                               children: [
-//                                 Transform.scale(
-//                                   scale: 0.85,
-//                                   child: Checkbox(
-//                                     value: state.termsAgreed,
-//                                     onChanged: (v) =>
-//                                         bloc.add(ToggleTerms(v ?? false)),
-//                                     activeColor: Colors.orange,
-//                                     shape: RoundedRectangleBorder(
-//                                       borderRadius: BorderRadius.circular(6),
-//                                     ),
-//                                   ),
-//                                 ),
-//                                 Text(
-//                                   "I agree to Terms & Privacy",
-//                                   style: TextStyle(
-//                                     fontFamily: 'Hanken_Grotesk',
-//                                     fontSize: size.width * 0.035,
-//                                     color: Colors.grey.shade600,
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                             SizedBox(height: size.height * 0.04),
-
-//                             // Sign Up Button
-//                             SizedBox(
-//                               width: double.infinity,
-//                               height: size.height * 0.065,
-//                               child: ElevatedButton(
-//                                 onPressed:
-//                                     state.status == SignUpStatus.loading ||
-//                                             !state.canSubmit
-//                                         ? null
-//                                         : () => bloc.add(SubmitRegistration()),
-//                                 style: ElevatedButton.styleFrom(
-//                                   backgroundColor: Colors.orange,
+//                           // Terms & Privacy Checkbox
+//                           Row(
+//                             children: [
+//                               Transform.scale(
+//                                 scale: 0.85,
+//                                 child: Checkbox(
+//                                   value: state.termsAgreed,
+//                                   onChanged: (v) =>
+//                                       bloc.add(ToggleTerms(v ?? false)),
+//                                   activeColor: Colors.orange,
 //                                   shape: RoundedRectangleBorder(
-//                                     borderRadius: BorderRadius.circular(12),
+//                                     borderRadius: BorderRadius.circular(6),
 //                                   ),
-//                                   elevation: 0,
 //                                 ),
-//                                 child: state.status == SignUpStatus.loading
-//                                     ? const SizedBox(
-//                                         width: 24,
-//                                         height: 24,
-//                                         child: CircularProgressIndicator(
-//                                           color: Colors.white,
-//                                           strokeWidth: 2.5,
-//                                         ),
-//                                       )
-//                                     : const Text(
-//                                         'Sign Up',
-//                                         style: TextStyle(
-//                                           fontFamily: 'Hanken_Grotesk',
-//                                           fontSize: 18,
-//                                           color: Colors.white,
-//                                           fontWeight: FontWeight.w600,
-//                                         ),
-//                                       ),
 //                               ),
-//                             ),
+//                               Text(
+//                                 "I agree to Terms & Privacy",
+//                                 style: TextStyle(
+//                                   fontFamily: 'Hanken_Grotesk',
+//                                   fontSize: size.width * 0.035,
+//                                   color: Colors.grey.shade600,
+//                                 ),
+//                               ),
+//                             ],
+//                           ),
+//                           SizedBox(height: size.height * 0.04),
 
-//                             SizedBox(height: size.height * 0.04),
-
-//                             // Login link
-//                             Center(
-//                               child: Row(
-//                                 mainAxisAlignment: MainAxisAlignment.center,
-//                                 children: [
-//                                   Text(
-//                                     "Already have an account? ",
-//                                     style:
-//                                         TextStyle(fontSize: size.width * 0.035),
-//                                   ),
-//                                   GestureDetector(
-//                                     onTap: () => context.go('/login'),
-//                                     child: Text(
-//                                       "Login",
+//                           // Sign Up Button
+//                           SizedBox(
+//                             width: double.infinity,
+//                             height: size.height * 0.065,
+//                             child: ElevatedButton(
+//                               onPressed: state.status == SignUpStatus.loading ||
+//                                       !state.canSubmit
+//                                   ? null
+//                                   : () => bloc.add(SubmitRegistration()),
+//                               style: ElevatedButton.styleFrom(
+//                                 backgroundColor: Colors.orange,
+//                                 shape: RoundedRectangleBorder(
+//                                   borderRadius: BorderRadius.circular(12),
+//                                 ),
+//                                 elevation: 0,
+//                               ),
+//                               child: state.status == SignUpStatus.loading
+//                                   ? const SizedBox(
+//                                       width: 24,
+//                                       height: 24,
+//                                       child: CircularProgressIndicator(
+//                                         color: Colors.white,
+//                                         strokeWidth: 2.5,
+//                                       ),
+//                                     )
+//                                   : const Text(
+//                                       'Sign Up',
 //                                       style: TextStyle(
-//                                         fontSize: size.width * 0.035,
-//                                         color: Colors.orange,
-//                                         fontWeight: FontWeight.bold,
+//                                         fontFamily: 'Hanken_Grotesk',
+//                                         fontSize: 18,
+//                                         color: Colors.white,
+//                                         fontWeight: FontWeight.w600,
 //                                       ),
 //                                     ),
-//                                   ),
-//                                 ],
-//                               ),
 //                             ),
+//                           ),
 
-//                             SizedBox(height: size.height * 0.04),
-//                           ],
-//                         ),
+//                           SizedBox(height: size.height * 0.04),
+
+//                           // Login link
+//                           Center(
+//                             child: Row(
+//                               mainAxisAlignment: MainAxisAlignment.center,
+//                               children: [
+//                                 Text(
+//                                   "Already have an account? ",
+//                                   style:
+//                                       TextStyle(fontSize: size.width * 0.035),
+//                                 ),
+//                                 GestureDetector(
+//                                   onTap: () => context.go('/login'),
+//                                   child: Text(
+//                                     "Login",
+//                                     style: TextStyle(
+//                                       fontSize: size.width * 0.035,
+//                                       color: Colors.orange,
+//                                       fontWeight: FontWeight.bold,
+//                                     ),
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                           ),
+
+//                           SizedBox(height: size.height * 0.04),
+//                         ],
 //                       ),
 //                     ),
 //                   ),
@@ -400,7 +400,6 @@
 //     );
 //   }
 // }
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -440,8 +439,7 @@ class _SignUpContentState extends State<_SignUpContent> {
         if (state.status == SignUpStatus.success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content:
-                  Text(state.errorMessage ?? 'Account created successfully!'),
+              content: Text(state.errorMessage ?? 'User created successfully!'),
               backgroundColor: Colors.green,
             ),
           );
@@ -465,59 +463,40 @@ class _SignUpContentState extends State<_SignUpContent> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // Background image + Logo + Back button in a Stack
                   SizedBox(
                     height: screenHeight * 0.4,
                     child: Stack(
                       children: [
-                        // Background image
                         Positioned.fill(
-                          child: Image.asset(
-                            'assets/images/login_bg.png',
-                            fit: BoxFit.cover,
-                            alignment: Alignment.topCenter,
-                          ),
+                          child: Image.asset('assets/images/login_bg.png',
+                              fit: BoxFit.cover),
                         ),
-
-                        // Logo
                         Positioned(
                           top: size.height * 0.04,
                           left: 0,
                           right: 0,
                           child: Padding(
                             padding: const EdgeInsets.all(10),
-                            child: Image.asset(
-                              'assets/images/Logo.png',
-                              height: size.height * 0.10,
-                              fit: BoxFit.contain,
-                            ),
+                            child: Image.asset('assets/images/Logo.png',
+                                height: size.height * 0.10),
                           ),
                         ),
-
-                        // Back button
                         Positioned(
                           top: 8,
                           left: 4,
                           child: IconButton(
                             icon: Image.asset(
-                              'assets/images/back_button_logo.png',
-                              width: 60,
-                              height: 60,
-                            ),
-                            onPressed: () {
-                              if (context.canPop()) {
-                                context.pop();
-                              } else {
-                                context.go('/onboarding');
-                              }
-                            },
+                                'assets/images/back_button_logo.png',
+                                width: 60,
+                                height: 60),
+                            onPressed: () => context.canPop()
+                                ? context.pop()
+                                : context.go('/onboarding'),
                           ),
                         ),
                       ],
                     ),
                   ),
-
-                  // Form content
                   Padding(
                     padding: EdgeInsets.only(
                       top: size.height * 0.01,
@@ -529,14 +508,8 @@ class _SignUpContentState extends State<_SignUpContent> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Image.asset(
-                            'assets/images/Line.png',
-                            height: 20,
-                            fit: BoxFit.contain,
-                          ),
+                          Image.asset('assets/images/Line.png', height: 20),
                           SizedBox(height: size.height * 0.02),
-
-                          // First & Last Name
                           Row(
                             children: [
                               Expanded(
@@ -547,7 +520,6 @@ class _SignUpContentState extends State<_SignUpContent> {
                                   onChanged: (v) =>
                                       bloc.add(UpdateFirstName(v)),
                                   icon: Icons.person,
-                                  error: state.fieldErrors?['first_name'],
                                 ),
                               ),
                               SizedBox(width: size.width * 0.04),
@@ -558,14 +530,11 @@ class _SignUpContentState extends State<_SignUpContent> {
                                   value: state.lastName,
                                   onChanged: (v) => bloc.add(UpdateLastName(v)),
                                   icon: Icons.person_outline,
-                                  error: state.fieldErrors?['last_name'],
                                 ),
                               ),
                             ],
                           ),
                           SizedBox(height: size.height * 0.025),
-
-                          // Username
                           _field(
                             label: "Username",
                             hint: "newuser",
@@ -575,8 +544,6 @@ class _SignUpContentState extends State<_SignUpContent> {
                             error: state.fieldErrors?['username'],
                           ),
                           SizedBox(height: size.height * 0.025),
-
-                          // Email
                           _field(
                             label: "Email",
                             hint: "yourname@gmail.com",
@@ -587,8 +554,6 @@ class _SignUpContentState extends State<_SignUpContent> {
                             error: state.fieldErrors?['email'],
                           ),
                           SizedBox(height: size.height * 0.025),
-
-                          // Phone
                           _field(
                             label: "Phone",
                             hint: "9812345678",
@@ -596,14 +561,12 @@ class _SignUpContentState extends State<_SignUpContent> {
                             onChanged: (v) => bloc.add(UpdatePhone(v)),
                             keyboard: TextInputType.phone,
                             icon: Icons.phone_android,
-                            error: state.fieldErrors?['mobile'],
+                            error: state.fieldErrors?['phone'],
                           ),
                           SizedBox(height: size.height * 0.025),
-
-                          // Password
                           _field(
                             label: "Password",
-                            hint: "••••••••",
+                            hint: "At least 8 characters",
                             value: state.password,
                             onChanged: (v) => bloc.add(UpdatePassword(v)),
                             isPassword: true,
@@ -611,8 +574,6 @@ class _SignUpContentState extends State<_SignUpContent> {
                             error: state.fieldErrors?['password'],
                           ),
                           SizedBox(height: size.height * 0.025),
-
-                          // Confirm Password
                           _field(
                             label: "Confirm Password",
                             hint: "••••••••",
@@ -626,8 +587,6 @@ class _SignUpContentState extends State<_SignUpContent> {
                                 : null,
                           ),
                           SizedBox(height: size.height * 0.03),
-
-                          // Terms & Privacy Checkbox
                           Row(
                             children: [
                               Transform.scale(
@@ -637,9 +596,6 @@ class _SignUpContentState extends State<_SignUpContent> {
                                   onChanged: (v) =>
                                       bloc.add(ToggleTerms(v ?? false)),
                                   activeColor: Colors.orange,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
                                 ),
                               ),
                               Text(
@@ -653,8 +609,6 @@ class _SignUpContentState extends State<_SignUpContent> {
                             ],
                           ),
                           SizedBox(height: size.height * 0.04),
-
-                          // Sign Up Button
                           SizedBox(
                             width: double.infinity,
                             height: size.height * 0.065,
@@ -666,23 +620,14 @@ class _SignUpContentState extends State<_SignUpContent> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.orange,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 0,
+                                    borderRadius: BorderRadius.circular(12)),
                               ),
                               child: state.status == SignUpStatus.loading
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.5,
-                                      ),
-                                    )
+                                  ? const CircularProgressIndicator(
+                                      color: Colors.white)
                                   : const Text(
                                       'Sign Up',
                                       style: TextStyle(
-                                        fontFamily: 'Hanken_Grotesk',
                                         fontSize: 18,
                                         color: Colors.white,
                                         fontWeight: FontWeight.w600,
@@ -690,35 +635,24 @@ class _SignUpContentState extends State<_SignUpContent> {
                                     ),
                             ),
                           ),
-
                           SizedBox(height: size.height * 0.04),
-
-                          // Login link
                           Center(
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  "Already have an account? ",
-                                  style:
-                                      TextStyle(fontSize: size.width * 0.035),
-                                ),
+                                const Text("Already have an account? "),
                                 GestureDetector(
                                   onTap: () => context.go('/login'),
-                                  child: Text(
+                                  child: const Text(
                                     "Login",
                                     style: TextStyle(
-                                      fontSize: size.width * 0.035,
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-
-                          SizedBox(height: size.height * 0.04),
                         ],
                       ),
                     ),
@@ -744,7 +678,6 @@ class _SignUpContentState extends State<_SignUpContent> {
     String? error,
   }) {
     final size = MediaQuery.of(context).size;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -765,39 +698,14 @@ class _SignUpContentState extends State<_SignUpContent> {
           onChanged: onChanged,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(
-              fontSize: size.width * 0.035,
-              color: Colors.grey,
-            ),
-            prefixIcon: icon != null
-                ? Icon(
-                    icon,
-                    color: Colors.orange,
-                    size: size.width * 0.06,
-                  )
-                : null,
+            prefixIcon: icon != null ? Icon(icon, color: Colors.orange) : null,
             errorText: error,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(color: Colors.orange, width: 2),
             ),
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: size.width * 0.04,
-              vertical: size.height * 0.018,
-            ),
           ),
-          validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Required';
-            return null;
-          },
         ),
       ],
     );

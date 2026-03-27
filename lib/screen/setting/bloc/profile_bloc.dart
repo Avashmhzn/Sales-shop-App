@@ -12,30 +12,18 @@
 //     on<LoadManagers>(_onLoadManagers);
 //     on<CreateProfile>(_onCreateProfile);
 //     on<DeleteProfile>(_onDeleteProfile);
-//     on<UpdateProfile>(_onUpdateProfile); // Fixed: must be inside constructor
+//     on<UpdateProfile>(_onUpdateProfile);
 //   }
 
-//   // Helper: Dynamically get current domain from Dio baseUrl (no hardcoding)
 //   String _getCurrentDomain() {
 //     final baseUrl = dio.options.baseUrl.trim();
-//     if (baseUrl.isEmpty) {
-//       // Very rare fallback — should never happen if Dio is configured
-//       return 'localhost';
-//     }
-
+//     if (baseUrl.isEmpty) return 'localhost';
 //     try {
-//       // Parse as URI and get host (IP or domain name)
 //       final uri = Uri.parse(baseUrl);
 //       final host = uri.host;
-
-//       // Clean up common cases (remove port if present)
-//       if (host.contains(':')) {
-//         return host.split(':').first;
-//       }
-
-//       return host; // e.g. "192.168.1.65", "localhost", "app.example.com"
+//       if (host.contains(':')) return host.split(':').first;
+//       return host;
 //     } catch (e) {
-//       // If parsing fails (invalid URL format), fallback safely
 //       return 'localhost';
 //     }
 //   }
@@ -49,17 +37,21 @@
 //       final res = await dio.get('/profile/get_profile/');
 
 //       if (res.statusCode != 200) {
-//         emit(ProfileError('Failed to load profiles (HTTP ${res.statusCode})'));
+//         // emit(ProfileError('Failed to load profiles (HTTP ${res.statusCode})'));
+//         emit(const ProfileError('No profiles found for this manager.'));
 //         return;
 //       }
 
 //       final data = res.data;
-//       if (data is! Map<String, dynamic> || data['success'] != true) {
-//         emit(ProfileError(
-//           data is Map
-//               ? data['message']?.toString() ?? 'Failed'
-//               : 'Invalid response',
-//         ));
+//       if (data is! Map<String, dynamic>) {
+//         emit(const ProfileError('Invalid response format'));
+//         return;
+//       }
+
+//       // ✅ Show actual API message when success is false
+//       if (data['success'] != true) {
+//         final msg = data['message']?.toString() ?? 'Failed to load profiles';
+//         emit(ProfileError(msg));
 //         return;
 //       }
 
@@ -69,7 +61,6 @@
 //           .map((e) => Profile.fromJson(e))
 //           .toList();
 
-//       // Preserve existing managers if already loaded
 //       List<String> currentManagers = [];
 //       if (state is ProfileLoaded) {
 //         currentManagers = (state as ProfileLoaded).managers;
@@ -95,21 +86,21 @@
 //       }
 
 //       final data = res.data;
-//       if (data is! Map<String, dynamic> || data['success'] != true) {
-//         emit(ProfileError(
-//           data is Map
-//               ? data['message']?.toString() ?? 'Failed'
-//               : 'Invalid response',
-//         ));
+//       if (data is! Map<String, dynamic>) {
+//         emit(const ProfileError('Invalid response format'));
+//         return;
+//       }
+
+//       // ✅ Show actual API message when success is false
+//       if (data['success'] != true) {
+//         final msg = data['message']?.toString() ?? 'Failed to load managers';
+//         emit(ProfileError(msg));
 //         return;
 //       }
 
 //       final rawList = data['data'] as List<dynamic>? ?? [];
-
-//       // Get current domain dynamically from Dio baseUrl
 //       final currentDomain = _getCurrentDomain();
 
-//       // Filter users: only those whose "domains" contains currentDomain
 //       final managers = rawList
 //           .whereType<Map<String, dynamic>>()
 //           .where((user) {
@@ -121,7 +112,6 @@
 //           .where((name) => name.isNotEmpty)
 //           .toList();
 
-//       // Preserve existing profiles if already loaded
 //       List<Profile> currentProfiles = [];
 //       if (state is ProfileLoaded) {
 //         currentProfiles = (state as ProfileLoaded).profiles;
@@ -144,14 +134,18 @@
 //         data: event.profile.toJson(),
 //       );
 
-//       if (res.data['success'] == true) {
-//         final created =
-//             Profile.fromJson(res.data['data'] as Map<String, dynamic>);
-//         emit(ProfileCreated(created));
-//         add(const LoadProfile()); // refresh profiles
-//       } else {
-//         emit(ProfileError(res.data['message'] ?? 'Failed to create profile'));
+//       final data = res.data;
+
+//       // ✅ Show actual API message on failure
+//       if (data['success'] != true) {
+//         final msg = data['message']?.toString() ?? 'Failed to create profile';
+//         emit(ProfileError(msg));
+//         return;
 //       }
+
+//       final created = Profile.fromJson(data['data'] as Map<String, dynamic>);
+//       emit(ProfileCreated(created));
+//       add(const LoadProfile());
 //     } catch (e) {
 //       emit(ProfileError('Error creating profile: $e'));
 //     }
@@ -168,12 +162,17 @@
 //         queryParameters: {'profile_id': event.profileId},
 //       );
 
-//       if (res.data['success'] == true) {
-//         emit(ProfileDeleted());
-//         add(const LoadProfile()); // refresh profiles
-//       } else {
-//         emit(ProfileError(res.data['message'] ?? 'Failed to delete profile'));
+//       final data = res.data;
+
+//       // ✅ Show actual API message on failure
+//       if (data['success'] != true) {
+//         final msg = data['message']?.toString() ?? 'Failed to delete profile';
+//         emit(ProfileError(msg));
+//         return;
 //       }
+
+//       emit(ProfileDeleted());
+//       add(const LoadProfile());
 //     } catch (e) {
 //       emit(ProfileError('Error deleting profile: $e'));
 //     }
@@ -191,12 +190,17 @@
 //         data: event.profile.toJson(),
 //       );
 
-//       if (res.data['success'] == true) {
-//         emit(ProfileUpdated());
-//         add(const LoadProfile()); // refresh list
-//       } else {
-//         emit(ProfileError(res.data['message'] ?? 'Failed to update profile'));
+//       final data = res.data;
+
+//       // ✅ Show actual API message on failure
+//       if (data['success'] != true) {
+//         final msg = data['message']?.toString() ?? 'Failed to update profile';
+//         emit(ProfileError(msg));
+//         return;
 //       }
+
+//       emit(ProfileUpdated());
+//       add(const LoadProfile());
 //     } catch (e) {
 //       emit(ProfileError('Error updating profile: $e'));
 //     }
@@ -226,13 +230,13 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     try {
       final uri = Uri.parse(baseUrl);
       final host = uri.host;
-      if (host.contains(':')) return host.split(':').first;
-      return host;
+      return host.contains(':') ? host.split(':').first : host;
     } catch (e) {
       return 'localhost';
     }
   }
 
+  // ==================== FIXED: Load Profile ====================
   Future<void> _onLoadProfile(
     LoadProfile event,
     Emitter<ProfileState> emit,
@@ -241,42 +245,43 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     try {
       final res = await dio.get('/profile/get_profile/');
 
-      if (res.statusCode != 200) {
-        // emit(ProfileError('Failed to load profiles (HTTP ${res.statusCode})'));
-        emit(const ProfileError('No profiles found for this manager.'));
-        return;
-      }
-
       final data = res.data;
       if (data is! Map<String, dynamic>) {
         emit(const ProfileError('Invalid response format'));
         return;
       }
 
-      // ✅ Show actual API message when success is false
       if (data['success'] != true) {
-        final msg = data['message']?.toString() ?? 'Failed to load profiles';
+        final msg = data['message']?.toString() ?? 'Failed to load profile';
         emit(ProfileError(msg));
         return;
       }
 
-      final rawList = data['data'] as List<dynamic>? ?? [];
-      final profiles = rawList
-          .whereType<Map<String, dynamic>>()
-          .map((e) => Profile.fromJson(e))
-          .toList();
+      final profileData = data['data'];
+
+      // Handle both cases: single object or list (future-proof)
+      Profile? profile;
+      if (profileData is Map<String, dynamic>) {
+        profile = Profile.fromJson(profileData);
+      } else if (profileData is List && profileData.isNotEmpty) {
+        profile = Profile.fromJson(profileData.first as Map<String, dynamic>);
+      }
 
       List<String> currentManagers = [];
       if (state is ProfileLoaded) {
         currentManagers = (state as ProfileLoaded).managers;
       }
 
-      emit(ProfileLoaded(profiles: profiles, managers: currentManagers));
+      emit(ProfileLoaded(
+        profiles: profile != null ? [profile] : [],
+        managers: currentManagers,
+      ));
     } catch (e) {
-      emit(ProfileError('Error loading profiles: $e'));
+      emit(ProfileError('Error loading profile: $e'));
     }
   }
 
+  // ==================== Load Managers (unchanged) ====================
   Future<void> _onLoadManagers(
     LoadManagers event,
     Emitter<ProfileState> emit,
@@ -285,21 +290,10 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     try {
       final res = await dio.get('/auth/get_user/');
 
-      if (res.statusCode != 200) {
-        emit(ProfileError('Failed to load managers (HTTP ${res.statusCode})'));
-        return;
-      }
-
       final data = res.data;
-      if (data is! Map<String, dynamic>) {
-        emit(const ProfileError('Invalid response format'));
-        return;
-      }
-
-      // ✅ Show actual API message when success is false
-      if (data['success'] != true) {
-        final msg = data['message']?.toString() ?? 'Failed to load managers';
-        emit(ProfileError(msg));
+      if (data is! Map<String, dynamic> || data['success'] != true) {
+        emit(ProfileError(
+            data?['message']?.toString() ?? 'Failed to load managers'));
         return;
       }
 
@@ -328,6 +322,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     }
   }
 
+  // ==================== Create Profile ====================
   Future<void> _onCreateProfile(
     CreateProfile event,
     Emitter<ProfileState> emit,
@@ -340,8 +335,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       );
 
       final data = res.data;
-
-      // ✅ Show actual API message on failure
       if (data['success'] != true) {
         final msg = data['message']?.toString() ?? 'Failed to create profile';
         emit(ProfileError(msg));
@@ -350,39 +343,13 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
       final created = Profile.fromJson(data['data'] as Map<String, dynamic>);
       emit(ProfileCreated(created));
-      add(const LoadProfile());
+      add(const LoadProfile()); // refresh
     } catch (e) {
       emit(ProfileError('Error creating profile: $e'));
     }
   }
 
-  Future<void> _onDeleteProfile(
-    DeleteProfile event,
-    Emitter<ProfileState> emit,
-  ) async {
-    emit(ProfileDeleting());
-    try {
-      final res = await dio.delete(
-        '/profile/delete_profile/',
-        queryParameters: {'profile_id': event.profileId},
-      );
-
-      final data = res.data;
-
-      // ✅ Show actual API message on failure
-      if (data['success'] != true) {
-        final msg = data['message']?.toString() ?? 'Failed to delete profile';
-        emit(ProfileError(msg));
-        return;
-      }
-
-      emit(ProfileDeleted());
-      add(const LoadProfile());
-    } catch (e) {
-      emit(ProfileError('Error deleting profile: $e'));
-    }
-  }
-
+  // ==================== Update Profile ====================
   Future<void> _onUpdateProfile(
     UpdateProfile event,
     Emitter<ProfileState> emit,
@@ -396,8 +363,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       );
 
       final data = res.data;
-
-      // ✅ Show actual API message on failure
       if (data['success'] != true) {
         final msg = data['message']?.toString() ?? 'Failed to update profile';
         emit(ProfileError(msg));
@@ -408,6 +373,32 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       add(const LoadProfile());
     } catch (e) {
       emit(ProfileError('Error updating profile: $e'));
+    }
+  }
+
+  // ==================== Delete Profile ====================
+  Future<void> _onDeleteProfile(
+    DeleteProfile event,
+    Emitter<ProfileState> emit,
+  ) async {
+    emit(ProfileDeleting());
+    try {
+      final res = await dio.delete(
+        '/profile/delete_profile/',
+        queryParameters: {'profile_id': event.profileId},
+      );
+
+      final data = res.data;
+      if (data['success'] != true) {
+        final msg = data['message']?.toString() ?? 'Failed to delete profile';
+        emit(ProfileError(msg));
+        return;
+      }
+
+      emit(ProfileDeleted());
+      add(const LoadProfile());
+    } catch (e) {
+      emit(ProfileError('Error deleting profile: $e'));
     }
   }
 }

@@ -995,6 +995,7 @@ class DioClient {
 
           final unauthenticatedEndpoints = [
             '/auth/login/',
+            '/auth/register/',
             '/auth/forgot_password/',
             '/auth/verify_forgot_password_otp/',
             '/auth/reset_password/',

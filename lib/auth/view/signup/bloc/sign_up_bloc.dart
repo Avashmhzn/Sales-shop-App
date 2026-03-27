@@ -3,7 +3,6 @@ import 'package:dio/dio.dart';
 import 'package:saleup_app/auth/view/signup/bloc/sign_in_up_event.dart';
 import 'package:saleup_app/auth/view/signup/bloc/sign_up_state.dart';
 import 'dart:developer';
-
 import 'package:saleup_app/core/network/dio_client.dart';
 
 class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
@@ -41,38 +40,44 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
     }
 
     emit(state.copyWith(
-        status: SignUpStatus.loading, errorMessage: null, fieldErrors: null));
+      status: SignUpStatus.loading,
+      errorMessage: null,
+      fieldErrors: null,
+    ));
 
     try {
       final request = {
         "email": state.email,
         "username": state.username,
-        "mobile": state.phone,
         "password": state.password,
         "first_name": state.firstName,
         "last_name": state.lastName,
-        "is_active": true,
-        "is_staff": false,
-        "is_superuser": false,
+        "mobile": state.phone,
+        "is_active": state.isActive ?? true,
+        "is_staff": state.isStaff ?? true,
+        "is_superuser": state.isSuperuser ?? false,
+        "domains": [],
+        "groups": state.groups ?? ["Admin"],
+        "user_permissions": []
       };
 
-      log('Register → $request');
+      log('Register Payload → $request');
 
       final response = await DioClient().dio.post(
             '/auth/register/',
             data: request,
           );
 
+      log('Response Status: ${response.statusCode}');
+      log('Response Body: ${response.data}');
+
       if (response.statusCode == 201 || response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
 
         if (data['success'] == true) {
-          // Optional: if backend returns tokens here → save them
-          // await AuthService().saveTokens(...);
-
           emit(state.copyWith(
             status: SignUpStatus.success,
-            errorMessage: data['message'] ?? 'Account created successfully!',
+            errorMessage: data['message'] ?? 'User created successfully.',
           ));
         } else {
           emit(state.copyWith(
@@ -80,41 +85,44 @@ class SignUpBloc extends Bloc<SignUpEvent, SignUpState> {
             errorMessage: data['message'] ?? 'Registration failed',
           ));
         }
-      } else {
-        emit(state.copyWith(
-          status: SignUpStatus.failure,
-          errorMessage: 'Unexpected status: ${response.statusCode}',
-        ));
       }
     } on DioException catch (e) {
       String msg = 'Registration failed';
-      Map<String, String>? fieldErrs;
+      Map<String, String>? fieldErrs = {};
+
+      log('Error Response: ${e.response?.data}');
 
       if (e.response?.data is Map) {
-        final err = e.response!.data as Map;
-        msg = err['message'] ?? 'Invalid input';
+        final err = e.response!.data as Map<dynamic, dynamic>;
 
-        // Parse field-specific errors if backend sends them (common in Django REST)
-        if (err.containsKey('email')) fieldErrs = {'email': err['email'][0]};
+        msg = err['message']?.toString() ??
+            err['detail']?.toString() ??
+            (err['password']?.toString() ?? 'Invalid input');
+
+        if (err.containsKey('password')) {
+          fieldErrs['password'] = err['password'].toString();
+        }
+        if (err.containsKey('email')) {
+          fieldErrs['email'] = err['email'].toString();
+        }
         if (err.containsKey('username')) {
-          fieldErrs ??= {'username': err['username'][0]};
+          fieldErrs['username'] = err['username'].toString();
         }
         if (err.containsKey('mobile')) {
-          fieldErrs ??= {'phone': err['mobile'][0]};
+          fieldErrs['phone'] = err['mobile'].toString();
         }
-        // ... add more fields
       }
 
       emit(state.copyWith(
         status: SignUpStatus.failure,
         errorMessage: msg,
-        fieldErrors: fieldErrs,
+        fieldErrors: fieldErrs.isNotEmpty ? fieldErrs : null,
       ));
     } catch (e) {
-      log('Unexpected: $e');
+      log('Unexpected error: $e');
       emit(state.copyWith(
         status: SignUpStatus.failure,
-        errorMessage: 'Something went wrong. Try again.',
+        errorMessage: 'Something went wrong. Please try again.',
       ));
     }
   }

@@ -57,3 +57,20 @@ class DeleteExpiry extends ExpiryEvent {
   @override
   List<Object?> get props => [id];
 }
+
+/// Deletes multiple records via /expiry/delete_expiries/
+class DeleteAllExpiry extends ExpiryEvent {
+  final List<int> ids;
+  const DeleteAllExpiry(this.ids);
+  @override
+  List<Object?> get props => [ids];
+}
+
+/// Updates a single expiry via /expiry/update_expiry/?expiry_id=
+class UpdateExpiry extends ExpiryEvent {
+  final int id;
+  final Map<String, dynamic> payload;
+  const UpdateExpiry({required this.id, required this.payload});
+  @override
+  List<Object?> get props => [id, payload];
+}

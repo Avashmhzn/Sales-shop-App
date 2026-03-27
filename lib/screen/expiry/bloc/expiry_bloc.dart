@@ -16,8 +16,11 @@ class ExpiryBloc extends Bloc<ExpiryEvent, ExpiryState> {
     on<ClearFilters>(_onClearFilters);
     on<GoToPage>(_onGoToPage);
     on<DeleteExpiry>(_onDelete);
+    on<DeleteAllExpiry>(_onDeleteAll);
+    on<UpdateExpiry>(_onUpdate);
   }
 
+  // ── Fetch ──────────────────────────────────────────────────────────────
   Future<void> _onFetch(FetchExpiry event, Emitter<ExpiryState> emit) async {
     emit(state.copyWith(isLoading: true, errorMessage: null));
     try {
@@ -36,22 +39,21 @@ class ExpiryBloc extends Bloc<ExpiryEvent, ExpiryState> {
         ));
       }
     } on dio.DioException catch (e) {
-      String errorMessage = 'Network error: ${e.message}';
-      if (e.response != null && e.response!.statusCode == 400) {
-        errorMessage = e.response!.data['message'] ?? 'Authentication failed';
-      } else if (e.response != null) {
-        errorMessage = 'Server error: ${e.response!.statusCode}';
-      }
-      emit(state.copyWith(isLoading: false, errorMessage: errorMessage));
+      emit(state.copyWith(
+        isLoading: false,
+        errorMessage: _dioError(e),
+      ));
     } catch (e) {
       emit(state.copyWith(isLoading: false, errorMessage: 'Error: $e'));
     }
   }
 
+  // ── Search ─────────────────────────────────────────────────────────────
   void _onSearch(SearchExpiry event, Emitter<ExpiryState> emit) {
     emit(state.copyWith(searchQuery: event.query, currentPage: 1));
   }
 
+  // ── Filters ────────────────────────────────────────────────────────────
   void _onProductFilter(ToggleProductFilter event, Emitter<ExpiryState> emit) {
     emit(state.copyWith(selectedProduct: event.product, currentPage: 1));
   }
@@ -59,7 +61,7 @@ class ExpiryBloc extends Bloc<ExpiryEvent, ExpiryState> {
   void _onPriceSort(SetPriceSort event, Emitter<ExpiryState> emit) {
     emit(state.copyWith(
       priceSort: event.direction,
-      quantitySort: null, // Only one sort active
+      quantitySort: null,
       currentPage: 1,
     ));
   }
@@ -67,7 +69,7 @@ class ExpiryBloc extends Bloc<ExpiryEvent, ExpiryState> {
   void _onQuantitySort(SetQuantitySort event, Emitter<ExpiryState> emit) {
     emit(state.copyWith(
       quantitySort: event.direction,
-      priceSort: null, // Only one sort active
+      priceSort: null,
       currentPage: 1,
     ));
   }
@@ -88,6 +90,7 @@ class ExpiryBloc extends Bloc<ExpiryEvent, ExpiryState> {
     emit(state.copyWith(currentPage: event.page.clamp(1, totalPages)));
   }
 
+  // ── Delete single ──────────────────────────────────────────────────────
   Future<void> _onDelete(DeleteExpiry event, Emitter<ExpiryState> emit) async {
     try {
       await DioClient().dio.delete('/expiry/delete_expiry/${event.id}/');
@@ -96,5 +99,66 @@ class ExpiryBloc extends Bloc<ExpiryEvent, ExpiryState> {
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Delete failed: $e'));
     }
+  }
+
+  // ── Delete all (selected ids) ──────────────────────────────────────────
+  Future<void> _onDeleteAll(
+      DeleteAllExpiry event, Emitter<ExpiryState> emit) async {
+    try {
+      await DioClient().dio.delete(
+        '/expiry/delete_expiries/',
+        data: {'ids': event.ids},
+      );
+      final updated =
+          state.expiryData.where((e) => !event.ids.contains(e.id)).toList();
+      emit(state.copyWith(expiryData: updated, currentPage: 1));
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Delete all failed: $e'));
+    }
+  }
+
+  // ── Update ─────────────────────────────────────────────────────────────
+  Future<void> _onUpdate(UpdateExpiry event, Emitter<ExpiryState> emit) async {
+    emit(state.copyWith(isLoading: true, errorMessage: null));
+    try {
+      final response = await DioClient().dio.put(
+            '/expiry/update_expiry/',
+            queryParameters: {'expiry_id': event.id},
+            data: event.payload,
+            options: dio.Options(
+              contentType: 'application/json', // force JSON — not form-data
+            ),
+          );
+
+      final json = response.data as Map<String, dynamic>;
+      if (json['success'] == true) {
+        final updatedItem =
+            ExpiryData.fromJson(json['data'] as Map<String, dynamic>);
+        final updatedList = state.expiryData.map((e) {
+          return e.id == event.id ? updatedItem : e;
+        }).toList();
+        emit(state.copyWith(isLoading: false, expiryData: updatedList));
+      } else {
+        emit(state.copyWith(
+          isLoading: false,
+          errorMessage: json['message'] as String? ?? 'Update failed',
+        ));
+      }
+    } on dio.DioException catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: _dioError(e)));
+    } catch (e) {
+      emit(state.copyWith(isLoading: false, errorMessage: 'Error: $e'));
+    }
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────
+  String _dioError(dio.DioException e) {
+    if (e.response != null) {
+      if (e.response!.statusCode == 400) {
+        return e.response!.data['message'] ?? 'Bad request';
+      }
+      return 'Server error: ${e.response!.statusCode}';
+    }
+    return 'Network error: ${e.message}';
   }
 }
