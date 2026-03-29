@@ -1570,7 +1570,7 @@ class _ExpiryScreenState extends State<ExpiryScreen> {
       builder: (dialogCtx) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         backgroundColor: Colors.white,
-        child: Container(
+        child: SizedBox(
           width: 520,
           child: Column(
             mainAxisSize: MainAxisSize.min,

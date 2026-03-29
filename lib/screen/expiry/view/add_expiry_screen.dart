@@ -259,7 +259,7 @@ class _AddExpiryScreenState extends State<AddExpiryScreen> {
                         Switch(
                           value: _willNotExpire,
                           onChanged: (v) => setState(() => _willNotExpire = v),
-                          activeColor: const Color(0xFF4CAF50),
+                          activeThumbColor: const Color(0xFF4CAF50),
                         ),
                       ],
                     ),
@@ -358,7 +358,7 @@ class _AddExpiryScreenState extends State<AddExpiryScreen> {
         ),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: _selectedProduct,
+          initialValue: _selectedProduct,
           isExpanded: true,
           decoration: InputDecoration(
             contentPadding:

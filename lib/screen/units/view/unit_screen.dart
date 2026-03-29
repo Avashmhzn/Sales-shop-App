@@ -259,19 +259,21 @@ class _UnitsScreenState extends State<UnitsScreen> {
 
   void _toggleSelect(int id, bool? value) {
     setState(() {
-      if (value == true)
+      if (value == true) {
         _selectedIds.add(id);
-      else
+      } else {
         _selectedIds.remove(id);
+      }
     });
   }
 
   void _toggleSelectAll(List<UnitData> items, bool? value) {
     setState(() {
-      if (value == true)
+      if (value == true) {
         _selectedIds.addAll(items.map((u) => u.id));
-      else
+      } else {
         _selectedIds.removeAll(items.map((u) => u.id));
+      }
     });
   }
 
@@ -596,8 +598,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
                                   backgroundColor: Colors.red,
                                 ));
                               } finally {
-                                if (context.mounted)
+                                if (context.mounted) {
                                   setDialogState(() => isLoading = false);
+                                }
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -680,8 +683,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
 
         if (validCurrentPage != state.currentPage) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted)
+            if (mounted) {
               context.read<UnitBloc>().add(GoToPage(validCurrentPage));
+            }
           });
         }
 

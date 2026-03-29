@@ -498,7 +498,7 @@ class _EditExpiryScreenState extends State<EditExpiryScreen> {
         ),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: value,
+          initialValue: value,
           isExpanded: true,
           style: const TextStyle(fontSize: 13, color: Color(0xFF333333)),
           decoration: _inputDecoration(),

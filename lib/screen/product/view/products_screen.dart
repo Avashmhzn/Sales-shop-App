@@ -520,7 +520,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
   final Set<int> _selectedIds = {};
-  bool _showFilter = false;
+  final bool _showFilter = false;
   // Filter panel expandable sections
   bool _catExpanded = true;
   bool _unitExpanded = true;
@@ -556,19 +556,21 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
   void _toggleSelect(int id, bool? value) {
     setState(() {
-      if (value == true)
+      if (value == true) {
         _selectedIds.add(id);
-      else
+      } else {
         _selectedIds.remove(id);
+      }
     });
   }
 
   void _toggleSelectAll(List<ProductData> items, bool? value) {
     setState(() {
-      if (value == true)
+      if (value == true) {
         _selectedIds.addAll(items.map((p) => p.id ?? 0));
-      else
+      } else {
         _selectedIds.removeAll(items.map((p) => p.id ?? 0));
+      }
     });
   }
 
@@ -859,7 +861,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 child: _pField(
                                     label: '* Location:',
                                     child: DropdownButtonFormField<String>(
-                                      value: selectedLocation,
+                                      initialValue: selectedLocation,
                                       decoration: _pDeco(hint: 'Select'),
                                       isExpanded: true,
                                       items: locations
@@ -877,7 +879,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 child: _pField(
                                     label: '* Category:',
                                     child: DropdownButtonFormField<String>(
-                                      value: selectedCategory,
+                                      initialValue: selectedCategory,
                                       decoration: _pDeco(hint: 'Select'),
                                       isExpanded: true,
                                       items: allCategories
@@ -898,7 +900,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 child: _pField(
                                     label: '* Unit:',
                                     child: DropdownButtonFormField<String>(
-                                      value: selectedUnit,
+                                      initialValue: selectedUnit,
                                       decoration: _pDeco(hint: 'Select'),
                                       isExpanded: true,
                                       items: allUnits
@@ -938,7 +940,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               value: isVat,
                               onChanged: (val) =>
                                   setDialogState(() => isVat = val),
-                              activeColor: _orange,
+                              activeThumbColor: _orange,
                             ),
                           ]),
                           const SizedBox(height: 4),
@@ -954,7 +956,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                               value: isService,
                               onChanged: (val) =>
                                   setDialogState(() => isService = val),
-                              activeColor: _orange,
+                              activeThumbColor: _orange,
                             ),
                           ]),
                           const SizedBox(height: 16),
@@ -1010,8 +1012,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                     backgroundColor: Colors.red,
                                   ));
                                 } finally {
-                                  if (context.mounted)
+                                  if (context.mounted) {
                                     setDialogState(() => isLoading = false);
+                                  }
                                 }
                               },
                               style: ElevatedButton.styleFrom(
@@ -1448,8 +1451,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
         final validCurrentPage = state.currentPage.clamp(1, totalPages);
         if (validCurrentPage != state.currentPage) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted)
+            if (mounted) {
               context.read<ProductBloc>().add(GoToPage(validCurrentPage));
+            }
           });
         }
         final paginatedData = filteredData.isNotEmpty
@@ -1571,18 +1575,18 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                 border: Border.all(color: _orange),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Row(
+                              child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(Icons.table_chart_outlined,
                                       size: 16, color: _orange),
-                                  const SizedBox(width: 6),
+                                  SizedBox(width: 6),
                                   Text('Bulk Actions',
                                       style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
                                           color: _orange)),
-                                  const SizedBox(width: 4),
+                                  SizedBox(width: 4),
                                   Icon(Icons.keyboard_arrow_down,
                                       size: 16, color: _orange),
                                 ],
@@ -2119,7 +2123,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             child: Row(children: [
                               Expanded(
                                   child: DropdownButtonFormField<String>(
-                                value: _selectedLocation,
+                                initialValue: _selectedLocation,
                                 decoration: _addDeco(hint: 'Select'),
                                 isExpanded: true,
                                 items: _locations
@@ -2151,7 +2155,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             child: Row(children: [
                               Expanded(
                                   child: DropdownButtonFormField<String>(
-                                value: _selectedCategory,
+                                initialValue: _selectedCategory,
                                 decoration: _addDeco(hint: 'Select'),
                                 isExpanded: true,
                                 items: _categories
@@ -2177,7 +2181,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
                             child: Row(children: [
                               Expanded(
                                   child: DropdownButtonFormField<String>(
-                                value: _selectedUnit,
+                                initialValue: _selectedUnit,
                                 decoration: _addDeco(hint: 'Select'),
                                 isExpanded: true,
                                 items: _units
@@ -2291,7 +2295,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: const Color(0xFF2196F3)),
+            activeThumbColor: const Color(0xFF2196F3)),
       ],
     );
   }

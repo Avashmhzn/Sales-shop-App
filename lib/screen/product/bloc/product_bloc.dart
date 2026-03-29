@@ -325,11 +325,13 @@ class ProductBloc extends Bloc<ProductEvent, ProductState> {
       // Debug: log null fields to find problematic products
       for (var p in productList) {
         if (p.name == null) developer.log('Product ${p.id} has null name');
-        if (p.category == null)
+        if (p.category == null) {
           developer.log('Product ${p.id} has null category');
+        }
         if (p.unit == null) developer.log('Product ${p.id} has null unit');
-        if (p.location == null)
+        if (p.location == null) {
           developer.log('Product ${p.id} has null location');
+        }
       }
 
       // Safe category extraction

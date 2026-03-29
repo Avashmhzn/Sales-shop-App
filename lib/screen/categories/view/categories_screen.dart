@@ -48,19 +48,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   void _toggleSelect(int id, bool? value) {
     setState(() {
-      if (value == true)
+      if (value == true) {
         _selectedIds.add(id);
-      else
+      } else {
         _selectedIds.remove(id);
+      }
     });
   }
 
   void _toggleSelectAll(List<CategoryData> items, bool? value) {
     setState(() {
-      if (value == true)
+      if (value == true) {
         _selectedIds.addAll(items.map((c) => c.id));
-      else
+      } else {
         _selectedIds.removeAll(items.map((c) => c.id));
+      }
     });
   }
 
@@ -375,7 +377,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                 child: _editField(
                                   label: 'Parent:',
                                   child: DropdownButtonFormField<int?>(
-                                    value: selectedParentId,
+                                    initialValue: selectedParentId,
                                     decoration: _editDeco(
                                         hint: 'Select an account head'),
                                     isExpanded: true,
@@ -427,7 +429,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                 value: status,
                                 onChanged: (val) =>
                                     setDialogState(() => status = val),
-                                activeColor: _orange,
+                                activeThumbColor: _orange,
                               ),
                             ],
                           ),
@@ -446,7 +448,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                 value: isDiscountRestricted,
                                 onChanged: (val) => setDialogState(
                                     () => isDiscountRestricted = val),
-                                activeColor: _orange,
+                                activeThumbColor: _orange,
                               ),
                             ],
                           ),
@@ -514,8 +516,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                     backgroundColor: Colors.red,
                                   ));
                                 } finally {
-                                  if (context.mounted)
+                                  if (context.mounted) {
                                     setDialogState(() => isLoading = false);
+                                  }
                                 }
                               },
                               style: ElevatedButton.styleFrom(
@@ -607,10 +610,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
         if (validCurrentPage != state.currentPage) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted)
+            if (mounted) {
               context
                   .read<CategoryBloc>()
                   .add(GoToCategoryPage(validCurrentPage));
+            }
           });
         }
 
@@ -637,19 +641,19 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Flexible(
+                      const Flexible(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Categories',
+                            Text('Categories',
                                 style: TextStyle(
                                     fontSize: 26,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF1A1A1A))),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                                 'Organize products into categories for easier filtering and reporting.',
-                                style: const TextStyle(
+                                style: TextStyle(
                                     fontSize: 13, color: Color(0xFF777777))),
                           ],
                         ),
@@ -1324,7 +1328,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
                       child: _buildField(
                         label: 'Parent:',
                         child: DropdownButtonFormField<int?>(
-                          value: _selectedParentId,
+                          initialValue: _selectedParentId,
                           decoration:
                               _inputDeco(hint: 'Select an account head'),
                           isExpanded: true,
@@ -1436,7 +1440,7 @@ class _AddCategoryScreenState extends State<AddCategoryScreen> {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: const Color(0xFF2196F3),
+          activeThumbColor: const Color(0xFF2196F3),
         ),
       ],
     );
