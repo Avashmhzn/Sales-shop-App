@@ -322,7 +322,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     }
   }
 
-  // ==================== Create Profile ====================
+  // ==================== Create Profile ====================///
   Future<void> _onCreateProfile(
     CreateProfile event,
     Emitter<ProfileState> emit,
