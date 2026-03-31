@@ -25,6 +25,7 @@ class ReceiptDetailDialog extends StatelessWidget {
             'receiptDetail=${state.receiptDetail != null ? "non-null" : "null"}, '
             'errorMessage=${state.errorMessage}');
 
+        // ── Loading ──────────────────────────────────────────────────────
         if (state.isLoading) {
           return const AlertDialog(
             content: SizedBox(
@@ -34,84 +35,75 @@ class ReceiptDetailDialog extends StatelessWidget {
           );
         }
 
+        // ── Error ────────────────────────────────────────────────────────
         if (state.errorMessage != null) {
-          print('Error state: ${state.errorMessage}');
           return AlertDialog(
             title: const Text('Error'),
             content: Text(
-              'Error: ${state.errorMessage}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.black87,
-                  ),
+              state.errorMessage!,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.black87),
             ),
             actions: [
               TextButton(
-                onPressed: () {
-                  print('Retrying FetchReceiptById for receiptId: $receiptId');
-                  context.read<ReceiptBloc>().add(FetchReceiptById(receiptId));
-                },
+                onPressed: () => context
+                    .read<ReceiptBloc>()
+                    .add(FetchReceiptById(receiptId)),
                 child: const Text('Retry'),
               ),
               TextButton(
-                onPressed: () {
-                  print('Closing dialog due to error');
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 child: const Text('Close'),
               ),
             ],
           );
         }
 
+        // ── No data / ID mismatch ────────────────────────────────────────
         if (state.receiptDetail == null ||
             state.receiptDetail!.id != receiptId) {
-          print('No receipt details available or ID mismatch');
           return AlertDialog(
             title: const Text('No Data'),
             content: Text(
               'No receipt details available',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.black87,
-                  ),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.black87),
             ),
             actions: [
               TextButton(
-                onPressed: () {
-                  print('Retrying FetchReceiptById for receiptId: $receiptId');
-                  context.read<ReceiptBloc>().add(FetchReceiptById(receiptId));
-                },
+                onPressed: () => context
+                    .read<ReceiptBloc>()
+                    .add(FetchReceiptById(receiptId)),
                 child: const Text('Retry'),
               ),
               TextButton(
-                onPressed: () {
-                  print('Closing dialog due to null receiptDetail');
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 child: const Text('Close'),
               ),
             ],
           );
         }
 
+        // ── Success ──────────────────────────────────────────────────────
         final receipt = state.receiptDetail!;
         final createdOnStr = receipt.createdOn ?? '';
         String formattedDateTime = 'Unknown';
         if (createdOnStr.isNotEmpty) {
           try {
-            final createdOn = DateTime.parse(createdOnStr);
-            formattedDateTime =
-                DateFormat('MMM dd, yyyy hh:mm a').format(createdOn);
-            print('Formatted date: $createdOnStr -> $formattedDateTime');
+            formattedDateTime = DateFormat('MMM dd, yyyy hh:mm a')
+                .format(DateTime.parse(createdOnStr));
           } catch (e) {
-            print('Error formatting date: $e');
             formattedDateTime = 'Invalid Date';
           }
         }
 
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
-          ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           backgroundColor: Colors.white,
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -125,10 +117,7 @@ class ReceiptDetailDialog extends StatelessWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.grey),
-                onPressed: () {
-                  print('Closing ReceiptDetailDialog');
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
               ),
             ],
           ),
@@ -139,54 +128,26 @@ class ReceiptDetailDialog extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  _buildDetailRow(context, Icons.receipt, 'Reference Number',
+                      receipt.refNumber ?? 'N/A'),
+                  _buildDetailRow(context, Icons.person, 'Customer',
+                      receipt.customer ?? 'N/A'),
                   _buildDetailRow(
                     context,
-                    Icons.receipt,
-                    'Reference Number',
-                    receipt.refNumber ?? 'N/A',
-                  ),
-                  _buildDetailRow(
-                    context,
-                    Icons.person,
-                    'Customer',
-                    receipt.customer ?? 'N/A',
-                  ),
-                  _buildDetailRow(
-                    context,
-                    Icons.attach_money,
+                    Icons.money_sharp,
                     'Amount',
-                    '\$${receipt.amount.toStringAsFixed(2)}',
+                    'Rs ${receipt.amount.toStringAsFixed(2)}',
                   ),
-                  _buildDetailRow(
-                    context,
-                    Icons.account_balance,
-                    'Deposited In',
-                    receipt.depositedIn ?? 'N/A',
-                  ),
-                  _buildDetailRow(
-                    context,
-                    Icons.payment,
-                    'Cheque Number',
-                    receipt.chequeNumber ?? 'N/A',
-                  ),
-                  _buildDetailRow(
-                    context,
-                    Icons.calendar_today,
-                    'Cheque Date',
-                    receipt.chequeDate ?? 'N/A',
-                  ),
-                  _buildDetailRow(
-                    context,
-                    Icons.notes,
-                    'Narration',
-                    receipt.narration ?? 'N/A',
-                  ),
-                  _buildDetailRow(
-                    context,
-                    Icons.date_range,
-                    'Created On',
-                    formattedDateTime,
-                  ),
+                  _buildDetailRow(context, Icons.account_balance,
+                      'Deposited In', receipt.depositedIn ?? 'N/A'),
+                  _buildDetailRow(context, Icons.payment, 'Cheque Number',
+                      receipt.chequeNumber ?? 'N/A'),
+                  _buildDetailRow(context, Icons.calendar_today, 'Cheque Date',
+                      receipt.chequeDate ?? 'N/A'),
+                  _buildDetailRow(context, Icons.notes, 'Narration',
+                      receipt.narration ?? 'N/A'),
+                  _buildDetailRow(context, Icons.date_range, 'Created On',
+                      formattedDateTime),
                 ],
               ),
             ),
@@ -207,9 +168,10 @@ class ReceiptDetailDialog extends StatelessWidget {
           Expanded(
             child: Text(
               '$label: $value',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.black87,
-                  ),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: Colors.black87),
             ),
           ),
         ],

@@ -44,6 +44,7 @@ PartyData _$PartyDataFromJson(Map<String, dynamic> json) => PartyData(
       updatedOn: json['updated_on'] == null
           ? null
           : DateTime.parse(json['updated_on'] as String),
+      accId: const NullableIntConverter().fromJson(json['acc_id']),
     );
 
 Map<String, dynamic> _$PartyDataToJson(PartyData instance) => <String, dynamic>{
@@ -60,4 +61,5 @@ Map<String, dynamic> _$PartyDataToJson(PartyData instance) => <String, dynamic>{
       'status': instance.status,
       'created_on': instance.createdOn?.toIso8601String(),
       'updated_on': instance.updatedOn?.toIso8601String(),
+      'acc_id': const NullableIntConverter().toJson(instance.accId),
     };

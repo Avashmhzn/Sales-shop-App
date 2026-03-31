@@ -722,6 +722,7 @@ import 'package:go_router/go_router.dart';
 import 'package:saleup_app/auth/view/companySelect/bloc/company_bloc.dart';
 import 'package:saleup_app/auth/view/companySelect/bloc/company_event.dart';
 import 'package:saleup_app/auth/view/companySelect/bloc/company_state.dart';
+import 'package:saleup_app/core/navigation/app_routes.dart';
 import 'package:saleup_app/core/network/api_endpoints.dart';
 import 'package:saleup_app/services/auth_service.dart';
 
@@ -1122,6 +1123,22 @@ class CompanySelectionScreen extends StatelessWidget {
                       ),
 
                       const SizedBox(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: OutlinedButton.icon(
+                          icon: const Icon(Icons.add_business),
+                          label: const Text('Create Company'),
+                          onPressed: () =>
+                              context.push(AppRoutes.createCompany),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
                     ],
                   ),
                 ),

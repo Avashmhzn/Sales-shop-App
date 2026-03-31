@@ -1,0 +1,35 @@
+abstract class AppRoutes {
+  static const splash = '/splash';
+  static const login = '/login';
+  static const onboarding = '/onboarding';
+  static const signup = '/signup';
+  static const forgotPassword = '/forgot-password';
+  static const selectCompany = '/select_company';
+  static const home = '/home';
+  static const purchase = '/purchase';
+  static const sales = '/sales';
+  static const addSales = '/add-sales';
+  static const settings = '/settings';
+  static const accountHeads = '/account-heads';
+  static const parties = '/parties';
+  static const locations = '/locations';
+  static const categories = '/categories';
+  static const products = '/products';
+  static const units = '/units';
+  static const expiry = '/expiry';
+  static const billOptions = '/bill-options';
+  static const purchaseReturn = '/purchase-return';
+  static const addPurchaseReturn = '/add-purchase-return';
+  static const salesReturn = '/sales-return';
+  static const voucher = '/voucher';
+  static const voucherCreate = '/voucher/create';
+  static const receipt = '/receipt';
+  static const payment = '/payment';
+  static const chat = '/chat';
+  static const dayClosing = '/day-closing';
+  static const productReport = '/product-report';
+  static const ledgerReport = '/ledger-report';
+  static const stockLedger = '/stock-ledger-report';
+  static const trialBalance = '/trial-balance-report';
+  static const String createCompany = '/create-company';
+}

@@ -29,7 +29,7 @@ class ReceiptResponse extends Equatable {
 @JsonSerializable()
 class ReceiptData extends Equatable {
   final int id;
-  @JsonKey(name: 'ref_number')
+  @JsonKey(name: 'ref_number', fromJson: _parseString)
   final String? refNumber;
   final String? customer;
   @JsonKey(fromJson: _parseDouble)
@@ -40,6 +40,7 @@ class ReceiptData extends Equatable {
   final String? chequeNumber;
   @JsonKey(name: 'cheque_date')
   final String? chequeDate;
+  @JsonKey(fromJson: _parseString)
   final String? signature;
   final String? narration;
   @JsonKey(name: 'created_on')
@@ -87,5 +88,55 @@ class ReceiptData extends Equatable {
     if (value is String) return double.tryParse(value) ?? 0.0;
     if (value is num) return value.toDouble();
     return 0.0;
+  }
+
+  static String? _parseString(dynamic value) {
+    if (value == null) return null;
+    return value.toString();
+  }
+}
+
+@JsonSerializable()
+class RemainingReceiptData extends Equatable {
+  @JsonKey(name: 'invoice_number', fromJson: _parseString)
+  final String invoiceNumber;
+  final String date;
+  @JsonKey(fromJson: _parseDouble)
+  final double total;
+  @JsonKey(fromJson: _parseDouble)
+  final double received;
+  @JsonKey(fromJson: _parseDouble)
+  final double remaining;
+
+  const RemainingReceiptData({
+    required this.invoiceNumber,
+    required this.date,
+    required this.total,
+    required this.received,
+    required this.remaining,
+  });
+
+  factory RemainingReceiptData.fromJson(Map<String, dynamic> json) {
+    print('Parsing RemainingReceiptData: $json');
+    return _$RemainingReceiptDataFromJson(json);
+  }
+
+  Map<String, dynamic> toJson() => _$RemainingReceiptDataToJson(this);
+
+  String get dropdownLabel =>
+      '$invoiceNumber — Remaining: ${remaining.toStringAsFixed(2)}';
+
+  @override
+  List<Object?> get props => [invoiceNumber, date, total, received, remaining];
+
+  static double _parseDouble(dynamic value) {
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    if (value is num) return value.toDouble();
+    return 0.0;
+  }
+
+  static String _parseString(dynamic value) {
+    if (value == null) return '';
+    return value.toString();
   }
 }

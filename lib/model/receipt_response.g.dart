@@ -48,3 +48,23 @@ Map<String, dynamic> _$ReceiptDataToJson(ReceiptData instance) =>
       'created_on': instance.createdOn,
       'updated_on': instance.updatedOn,
     };
+
+RemainingReceiptData _$RemainingReceiptDataFromJson(
+        Map<String, dynamic> json) =>
+    RemainingReceiptData(
+      invoiceNumber: RemainingReceiptData._parseString(json['invoice_number']),
+      date: json['date'] as String,
+      total: RemainingReceiptData._parseDouble(json['total']),
+      received: RemainingReceiptData._parseDouble(json['received']),
+      remaining: RemainingReceiptData._parseDouble(json['remaining']),
+    );
+
+Map<String, dynamic> _$RemainingReceiptDataToJson(
+        RemainingReceiptData instance) =>
+    <String, dynamic>{
+      'invoice_number': instance.invoiceNumber,
+      'date': instance.date,
+      'total': instance.total,
+      'received': instance.received,
+      'remaining': instance.remaining,
+    };

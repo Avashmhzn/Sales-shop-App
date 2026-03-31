@@ -78,6 +78,9 @@ class PartyData extends Equatable {
   final DateTime? createdOn;
   @JsonKey(name: 'updated_on')
   final DateTime? updatedOn;
+  @JsonKey(name: 'acc_id')
+  @NullableIntConverter()
+  final int? accId;
 
   const PartyData({
     required this.id,
@@ -92,6 +95,7 @@ class PartyData extends Equatable {
     this.status,
     this.createdOn,
     this.updatedOn,
+    this.accId,
   });
 
   factory PartyData.fromJson(Map<String, dynamic> json) =>
@@ -113,5 +117,6 @@ class PartyData extends Equatable {
         status,
         createdOn,
         updatedOn,
+        accId,
       ];
 }
