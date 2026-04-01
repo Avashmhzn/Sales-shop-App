@@ -1,13 +1,24 @@
 // import 'package:flutter/material.dart';
+// import 'package:saleup_app/core/navigation/app_routes.dart';
+
+// // ─── Data class ───────────────────────────────────────────────────────────────
+
+// class DrawerSectionItem {
+//   final String label;
+//   final String route;
+//   const DrawerSectionItem(this.label, this.route);
+// }
+
+// // ─── Root drawer ──────────────────────────────────────────────────────────────
 
 // class AppDrawer extends StatelessWidget {
-//   final Function(int) onNavigate;
-//   final int currentIndex;
+//   final String currentRoute;
+//   final void Function(String route) onNavigate;
 
 //   const AppDrawer({
 //     super.key,
+//     required this.currentRoute,
 //     required this.onNavigate,
-//     required this.currentIndex,
 //   });
 
 //   @override
@@ -34,121 +45,108 @@
 //                   Padding(
 //                     padding: const EdgeInsets.symmetric(
 //                         horizontal: 60, vertical: 30),
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Image.asset(
-//                           'assets/images/sales_up_logo.png',
-//                           height: 60,
-//                           fit: BoxFit.contain,
-//                         ),
-//                         const SizedBox(height: 8),
-//                       ],
+//                     child: Image.asset(
+//                       'assets/images/sales_up_logo.png',
+//                       height: 60,
+//                       fit: BoxFit.contain,
 //                     ),
 //                   ),
 //                 ],
 //               ),
-
 //               const SizedBox(height: 8),
 
+//               // Dashboard
 //               DrawerItem(
-//                 title: "Dashboard",
+//                 title: 'Dashboard',
 //                 assetPath: 'assets/images/dashboard.png',
-//                 isActive: currentIndex == 0,
+//                 isActive: currentRoute == AppRoutes.home,
 //                 onTap: () {
-//                   onNavigate(0);
+//                   onNavigate(AppRoutes.home);
 //                   Navigator.pop(context);
 //                 },
 //               ),
 
-//               ExpandableDrawerItem(
-//                 title: "Setup",
+//               // Setup
+//               DrawerSection(
+//                 title: 'Setup',
 //                 assetPath: 'assets/images/settings.png',
-//                 subItems: const [
-//                   'Account Heads',
-//                   'Parties',
-//                   'Locations',
-//                   'Categories',
-//                   'Products',
-//                   'Units',
-//                   'Expiry',
-//                   'Bill Payment',
-//                   'Settings',
+//                 currentRoute: currentRoute,
+//                 items: const [
+//                   DrawerSectionItem('Account Heads', AppRoutes.accountHeads),
+//                   DrawerSectionItem('Parties', AppRoutes.parties),
+//                   DrawerSectionItem('Locations', AppRoutes.locations),
+//                   DrawerSectionItem('Categories', AppRoutes.categories),
+//                   DrawerSectionItem('Products', AppRoutes.products),
+//                   DrawerSectionItem('Units', AppRoutes.units),
+//                   DrawerSectionItem('Expiry', AppRoutes.expiry),
+//                   DrawerSectionItem('Bill Payment', AppRoutes.billOptions),
+//                   DrawerSectionItem('Settings', AppRoutes.settings),
 //                 ],
-//                 onNavigate: (index) {
-//                   const indices = [4, 5, 6, 7, 8, 9, 10, 11, 27];
-//                   onNavigate(indices[index]);
+//                 onNavigate: (route) {
+//                   onNavigate(route);
+//                   Navigator.pop(context);
 //                 },
-//                 currentIndex: currentIndex,
 //               ),
 
-//               ExpandableDrawerItem(
-//                 title: "Daily Transation",
+//               // Daily Transaction
+//               DrawerSection(
+//                 title: 'Daily Transaction',
 //                 assetPath: 'assets/images/transaction-history.png',
-//                 subItems: const [
-//                   'Sales',
-//                   'Sales Return',
-//                   'Purchase',
-//                   'Purchase Return'
+//                 currentRoute: currentRoute,
+//                 items: const [
+//                   DrawerSectionItem('Sales', AppRoutes.sales),
+//                   DrawerSectionItem('Sales Return', AppRoutes.salesReturn),
+//                   DrawerSectionItem('Purchase', AppRoutes.purchase),
+//                   DrawerSectionItem(
+//                       'Purchase Return', AppRoutes.purchaseReturn),
 //                 ],
-//                 onNavigate: (index) {
-//                   const indices = [2, 13, 1, 12];
-//                   onNavigate(indices[index]);
+//                 onNavigate: (route) {
+//                   onNavigate(route);
+//                   Navigator.pop(context);
 //                 },
-//                 currentIndex: currentIndex,
 //               ),
 
-//               ExpandableDrawerItem(
-//                 title: "Receivable",
-//                 assetPath: 'assets/images/receivable.png',
-//                 subItems: const ['Khata', 'Create Khata'],
-//                 onNavigate: (index) {
-//                   const indices = [22, 23];
-//                   onNavigate(indices[index]);
-//                 },
-//                 currentIndex: currentIndex,
-//               ),
-
-//               ExpandableDrawerItem(
-//                 title: "Reports",
+//               // Reports (nested)
+//               DrawerNestedSection(
+//                 title: 'Reports',
 //                 assetPath: 'assets/images/report.png',
-//                 subItems: [
-//                   ExpandableDrawerItem(
-//                     title: "Transaction Reports",
+//                 currentRoute: currentRoute,
+//                 children: [
+//                   DrawerSection(
+//                     title: 'Transaction Reports',
 //                     assetPath: 'assets/images/transactional-data.png',
-//                     subItems: const [
-//                       'Voucher',
-//                       'Receipt',
-//                       'Payment',
-//                       'Day Closing',
-//                       "Product Report"
+//                     currentRoute: currentRoute,
+//                     items: const [
+//                       DrawerSectionItem('Voucher', AppRoutes.voucher),
+//                       DrawerSectionItem('Receipt', AppRoutes.receipt),
+//                       DrawerSectionItem('Payment', AppRoutes.payment),
+//                       DrawerSectionItem('Day Closing', AppRoutes.dayClosing),
+//                       DrawerSectionItem(
+//                           'Product Report', AppRoutes.productReport),
 //                     ],
-//                     onNavigate: (index) {
-//                       const indices = [14, 15, 16, 18, 19];
-//                       onNavigate(indices[index]);
+//                     onNavigate: (route) {
+//                       onNavigate(route);
+//                       Navigator.pop(context);
 //                     },
-//                     currentIndex: currentIndex,
 //                   ),
-//                   ExpandableDrawerItem(
-//                     title: "Accounting Reports",
+//                   DrawerSection(
+//                     title: 'Accounting Reports',
 //                     assetPath: 'assets/images/accounting.png',
-//                     subItems: const [
-//                       "Ledger Report",
-//                       "Stock-Ledger",
-//                       "Trial Balance",
-//                       "Balance Sheet",
-//                       "Profit & Loss",
-//                       "Log Summary",
+//                     currentRoute: currentRoute,
+//                     items: const [
+//                       DrawerSectionItem(
+//                           'Ledger Report', AppRoutes.ledgerReport),
+//                       DrawerSectionItem('Stock Ledger', AppRoutes.stockLedger),
+//                       DrawerSectionItem(
+//                           'Trial Balance', AppRoutes.trialBalance),
+//                       // TODO: add Balance Sheet, P&L, Log Summary once screens exist
 //                     ],
-//                     onNavigate: (index) {
-//                       const indices = [20, 21, 24, 25, 26, 28];
-//                       onNavigate(indices[index]);
+//                     onNavigate: (route) {
+//                       onNavigate(route);
+//                       Navigator.pop(context);
 //                     },
-//                     currentIndex: currentIndex,
 //                   ),
 //                 ],
-//                 onNavigate: (index) => onNavigate(17),
-//                 currentIndex: currentIndex,
 //               ),
 //             ],
 //           ),
@@ -158,7 +156,8 @@
 //   }
 // }
 
-// // ==================== DrawerItem (unchanged) ====================
+// // ─── Simple leaf item ─────────────────────────────────────────────────────────
+
 // class DrawerItem extends StatelessWidget {
 //   final String title;
 //   final VoidCallback onTap;
@@ -168,134 +167,98 @@
 //   const DrawerItem({
 //     required this.title,
 //     required this.onTap,
-//     this.assetPath,
 //     required this.isActive,
+//     this.assetPath,
 //     super.key,
 //   });
 
 //   @override
 //   Widget build(BuildContext context) {
 //     final color = isActive ? const Color(0xFFFFA133) : const Color(0xFF464E57);
-//     final fontWeight = isActive ? FontWeight.w600 : FontWeight.normal;
 
-//     final iconWidget = assetPath != null
-//         ? Image.asset(
-//             assetPath!,
-//             width: 24,
-//             height: 24,
-//             fit: BoxFit.contain,
-//             color: color,
-//             errorBuilder: (_, __, ___) =>
-//                 const Icon(Icons.error_outline, size: 24),
-//           )
-//         : const SizedBox(width: 24);
-
-//     return Column(
-//       mainAxisSize: MainAxisSize.min,
-//       children: [
-//         InkWell(
-//           onTap: onTap,
-//           child: Container(
-//             width: double.infinity,
-//             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-//             child: Row(
-//               children: [
-//                 iconWidget,
-//                 const SizedBox(width: 16),
-//                 Expanded(
-//                   child: Text(
-//                     title,
-//                     style: TextStyle(
-//                       fontSize: 14,
-//                       fontFamily: 'Inter',
-//                       fontWeight: fontWeight,
-//                       color: color,
-//                     ),
-//                   ),
+//     return InkWell(
+//       onTap: onTap,
+//       child: Container(
+//         width: double.infinity,
+//         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+//         child: Row(
+//           children: [
+//             if (assetPath != null)
+//               Image.asset(
+//                 assetPath!,
+//                 width: 24,
+//                 height: 24,
+//                 color: color,
+//                 errorBuilder: (_, __, ___) =>
+//                     const Icon(Icons.error_outline, size: 24),
+//               )
+//             else
+//               const SizedBox(width: 24),
+//             const SizedBox(width: 16),
+//             Expanded(
+//               child: Text(
+//                 title,
+//                 style: TextStyle(
+//                   fontSize: 14,
+//                   fontFamily: 'Inter',
+//                   fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+//                   color: color,
 //                 ),
-//               ],
+//               ),
 //             ),
-//           ),
+//           ],
 //         ),
-//         const Divider(
-//             height: 1,
-//             thickness: 1,
-//             color: Colors.transparent,
-//             indent: 16,
-//             endIndent: 16),
-//       ],
+//       ),
 //     );
 //   }
 // }
 
-// // ==================== ExpandableDrawerItem - ONLY THIS PART IS FIXED ====================
-// class ExpandableDrawerItem extends StatefulWidget {
+// // ─── Expandable section (flat list of route items) ────────────────────────────
+
+// class DrawerSection extends StatefulWidget {
 //   final String title;
 //   final String? assetPath;
-//   final List<dynamic> subItems;
-//   final Function(int) onNavigate;
-//   final int currentIndex;
+//   final String currentRoute;
+//   final List<DrawerSectionItem> items;
+//   final void Function(String route) onNavigate;
 
-//   const ExpandableDrawerItem({
+//   const DrawerSection({
 //     required this.title,
-//     this.assetPath,
-//     required this.subItems,
+//     required this.currentRoute,
+//     required this.items,
 //     required this.onNavigate,
-//     required this.currentIndex,
+//     this.assetPath,
 //     super.key,
 //   });
 
+//   bool get hasActiveItem => items.any((i) => i.route == currentRoute);
+
 //   @override
-//   State<ExpandableDrawerItem> createState() => _ExpandableDrawerItemState();
+//   State<DrawerSection> createState() => _DrawerSectionState();
 // }
 
-// class _ExpandableDrawerItemState extends State<ExpandableDrawerItem> {
-//   bool _isExpanded = false;
+// class _DrawerSectionState extends State<DrawerSection> {
+//   late bool _isExpanded;
 
 //   @override
 //   void initState() {
 //     super.initState();
-//     _isExpanded = _shouldBeExpanded();
+//     _isExpanded = widget.hasActiveItem;
 //   }
 
 //   @override
-//   void didUpdateWidget(covariant ExpandableDrawerItem oldWidget) {
-//     super.didUpdateWidget(oldWidget);
-//     if (widget.currentIndex != oldWidget.currentIndex) {
-//       setState(() {
-//         _isExpanded = _shouldBeExpanded();
-//       });
+//   void didUpdateWidget(covariant DrawerSection old) {
+//     super.didUpdateWidget(old);
+//     if (widget.currentRoute != old.currentRoute) {
+//       setState(() => _isExpanded = widget.hasActiveItem);
 //     }
-//   }
-
-//   bool _shouldBeExpanded() {
-//     for (int i = 0; i < widget.subItems.length; i++) {
-//       final globalIdx = _getGlobalIndex(i);
-//       if (globalIdx != null && widget.currentIndex == globalIdx) {
-//         return true;
-//       }
-//     }
-//     return false;
 //   }
 
 //   @override
 //   Widget build(BuildContext context) {
-//     final bool sectionActive = _shouldBeExpanded();
-
+//     final isActive = widget.hasActiveItem;
 //     final headerColor =
-//         sectionActive ? const Color(0xFFFFA133) : const Color(0xFF464E57);
-
-//     final iconWidget = widget.assetPath != null
-//         ? Image.asset(
-//             widget.assetPath!,
-//             width: 24,
-//             height: 24,
-//             fit: BoxFit.contain,
-//             color: headerColor,
-//             errorBuilder: (_, __, ___) =>
-//                 const Icon(Icons.error_outline, size: 24),
-//           )
-//         : const SizedBox(width: 24);
+//         isActive ? const Color(0xFFFFA133) : const Color(0xFF464E57);
 
 //     return Column(
 //       mainAxisSize: MainAxisSize.min,
@@ -311,7 +274,17 @@
 //               children: [
 //                 Row(
 //                   children: [
-//                     iconWidget,
+//                     if (widget.assetPath != null)
+//                       Image.asset(
+//                         widget.assetPath!,
+//                         width: 24,
+//                         height: 24,
+//                         color: headerColor,
+//                         errorBuilder: (_, __, ___) =>
+//                             const Icon(Icons.error_outline, size: 24),
+//                       )
+//                     else
+//                       const SizedBox(width: 24),
 //                     const SizedBox(width: 16),
 //                     Text(
 //                       widget.title,
@@ -335,88 +308,145 @@
 //         if (_isExpanded)
 //           Column(
 //             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: List.generate(widget.subItems.length, (index) {
-//               final item = widget.subItems[index];
-
-//               if (item is ExpandableDrawerItem) {
-//                 return Padding(
-//                   padding: const EdgeInsets.only(left: 16),
-//                   child: item,
-//                 );
-//               }
-
-//               final subTitle = item.toString();
-//               final globalIndex = _getGlobalIndex(index);
-//               final isActive =
-//                   globalIndex != null && widget.currentIndex == globalIndex;
-
-//               final subColor =
-//                   isActive ? const Color(0xFFFFA133) : const Color(0xFF687582);
-
+//             children: widget.items.map((item) {
+//               final isItemActive = item.route == widget.currentRoute;
+//               final color = isItemActive
+//                   ? const Color(0xFFFFA133)
+//                   : const Color(0xFF687582);
 //               return InkWell(
-//                 onTap: () {
-//                   widget.onNavigate(index);
-//                   Navigator.pop(context);
-//                 },
+//                 onTap: () => widget.onNavigate(item.route),
 //                 child: Container(
 //                   width: double.infinity,
 //                   padding: const EdgeInsets.only(
 //                       left: 55, right: 16, top: 8, bottom: 8),
 //                   child: Text(
-//                     subTitle,
+//                     item.label,
 //                     style: TextStyle(
 //                       fontSize: 14,
 //                       fontFamily: 'Inter',
 //                       fontWeight:
-//                           isActive ? FontWeight.w600 : FontWeight.normal,
-//                       color: subColor,
+//                           isItemActive ? FontWeight.w600 : FontWeight.normal,
+//                       color: color,
 //                     ),
 //                   ),
 //                 ),
 //               );
-//             }),
+//             }).toList(),
 //           ),
-//         const Divider(
-//           height: 1,
-//           thickness: 1,
-//           color: Colors.transparent,
-//           indent: 16,
-//           endIndent: 16,
-//         ),
 //       ],
 //     );
 //   }
+// }
 
-//   int? _getGlobalIndex(int subIndex) {
-//     switch (widget.title) {
-//       case 'Setup':
-//         const indices = [4, 5, 6, 7, 8, 9, 10, 11, 27];
-//         return subIndex < indices.length ? indices[subIndex] : null;
+// // ─── Nested section (contains DrawerSection children, e.g. Reports) ──────────
 
-//       case 'Daily Transation':
-//         const indices = [2, 13, 1, 12];
-//         return subIndex < indices.length ? indices[subIndex] : null;
+// class DrawerNestedSection extends StatefulWidget {
+//   final String title;
+//   final String? assetPath;
+//   final String currentRoute;
+//   final List<DrawerSection> children;
 
-//       case 'Receivable':
-//         const indices = [22, 23];
-//         return subIndex < indices.length ? indices[subIndex] : null;
+//   const DrawerNestedSection({
+//     required this.title,
+//     required this.currentRoute,
+//     required this.children,
+//     this.assetPath,
+//     super.key,
+//   });
 
-//       case 'Transaction Reports':
-//         const indices = [14, 15, 16, 18, 19];
-//         return subIndex < indices.length ? indices[subIndex] : null;
+//   bool get hasActiveChild => children.any((c) => c.hasActiveItem);
 
-//       case 'Accounting Reports':
-//         const indices = [20, 21, 24, 25, 26, 28];
-//         return subIndex < indices.length ? indices[subIndex] : null;
+//   @override
+//   State<DrawerNestedSection> createState() => _DrawerNestedSectionState();
+// }
 
-//       default:
-//         return null;
+// class _DrawerNestedSectionState extends State<DrawerNestedSection> {
+//   late bool _isExpanded;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _isExpanded = widget.hasActiveChild;
+//   }
+
+//   @override
+//   void didUpdateWidget(covariant DrawerNestedSection old) {
+//     super.didUpdateWidget(old);
+//     if (widget.currentRoute != old.currentRoute) {
+//       setState(() => _isExpanded = widget.hasActiveChild);
 //     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final isActive = widget.hasActiveChild;
+//     final headerColor =
+//         isActive ? const Color(0xFFFFA133) : const Color(0xFF464E57);
+
+//     return Column(
+//       mainAxisSize: MainAxisSize.min,
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         InkWell(
+//           onTap: () => setState(() => _isExpanded = !_isExpanded),
+//           child: Container(
+//             width: double.infinity,
+//             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 Row(
+//                   children: [
+//                     if (widget.assetPath != null)
+//                       Image.asset(
+//                         widget.assetPath!,
+//                         width: 24,
+//                         height: 24,
+//                         color: headerColor,
+//                         errorBuilder: (_, __, ___) =>
+//                             const Icon(Icons.error_outline, size: 24),
+//                       )
+//                     else
+//                       const SizedBox(width: 24),
+//                     const SizedBox(width: 16),
+//                     Text(
+//                       widget.title,
+//                       style: TextStyle(
+//                         fontSize: 14,
+//                         fontFamily: 'Inter',
+//                         color: headerColor,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//                 Icon(
+//                   _isExpanded ? Icons.expand_less : Icons.expand_more,
+//                   color: const Color(0xFF687582),
+//                   size: 18,
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ),
+//         if (_isExpanded)
+//           Padding(
+//             padding: const EdgeInsets.only(left: 16),
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: widget.children,
+//             ),
+//           ),
+//       ],
+//     );
 //   }
 // }
 
+// lib/widgets/app_drawer.dart
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:saleup_app/core/navigation/app_routes.dart';
+import 'package:saleup_app/services/session_manager.dart'; // ← Added for logout
 
 // ─── Data class ───────────────────────────────────────────────────────────────
 
@@ -438,135 +468,271 @@ class AppDrawer extends StatelessWidget {
     required this.onNavigate,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      backgroundColor: Colors.white,
-      child: SafeArea(
-        child: SingleChildScrollView(
+  // Logout Dialog
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Header
-              Stack(
+              // Icon at top
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.logout_rounded,
+                  color: Colors.red.shade400,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Title
+              const Text(
+                'Sign Out',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Inter',
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Subtitle
+              Text(
+                'Are you sure you want to log out? You will need to sign in again to access your account.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Inter',
+                  color: Colors.grey.shade600,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Action buttons
+              Row(
                 children: [
-                  SizedBox(
-                    height: 200,
-                    width: double.infinity,
-                    child: Image.asset(
-                      'assets/images/drawer_header.png',
-                      fit: BoxFit.cover,
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        side: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Color(0xFF4B5563),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 60, vertical: 30),
-                    child: Image.asset(
-                      'assets/images/sales_up_logo.png',
-                      height: 60,
-                      fit: BoxFit.contain,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        backgroundColor: Colors.red.shade400,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text(
+                        'Sign Out',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-
-              // Dashboard
-              DrawerItem(
-                title: 'Dashboard',
-                assetPath: 'assets/images/dashboard.png',
-                isActive: currentRoute == AppRoutes.home,
-                onTap: () {
-                  onNavigate(AppRoutes.home);
-                  Navigator.pop(context);
-                },
-              ),
-
-              // Setup
-              DrawerSection(
-                title: 'Setup',
-                assetPath: 'assets/images/settings.png',
-                currentRoute: currentRoute,
-                items: const [
-                  DrawerSectionItem('Account Heads', AppRoutes.accountHeads),
-                  DrawerSectionItem('Parties', AppRoutes.parties),
-                  DrawerSectionItem('Locations', AppRoutes.locations),
-                  DrawerSectionItem('Categories', AppRoutes.categories),
-                  DrawerSectionItem('Products', AppRoutes.products),
-                  DrawerSectionItem('Units', AppRoutes.units),
-                  DrawerSectionItem('Expiry', AppRoutes.expiry),
-                  DrawerSectionItem('Bill Payment', AppRoutes.billOptions),
-                  DrawerSectionItem('Settings', AppRoutes.settings),
-                ],
-                onNavigate: (route) {
-                  onNavigate(route);
-                  Navigator.pop(context);
-                },
-              ),
-
-              // Daily Transaction
-              DrawerSection(
-                title: 'Daily Transaction',
-                assetPath: 'assets/images/transaction-history.png',
-                currentRoute: currentRoute,
-                items: const [
-                  DrawerSectionItem('Sales', AppRoutes.sales),
-                  DrawerSectionItem('Sales Return', AppRoutes.salesReturn),
-                  DrawerSectionItem('Purchase', AppRoutes.purchase),
-                  DrawerSectionItem(
-                      'Purchase Return', AppRoutes.purchaseReturn),
-                ],
-                onNavigate: (route) {
-                  onNavigate(route);
-                  Navigator.pop(context);
-                },
-              ),
-
-              // Reports (nested)
-              DrawerNestedSection(
-                title: 'Reports',
-                assetPath: 'assets/images/report.png',
-                currentRoute: currentRoute,
-                children: [
-                  DrawerSection(
-                    title: 'Transaction Reports',
-                    assetPath: 'assets/images/transactional-data.png',
-                    currentRoute: currentRoute,
-                    items: const [
-                      DrawerSectionItem('Voucher', AppRoutes.voucher),
-                      DrawerSectionItem('Receipt', AppRoutes.receipt),
-                      DrawerSectionItem('Payment', AppRoutes.payment),
-                      DrawerSectionItem('Day Closing', AppRoutes.dayClosing),
-                      DrawerSectionItem(
-                          'Product Report', AppRoutes.productReport),
-                    ],
-                    onNavigate: (route) {
-                      onNavigate(route);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  DrawerSection(
-                    title: 'Accounting Reports',
-                    assetPath: 'assets/images/accounting.png',
-                    currentRoute: currentRoute,
-                    items: const [
-                      DrawerSectionItem(
-                          'Ledger Report', AppRoutes.ledgerReport),
-                      DrawerSectionItem('Stock Ledger', AppRoutes.stockLedger),
-                      DrawerSectionItem(
-                          'Trial Balance', AppRoutes.trialBalance),
-                      // TODO: add Balance Sheet, P&L, Log Summary once screens exist
-                    ],
-                    onNavigate: (route) {
-                      onNavigate(route);
-                      Navigator.pop(context);
-                    },
                   ),
                 ],
               ),
             ],
           ),
+        ),
+      ),
+    );
+
+    if (shouldLogout == true && context.mounted) {
+      await SessionManager().logout();
+      if (context.mounted) {
+        context.go('/login');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: SafeArea(
+        child: Column(
+          // Changed to Column for fixed bottom
+          children: [
+            // Your original scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Header
+                    Stack(
+                      children: [
+                        SizedBox(
+                          height: 200,
+                          width: double.infinity,
+                          child: Image.asset(
+                            'assets/images/drawer_header.png',
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 60, vertical: 30),
+                          child: Image.asset(
+                            'assets/images/sales_up_logo.png',
+                            height: 60,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Dashboard
+                    DrawerItem(
+                      title: 'Dashboard',
+                      assetPath: 'assets/images/dashboard.png',
+                      isActive: currentRoute == AppRoutes.home,
+                      onTap: () {
+                        onNavigate(AppRoutes.home);
+                        Navigator.pop(context);
+                      },
+                    ),
+
+                    // Setup
+                    DrawerSection(
+                      title: 'Setup',
+                      assetPath: 'assets/images/settings.png',
+                      currentRoute: currentRoute,
+                      items: const [
+                        DrawerSectionItem(
+                            'Account Heads', AppRoutes.accountHeads),
+                        DrawerSectionItem('Parties', AppRoutes.parties),
+                        DrawerSectionItem('Locations', AppRoutes.locations),
+                        DrawerSectionItem('Categories', AppRoutes.categories),
+                        DrawerSectionItem('Products', AppRoutes.products),
+                        DrawerSectionItem('Units', AppRoutes.units),
+                        DrawerSectionItem('Expiry', AppRoutes.expiry),
+                        DrawerSectionItem(
+                            'Bill Payment', AppRoutes.billOptions),
+                        DrawerSectionItem('Settings', AppRoutes.settings),
+                      ],
+                      onNavigate: (route) {
+                        onNavigate(route);
+                        Navigator.pop(context);
+                      },
+                    ),
+
+                    // Daily Transaction
+                    DrawerSection(
+                      title: 'Daily Transaction',
+                      assetPath: 'assets/images/transaction-history.png',
+                      currentRoute: currentRoute,
+                      items: const [
+                        DrawerSectionItem('Sales', AppRoutes.sales),
+                        DrawerSectionItem(
+                            'Sales Return', AppRoutes.salesReturn),
+                        DrawerSectionItem('Purchase', AppRoutes.purchase),
+                        DrawerSectionItem(
+                            'Purchase Return', AppRoutes.purchaseReturn),
+                      ],
+                      onNavigate: (route) {
+                        onNavigate(route);
+                        Navigator.pop(context);
+                      },
+                    ),
+
+                    // Reports (nested)
+                    DrawerNestedSection(
+                      title: 'Reports',
+                      assetPath: 'assets/images/report.png',
+                      currentRoute: currentRoute,
+                      children: [
+                        DrawerSection(
+                          title: 'Transaction Reports',
+                          assetPath: 'assets/images/transactional-data.png',
+                          currentRoute: currentRoute,
+                          items: const [
+                            DrawerSectionItem('Voucher', AppRoutes.voucher),
+                            DrawerSectionItem('Receipt', AppRoutes.receipt),
+                            DrawerSectionItem('Payment', AppRoutes.payment),
+                            DrawerSectionItem(
+                                'Day Closing', AppRoutes.dayClosing),
+                            DrawerSectionItem(
+                                'Product Report', AppRoutes.productReport),
+                          ],
+                          onNavigate: (route) {
+                            onNavigate(route);
+                            Navigator.pop(context);
+                          },
+                        ),
+                        DrawerSection(
+                          title: 'Accounting Reports',
+                          assetPath: 'assets/images/accounting.png',
+                          currentRoute: currentRoute,
+                          items: const [
+                            DrawerSectionItem(
+                                'Ledger Report', AppRoutes.ledgerReport),
+                            DrawerSectionItem(
+                                'Stock Ledger', AppRoutes.stockLedger),
+                            DrawerSectionItem(
+                                'Trial Balance', AppRoutes.trialBalance),
+                            // TODO: add Balance Sheet, P&L, Log Summary once screens exist
+                          ],
+                          onNavigate: (route) {
+                            onNavigate(route);
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // ====================== LOGOUT BUTTON AT BOTTOM ======================
+            const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: DrawerItem(
+                title: 'Logout',
+                assetPath: 'assets/images/logout.png', // Assuming this exists or using icon
+                isActive: false,
+                onTap: () => _showLogoutDialog(context),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
         ),
       ),
     );
@@ -603,11 +769,14 @@ class DrawerItem extends StatelessWidget {
             if (assetPath != null)
               Image.asset(
                 assetPath!,
-                width: 24,
-                height: 24,
-                color: color,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.error_outline, size: 24),
+                width: 20, // Smaller icon to match design better
+                height: 20,
+                color: title == 'Logout' ? Colors.red.shade400 : color,
+                errorBuilder: (_, __, ___) => Icon(
+                  title == 'Logout' ? Icons.logout : Icons.error_outline,
+                  size: 20,
+                  color: title == 'Logout' ? Colors.red.shade400 : color,
+                ),
               )
             else
               const SizedBox(width: 24),
@@ -619,7 +788,7 @@ class DrawerItem extends StatelessWidget {
                   fontSize: 14,
                   fontFamily: 'Inter',
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                  color: color,
+                  color: title == 'Logout' ? Colors.red.shade400 : color,
                 ),
               ),
             ),

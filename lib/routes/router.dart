@@ -728,9 +728,18 @@ class _ShellScaffoldState extends State<ShellScaffold> {
   }
 }
 
-final GoRouter router = GoRouter(
+GoRouter buildRouter(bool shouldAutoLogin) => GoRouter(
   initialLocation: AppRoutes.splash,
   navigatorKey: rootNavigatorKey,
+  redirect: (context, state) {
+    // If we're on splash, decide where to go next based on auto-login status
+    if (state.uri.path == AppRoutes.splash) {
+       // We don't return here because SplashScreen handles its own navigation 
+       // after the animation. However, if we want a hard redirect:
+       // return shouldAutoLogin ? AppRoutes.home : AppRoutes.onboarding;
+    }
+    return null;
+  },
   routes: [
     GoRoute(
       path: AppRoutes.splash,

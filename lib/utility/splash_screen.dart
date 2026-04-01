@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'package:saleup_app/services/session_manager.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -57,7 +58,18 @@ class _SplashScreenState extends State<SplashScreen>
     _controller!.addStatusListener((status) async {
       if (status == AnimationStatus.completed || _hasError) {
         if (mounted) {
-          context.go('/onboarding'); // ← always go to onboarding
+          final sessionManager = SessionManager();
+          final canAutoLogin = await sessionManager.shouldAutoLogin();
+
+          if (mounted) {
+            if (canAutoLogin) {
+              // Navigate to Home or Company Selection depending on logic
+              // For now, assuming home or select_company is the entry after login
+              context.go('/select_company');
+            } else {
+              context.go('/onboarding');
+            }
+          }
         }
       }
     });
