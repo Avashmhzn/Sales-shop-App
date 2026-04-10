@@ -1105,6 +1105,7 @@ class _AccountHeadState extends State<AccountHead> {
                                 'Edit Account',
                                 style: TextStyle(
                                   fontSize: 17,
+                                  fontFamily: 'Inter',
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black87,
                                 ),
@@ -1129,8 +1130,10 @@ class _AccountHeadState extends State<AccountHead> {
                                   child: TextFormField(
                                     initialValue: head.id.toString(),
                                     readOnly: true,
-                                    style:
-                                        const TextStyle(color: Colors.black45),
+                                    style: const TextStyle(
+                                      color: Colors.black45,
+                                      fontFamily: 'Inter',
+                                    ),
                                     decoration: _editInputDecoration(),
                                   ),
                                 ),
@@ -1142,6 +1145,10 @@ class _AccountHeadState extends State<AccountHead> {
                                   child: TextFormField(
                                     controller: nameController,
                                     decoration: _editInputDecoration(),
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontFamily: 'Inter',
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1161,6 +1168,11 @@ class _AccountHeadState extends State<AccountHead> {
                                     isExpanded: true,
                                     items: const [
                                       'Capital Account',
+                                      'Reserves & Surplus',
+                                      'Secured Loans',
+                                      'Unsecured Loans',
+                                      'Bank OD',
+                                      'Bank OCC Account',
                                       'Current Assets',
                                       'Fixed Assets',
                                       'Current Liabilities',
@@ -1174,7 +1186,6 @@ class _AccountHeadState extends State<AccountHead> {
                                       'Sundry Creditors',
                                       'Loans & Advances',
                                       'Provisions',
-                                      'Reserves & Surplus',
                                     ]
                                         .map((e) => DropdownMenuItem(
                                             value: e, child: Text(e)))
@@ -1197,7 +1208,6 @@ class _AccountHeadState extends State<AccountHead> {
                                       'Liabilities',
                                       'Income',
                                       'Expenses',
-                                      'Capital',
                                     ]
                                         .map((e) => DropdownMenuItem(
                                             value: e, child: Text(e)))
@@ -1484,12 +1494,16 @@ class _AccountHeadState extends State<AccountHead> {
                       style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w800,
+                          fontFamily: 'Inter',
                           color: Color(0xFF1A1A1A)),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Manage and categorize different account types',
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                      style: TextStyle(
+                          fontSize: 13,
+                          fontFamily: 'Inter',
+                          color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -1509,7 +1523,9 @@ class _AccountHeadState extends State<AccountHead> {
                               decoration: const InputDecoration(
                                 hintText: 'Search...',
                                 hintStyle: TextStyle(
-                                    color: Color(0xFFAAAAAA), fontSize: 13),
+                                    fontFamily: 'Inter',
+                                    color: Color(0xFFAAAAAA),
+                                    fontSize: 13),
                                 prefixIcon: Icon(Icons.search,
                                     color: Color(0xFFAAAAAA), size: 18),
                                 border: InputBorder.none,
@@ -1524,11 +1540,15 @@ class _AccountHeadState extends State<AccountHead> {
                           onPressed: () {},
                           icon: const Icon(Icons.add,
                               size: 18, color: Colors.white),
-                          label: const Text('New Account',
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white)),
+                          label: const Text(
+                            'New Account',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontFamily: 'Inter',
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _orange,
                             padding: const EdgeInsets.symmetric(
@@ -1553,6 +1573,7 @@ class _AccountHeadState extends State<AccountHead> {
                         label: Text('Delete All',
                             style: TextStyle(
                                 fontSize: 13,
+                                fontFamily: 'Inter',
                                 color: _selectedIds.isEmpty
                                     ? Colors.grey
                                     : const Color(0xFFD9534F))),
@@ -1588,10 +1609,14 @@ class _AccountHeadState extends State<AccountHead> {
                                                   size: 48,
                                                   color: Color(0xFFCCCCCC)),
                                               SizedBox(height: 12),
-                                              Text('No account heads found',
-                                                  style: TextStyle(
-                                                      color: Color(0xFF888888),
-                                                      fontSize: 14)),
+                                              Text(
+                                                'No account heads found',
+                                                style: TextStyle(
+                                                  fontFamily: 'Inter',
+                                                  color: Color(0xFF888888),
+                                                  fontSize: 14,
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         )
@@ -1674,6 +1699,7 @@ class _AccountHeadState extends State<AccountHead> {
                 parent,
                 style: TextStyle(
                     fontSize: 12,
+                    fontFamily: 'Inter',
                     fontWeight: FontWeight.w500,
                     color: isSelected ? Colors.white : const Color(0xFF555555)),
               ),
@@ -1722,6 +1748,7 @@ class _AccountHeadState extends State<AccountHead> {
                         group,
                         style: TextStyle(
                           fontSize: 11,
+                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w500,
                           color: isSelected ? _orange : const Color(0xFF777777),
                         ),
@@ -1750,6 +1777,7 @@ class _AccountHeadState extends State<AccountHead> {
                   Text('Clear',
                       style: TextStyle(
                           fontSize: 11,
+                          fontFamily: 'Inter',
                           fontWeight: FontWeight.w500,
                           color: Color(0xFFD9534F))),
                 ],
@@ -1827,8 +1855,13 @@ class _TableWithSharedScrollState extends State<_TableWithSharedScroll> {
   @override
   Widget build(BuildContext context) {
     const headerStyle = TextStyle(
-        fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF555555));
-    const rs = TextStyle(fontSize: 13, color: Color(0xFF333333));
+      fontSize: 12,
+      fontFamily: 'Inter',
+      fontWeight: FontWeight.w600,
+      color: Color(0xFF555555),
+    );
+    const rs =
+        TextStyle(fontSize: 13, fontFamily: 'Inter', color: Color(0xFF333333));
 
     return RawScrollbar(
       controller: _hScroll,
@@ -1957,10 +1990,11 @@ class _TableWithSharedScrollState extends State<_TableWithSharedScroll> {
                                                       const Text(
                                                         'Account Details',
                                                         style: TextStyle(
-                                                            fontSize: 18,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
+                                                          fontSize: 18,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontFamily: 'Inter',
+                                                        ),
                                                       ),
                                                       IconButton(
                                                         icon: const Icon(
@@ -2064,16 +2098,22 @@ class _TableWithSharedScrollState extends State<_TableWithSharedScroll> {
   Widget _buildLabelValue(String label, String value) {
     return RichText(
       text: TextSpan(
-        style: const TextStyle(fontSize: 14, color: Colors.black87),
+        style: const TextStyle(
+            fontSize: 14, fontFamily: 'Inter', color: Colors.black87),
         children: [
           TextSpan(
             text: '$label: ',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontFamily: 'Inter',
+            ),
           ),
           TextSpan(
             text: value,
             style: const TextStyle(
-                fontWeight: FontWeight.normal, color: Colors.black54),
+                fontWeight: FontWeight.normal,
+                fontFamily: 'Inter',
+                color: Colors.black54),
           ),
         ],
       ),
@@ -2128,8 +2168,10 @@ class _PaginationBar extends StatelessWidget {
                 const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 2),
                     child: Text('…',
-                        style:
-                            TextStyle(color: Color(0xFF888888), fontSize: 13)))
+                        style: TextStyle(
+                            color: Color(0xFF888888),
+                            fontFamily: 'Inter',
+                            fontSize: 13)))
               else
                 _PagePill(
                     page: p,
@@ -2173,6 +2215,7 @@ class _PagePill extends StatelessWidget {
         child: Text('$page',
             style: TextStyle(
                 fontSize: 12,
+                fontFamily: 'Inter',
                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
                 color: isActive
                     ? const Color(0xFF1A1A1A)

@@ -760,20 +760,43 @@ class _PartiesScreenState extends State<PartiesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Delete Party',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Are you sure you want to delete "${party.name}"?'),
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: const Text(
+          'Delete Party',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Inter',
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${party.name}"?',
+          style: const TextStyle(
+            fontFamily: 'Inter',
+          ),
+        ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                ),
+              )),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD9534F),
                 foregroundColor: Colors.white),
-            child: const Text('Delete'),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontFamily: 'Inter',
+              ),
+            ),
           ),
         ],
       ),
@@ -830,20 +853,44 @@ class _PartiesScreenState extends State<PartiesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        title: const Text('Delete Parties',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Delete ${ids.length} selected parties?'),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Delete Parties',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontFamily: 'Inter',
+          ),
+        ),
+        content: Text(
+          'Delete ${ids.length} selected parties?',
+          style: const TextStyle(
+            fontFamily: 'Inter',
+          ),
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'Inter',
+              ),
+            ),
+          ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFD9534F),
                 foregroundColor: Colors.white),
-            child: const Text('Delete'),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontFamily: 'Inter',
+              ),
+            ),
           ),
         ],
       ),
@@ -913,6 +960,7 @@ class _PartiesScreenState extends State<PartiesScreen> {
                     'Party Details',
                     style: TextStyle(
                         fontSize: 18,
+                        fontFamily: 'Inter',
                         fontWeight: FontWeight.bold,
                         color: Colors.black87),
                   ),
@@ -1020,6 +1068,7 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                 'Edit Parties',
                                 style: TextStyle(
                                   fontSize: 18,
+                                  fontFamily: 'Inter',
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black87,
                                 ),
@@ -1041,8 +1090,10 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                   child: TextFormField(
                                     initialValue: party.id.toString(),
                                     readOnly: true,
-                                    style:
-                                        const TextStyle(color: Colors.black54),
+                                    style: const TextStyle(
+                                      color: Colors.black54,
+                                      fontFamily: 'Inter',
+                                    ),
                                     decoration: _inputDecoration(),
                                   ),
                                 ),
@@ -1166,6 +1217,7 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                 'Status',
                                 style: TextStyle(
                                   fontSize: 13,
+                                  fontFamily: 'Inter',
                                   fontWeight: FontWeight.w500,
                                   color: Colors.black87,
                                 ),
@@ -1287,7 +1339,8 @@ class _PartiesScreenState extends State<PartiesScreen> {
   InputDecoration _inputDecoration({String? hint}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: Colors.black38, fontSize: 13),
+      hintStyle: const TextStyle(
+          color: Colors.black38, fontFamily: 'Inter', fontSize: 13),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -1318,16 +1371,22 @@ class _PartiesScreenState extends State<PartiesScreen> {
               width: 110,
               child: Text(
                 label,
-                style: const TextStyle(fontSize: 14, color: Colors.black54),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontFamily: 'Inter',
+                  color: Colors.black54,
+                ),
               ),
             ),
             Expanded(
               child: Text(
                 value,
                 style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.black87,
-                    fontWeight: FontWeight.w500),
+                  fontSize: 14,
+                  fontFamily: 'Inter',
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
@@ -1395,15 +1454,22 @@ class _PartiesScreenState extends State<PartiesScreen> {
                               const Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Parties',
-                                      style: TextStyle(
-                                          fontSize: 26,
-                                          fontWeight: FontWeight.bold)),
+                                  Text(
+                                    'Parties',
+                                    style: TextStyle(
+                                      fontSize: 26,
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   SizedBox(height: 4),
                                   Text(
                                     'Add or update suppliers/customers \nand maintain party-related records',
                                     style: TextStyle(
-                                        fontSize: 13, color: Colors.grey),
+                                      fontSize: 13,
+                                      color: Colors.grey,
+                                      fontFamily: 'Inter',
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1420,7 +1486,11 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                   );
                                 },
                                 icon: const Icon(Icons.add, size: 18),
-                                label: const Text('New Parties'),
+                                label: const Text(
+                                  'New Parties',
+                                  style: TextStyle(
+                                      fontFamily: 'Inter', fontSize: 12),
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFFF9800),
                                   foregroundColor: Colors.white,
@@ -1448,11 +1518,15 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                     controller: _searchController,
                                     decoration: const InputDecoration(
                                       hintText: 'Search...',
-                                      prefixIcon: Icon(Icons.search,
-                                          color: Colors.grey),
+                                      prefixIcon: Icon(
+                                        Icons.search,
+                                        color: Colors.grey,
+                                      ),
                                       border: InputBorder.none,
                                       contentPadding: EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 0),
+                                        horizontal: 16,
+                                        vertical: 0,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1464,7 +1538,10 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                     : _deleteSelected,
                                 icon:
                                     const Icon(Icons.delete_outline, size: 18),
-                                label: const Text('Delete All'),
+                                label: const Text(
+                                  'Delete All',
+                                  style: TextStyle(fontFamily: 'Inter'),
+                                ),
                                 style: TextButton.styleFrom(
                                   foregroundColor: _selectedIds.isEmpty
                                       ? Colors.grey
@@ -1487,10 +1564,14 @@ class _PartiesScreenState extends State<PartiesScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Filter Parties',
-                                    style: TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold)),
+                                const Text(
+                                  'Filter Parties',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontFamily: 'Inter',
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 const SizedBox(height: 8),
                                 Wrap(
                                   spacing: 10,
@@ -1513,8 +1594,10 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                       child: const Text(
                                         'Clear Filters',
                                         style: TextStyle(
-                                            color: Color(0xFFD9534F),
-                                            fontWeight: FontWeight.w500),
+                                          color: Color(0xFFD9534F),
+                                          fontWeight: FontWeight.w500,
+                                          fontFamily: 'Inter',
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -1544,7 +1627,10 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                       decoration: const BoxDecoration(
                                         color: Color(0xFFFAFAFA),
                                         borderRadius: BorderRadius.vertical(
-                                            top: Radius.circular(12)),
+                                          top: Radius.circular(
+                                            12,
+                                          ),
+                                        ),
                                       ),
                                       padding: const EdgeInsets.symmetric(
                                           horizontal: 16),
@@ -1564,52 +1650,76 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                           const SizedBox(width: 10),
                                           const SizedBox(
                                             width: 60,
-                                            child: Text('ID',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Color(0xFF555555))),
+                                            child: Text(
+                                              'ID',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF555555),
+                                              ),
+                                            ),
                                           ),
                                           const SizedBox(
                                             width: 60,
-                                            child: Text('Name',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Color(0xFF555555))),
+                                            child: Text(
+                                              'Name',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF555555),
+                                              ),
+                                            ),
                                           ),
                                           const SizedBox(
                                             width: 140,
-                                            child: Text('Phone Number',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Color(0xFF555555))),
+                                            child: Text(
+                                              'Phone Number',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF555555),
+                                              ),
+                                            ),
                                           ),
                                           const SizedBox(
                                             width: 140,
-                                            child: Text('Pan Number',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Color(0xFF555555))),
+                                            child: Text(
+                                              'Pan Number',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF555555),
+                                              ),
+                                            ),
                                           ),
                                           const SizedBox(
                                             width: 120,
-                                            child: Text('Type',
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Color(0xFF555555))),
+                                            child: Text(
+                                              'Type',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF555555),
+                                              ),
+                                            ),
                                           ),
                                           const SizedBox(
                                             width: 110,
-                                            child: Text('Action',
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                    fontSize: 12,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: Color(0xFF555555))),
+                                            child: Text(
+                                              'Action',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontFamily: 'Inter',
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF555555),
+                                              ),
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -1621,7 +1731,13 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                       const Padding(
                                         padding: EdgeInsets.all(40),
                                         child: Center(
-                                            child: Text('No parties found')),
+                                          child: Text(
+                                            'No parties found',
+                                            style: TextStyle(
+                                              fontFamily: 'Inter',
+                                            ),
+                                          ),
+                                        ),
                                       )
                                     else
                                       ...paginatedData.map((party) {
@@ -1654,20 +1770,26 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                                     const SizedBox(width: 10),
                                                     SizedBox(
                                                       width: 60,
-                                                      child: Text('${party.id}',
-                                                          style: const TextStyle(
-                                                              fontSize: 13,
-                                                              color: Color(
-                                                                  0xFF333333))),
+                                                      child: Text(
+                                                        '${party.id}',
+                                                        style: const TextStyle(
+                                                          fontSize: 13,
+                                                          fontFamily: 'Inter',
+                                                          color:
+                                                              Color(0xFF333333),
+                                                        ),
+                                                      ),
                                                     ),
                                                     SizedBox(
                                                       width: 60,
                                                       child: Text(
                                                         party.name,
                                                         style: const TextStyle(
-                                                            fontSize: 13,
-                                                            color: Color(
-                                                                0xFF333333)),
+                                                          fontSize: 13,
+                                                          fontFamily: 'Inter',
+                                                          color:
+                                                              Color(0xFF333333),
+                                                        ),
                                                         overflow: TextOverflow
                                                             .ellipsis,
                                                       ),
@@ -1677,9 +1799,11 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                                       child: Text(
                                                         party.phone ?? 'N/A',
                                                         style: const TextStyle(
-                                                            fontSize: 13,
-                                                            color: Color(
-                                                                0xFF333333)),
+                                                          fontSize: 13,
+                                                          fontFamily: 'Inter',
+                                                          color:
+                                                              Color(0xFF333333),
+                                                        ),
                                                       ),
                                                     ),
                                                     SizedBox(
@@ -1688,9 +1812,11 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                                         party.panNumber ??
                                                             'N/A',
                                                         style: const TextStyle(
-                                                            fontSize: 13,
-                                                            color: Color(
-                                                                0xFF333333)),
+                                                          fontSize: 13,
+                                                          fontFamily: 'Inter',
+                                                          color:
+                                                              Color(0xFF333333),
+                                                        ),
                                                       ),
                                                     ),
                                                     SizedBox(
@@ -1698,9 +1824,11 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                                       child: Text(
                                                         party.type ?? 'N/A',
                                                         style: const TextStyle(
-                                                            fontSize: 13,
-                                                            color: Color(
-                                                                0xFF333333)),
+                                                          fontSize: 13,
+                                                          fontFamily: 'Inter',
+                                                          color:
+                                                              Color(0xFF333333),
+                                                        ),
                                                       ),
                                                     ),
                                                     SizedBox(
@@ -1730,11 +1858,12 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                                                 _showEditPartyDialog(
                                                                     party),
                                                             child: const Icon(
-                                                                Icons
-                                                                    .edit_outlined,
-                                                                size: 16,
-                                                                color: Color(
-                                                                    0xFF888888)),
+                                                              Icons
+                                                                  .edit_outlined,
+                                                              size: 16,
+                                                              color: Color(
+                                                                  0xFF888888),
+                                                            ),
                                                           ),
                                                           const SizedBox(
                                                               width: 10),
@@ -1757,8 +1886,9 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                                 ),
                                               ),
                                               const Divider(
-                                                  height: 1,
-                                                  color: Color(0xFFEEEEEE)),
+                                                height: 1,
+                                                color: Color(0xFFEEEEEE),
+                                              ),
                                             ],
                                           ),
                                         );
@@ -1795,8 +1925,10 @@ class _PartiesScreenState extends State<PartiesScreen> {
                                     child: Text(
                                       '$validCurrentPage',
                                       style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold),
+                                        color: Colors.white,
+                                        fontFamily: 'Inter',
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                   IconButton(
@@ -1841,6 +1973,7 @@ class _PartiesScreenState extends State<PartiesScreen> {
         child: Text(
           label,
           style: TextStyle(
+            fontFamily: 'Inter',
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             color: isSelected ? const Color(0xFFE8891A) : Colors.black87,
           ),

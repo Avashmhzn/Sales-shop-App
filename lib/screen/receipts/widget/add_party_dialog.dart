@@ -169,7 +169,7 @@ class _AddPartyDialogState extends State<AddPartyDialog> {
                     SwitchListTile(
                       title: const Text('Active'),
                       value: _status,
-                      activeColor: Colors.blue,
+                      activeThumbColor: Colors.blue,
                       contentPadding: EdgeInsets.zero,
                       onChanged: (val) => setState(() => _status = val),
                     ),
@@ -243,7 +243,7 @@ class _AddPartyDialogState extends State<AddPartyDialog> {
         const Text('* Type', style: TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: _selectedType,
+          initialValue: _selectedType,
           items: _partyTypes
               .map((type) => DropdownMenuItem(value: type, child: Text(type)))
               .toList(),

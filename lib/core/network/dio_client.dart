@@ -1,5 +1,3 @@
-// //news
-// import 'dart:convert';
 // import 'dart:developer';
 // import 'dart:io';
 
@@ -26,6 +24,8 @@
 
 //   late final Dio dio;
 //   late final CookieJar cookieJar;
+//   static final GlobalKey<NavigatorState> navigatorKey =
+//       GlobalKey<NavigatorState>();
 
 //   DioClient._internal() {
 //     dio = Dio();
@@ -39,9 +39,9 @@
 //         'Content-Type': 'application/json',
 //         'Accept': 'application/json',
 //       }
-//       ..validateStatus = (status) => status != null && status < 500;
+//       // ✅ FIXED: was < 500, now < 600 so 500 errors reach your bloc
+//       ..validateStatus = (status) => status != null && status < 600;
 
-//     // Enable session cookies (important for Django session auth if used)
 //     cookieJar = CookieJar();
 //     dio.interceptors.add(CookieManager(cookieJar));
 
@@ -56,7 +56,6 @@
 //         onRequest: (options, handler) async {
 //           options.extra['requestStartTime'] = DateTime.now();
 
-//           // Small delay helps with secure storage read-after-write
 //           await Future.delayed(const Duration(milliseconds: 100));
 
 //           log('→ START [${options.method}] ${options.uri.toString()}');
@@ -64,6 +63,7 @@
 
 //           final unauthenticatedEndpoints = [
 //             '/auth/login/',
+//             '/auth/register/',
 //             '/auth/forgot_password/',
 //             '/auth/verify_forgot_password_otp/',
 //             '/auth/reset_password/',
@@ -72,7 +72,7 @@
 
 //           if (!unauthenticatedEndpoints.contains(options.path)) {
 //             final token = await AuthService().getAccessToken();
-//             log('Token check for ${options.path}: ${token != null ? "YES (len ${token.length ?? 0})" : "NULL"}');
+//             log('Token check for ${options.path}: ${token != null ? "YES (len ${token.length})" : "NULL"}');
 
 //             if (token != null) {
 //               options.headers['Authorization'] = 'Bearer $token';
@@ -102,7 +102,7 @@
 //               ? DateTime.now().difference(start).inMilliseconds
 //               : 0;
 
-//           log('✗ ERROR after ${duration}ms → ${error.message} → ${error.requestOptions.uri}');
+//           log('ERROR after ${duration}ms → ${error.message} → ${error.requestOptions.uri}');
 
 //           if (error.response?.statusCode == 401 &&
 //               !error.requestOptions.path.contains('/auth/login/') &&
@@ -122,8 +122,6 @@
 //               await AuthService().clearTokens();
 //               await cookieJar.deleteAll();
 //               Api.resetToPublic();
-//               // Optional: navigate to login if you have context
-//               // navigatorKey.currentContext?.go('/login');
 //             }
 //           }
 
@@ -132,11 +130,10 @@
 //       ),
 //     );
 //   }
-//   // ─── NEW METHOD ────────────────────────────────────────────────
+
 //   void updateBaseUrl(String newBaseUrl) {
-//     final cleanUrl = newBaseUrl.endsWith('') ? newBaseUrl : newBaseUrl;
-//     dio.options.baseUrl = cleanUrl;
-//     log('Dio baseUrl CHANGED to → $cleanUrl', name: 'DioClient');
+//     dio.options.baseUrl = newBaseUrl;
+//     log('Dio baseUrl CHANGED to → $newBaseUrl', name: 'DioClient');
 //   }
 
 //   Future<bool> isTokenValid() async {
@@ -256,7 +253,6 @@
 //     try {
 //       dynamic value = map[key1];
 //       if (value == null) return null;
-
 //       if (key2 != null) {
 //         if (value is List && key2 is int && key2 < value.length) {
 //           value = value[key2];
@@ -333,7 +329,6 @@
 
 //   String _getProductName(Map<String, dynamic>? data) {
 //     if (data == null) return 'Unknown Product';
-
 //     return _safeString(data, 'product_name') ??
 //         _safeString(data, 'purchases', 0, 'product_name') ??
 //         _safeString(data, 'sales', 0, 'product_name') ??
@@ -358,48 +353,31 @@
 //       final pdf = pw.Document();
 
 //       log('PDF EXPORT STARTED → rateType: $rateType');
-//       log('RAW JSON:\n${const JsonEncoder.withIndent('  ').convert(json)}');
 
 //       final responseData = json['data'] as Map<String, dynamic>?;
 //       if (responseData == null) throw Exception('No data in response');
 
 //       final productName = _getProductName(responseData);
-
 //       final closingCostPrice =
 //           _getRate(responseData, 'closing_stock', 'summary', 'cost');
-
 //       final openingQty = _getQty(responseData, 'opening_stock', 'summary');
 //       final openingAmt = openingQty * closingCostPrice;
-
 //       final closingQty = _getQty(responseData, 'closing_stock', 'summary');
 //       final closingAmt = closingQty * closingCostPrice;
-
 //       final purchaseQty = _getQty(responseData, 'purchases');
 //       final purchaseRate = _getRate(responseData, 'purchases', null, rateType);
 //       final purchaseAmt = purchaseQty * purchaseRate;
-
 //       final purRetQty = _getQty(responseData, 'purchase_returns');
 //       final purRetRate =
 //           _getRate(responseData, 'purchase_returns', null, rateType);
 //       final purRetAmt = purRetQty * purRetRate;
-
 //       final salesQty = _getQty(responseData, 'sales');
 //       final salesRate = _getRate(responseData, 'sales', null, rateType);
 //       final salesAmt = salesQty * salesRate;
-
 //       final saleRetQty = _getQty(responseData, 'sale_returns');
 //       final saleRetRate =
 //           _getRate(responseData, 'sale_returns', null, rateType);
 //       final saleRetAmt = saleRetQty * saleRetRate;
-
-//       log('CALCULATED VALUES:');
-//       log('  Product: $productName');
-//       log('  Opening:  Qty=$openingQty   Rate=$closingCostPrice   Amt=$openingAmt');
-//       log('  Closing:  Qty=$closingQty   Rate=$closingCostPrice   Amt=$closingAmt');
-//       log('  Purchase: Qty=$purchaseQty  Rate=$purchaseRate  Amt=$purchaseAmt');
-//       log('  Pur Ret:  Qty=$purRetQty    Rate=$purRetRate    Amt=$purRetAmt');
-//       log('  Sales:    Qty=$salesQty     Rate=$salesRate     Amt=$salesAmt');
-//       log('  Sale Ret: Qty=$saleRetQty   Rate=$saleRetRate   Amt=$saleRetAmt');
 
 //       pdf.addPage(
 //         pw.Page(
@@ -515,48 +493,31 @@
 //       if (responseData == null) throw Exception('No data in response');
 
 //       final productName = _getProductName(responseData);
-
 //       final closingCostPrice =
 //           _getRate(responseData, 'closing_stock', 'summary', 'cost');
-
 //       final openingQty = _getQty(responseData, 'opening_stock', 'summary');
 //       final openingAmt = openingQty * closingCostPrice;
-
 //       final closingQty = _getQty(responseData, 'closing_stock', 'summary');
 //       final closingAmt = closingQty * closingCostPrice;
-
 //       final purchaseQty = _getQty(responseData, 'purchases');
 //       final purchaseRate = _getRate(responseData, 'purchases', null, rateType);
 //       final purchaseAmt = purchaseQty * purchaseRate;
-
 //       final purRetQty = _getQty(responseData, 'purchase_returns');
 //       final purRetRate =
 //           _getRate(responseData, 'purchase_returns', null, rateType);
 //       final purRetAmt = purRetQty * purRetRate;
-
 //       final salesQty = _getQty(responseData, 'sales');
 //       final salesRate = _getRate(responseData, 'sales', null, rateType);
 //       final salesAmt = salesQty * salesRate;
-
 //       final saleRetQty = _getQty(responseData, 'sale_returns');
 //       final saleRetRate =
 //           _getRate(responseData, 'sale_returns', null, rateType);
 //       final saleRetAmt = saleRetQty * saleRetRate;
 
-//       log('CALCULATED VALUES:');
-//       log('  Product: $productName');
-//       log('  Opening:  Qty=$openingQty   Rate=$closingCostPrice   Amt=$openingAmt');
-//       log('  Closing:  Qty=$closingQty   Rate=$closingCostPrice   Amt=$closingAmt');
-//       log('  Purchase: Qty=$purchaseQty  Rate=$purchaseRate  Amt=$purchaseAmt');
-//       log('  Pur Ret:  Qty=$purRetQty    Rate=$purRetRate    Amt=$purRetAmt');
-//       log('  Sales:    Qty=$salesQty     Rate=$salesRate     Amt=$salesAmt');
-//       log('  Sale Ret: Qty=$saleRetQty   Rate=$saleRetRate   Amt=$saleRetAmt');
-
 //       final workbook = xlsio.Workbook();
 //       final sheet = workbook.worksheets[0];
 //       sheet.name = 'Stock Ledger';
 
-//       // Title
 //       sheet.getRangeByIndex(1, 1, 1, 19).merge();
 //       sheet.getRangeByIndex(1, 1).setText(
 //           'Stock Ledger Summary (${rateType == 'selling' ? 'Selling Price' : 'Cost Price'})');
@@ -564,13 +525,11 @@
 //       sheet.getRangeByIndex(1, 1).cellStyle.bold = true;
 //       sheet.getRangeByIndex(1, 1).cellStyle.hAlign = xlsio.HAlignType.center;
 
-//       // Product & Period
 //       sheet.getRangeByIndex(3, 1).setText('Product');
 //       sheet.getRangeByIndex(3, 2).setText(productName);
 //       sheet.getRangeByIndex(4, 1).setText('Period');
 //       sheet.getRangeByIndex(4, 2).setText('$startDate - $endDate');
 
-//       // Headers
 //       final sections = [
 //         {'name': 'Opening', 'startCol': 2},
 //         {'name': 'Purchase', 'startCol': 5},
@@ -590,7 +549,6 @@
 //         cell.cellStyle.backColor = '#D3D3D3';
 //       }
 
-//       // Sub-headers Qty / Rate / Amount
 //       for (int i = 0; i < 6; i++) {
 //         final col = 2 + i * 3;
 //         sheet.getRangeByIndex(7, col).setText('Qty');
@@ -598,7 +556,6 @@
 //         sheet.getRangeByIndex(7, col + 2).setText('Amount');
 //       }
 
-//       // Data row (row 8)
 //       final dataRow = [
 //         productName,
 //         openingQty.toStringAsFixed(0),
@@ -627,11 +584,9 @@
 //         cell.cellStyle.hAlign = xlsio.HAlignType.center;
 //       }
 
-//       // Borders & formatting
 //       final tableRange = sheet.getRangeByIndex(6, 1, 8, 19);
 //       tableRange.cellStyle.borders.all.lineStyle = xlsio.LineStyle.thin;
 
-//       // Auto-fit columns
 //       for (int i = 1; i <= 19; i++) {
 //         sheet.autoFitColumn(i);
 //       }
@@ -643,7 +598,6 @@
 //       final timestamp = DateTime.now().millisecondsSinceEpoch;
 //       final file = File('${dir.path}/stock_ledger_$timestamp.xlsx');
 //       await file.writeAsBytes(bytes);
-
 //       log('XLSX SAVED → ${file.path}');
 //     } catch (e, stack) {
 //       log('EXCEL EXPORT FAILED → $e\n$stack');
@@ -930,27 +884,42 @@
 //       rethrow;
 //     }
 //   }
+
+//   // Public method to logout from invalid token (called from CompanyBloc)
+//   Future<void> logoutFromInvalidToken() async {
+//     log('🔄 Force Logout from CompanyBloc');
+//     await AuthService().clearTokens();
+//     await cookieJar.deleteAll();
+//     Api.resetToPublic();
+
+//     final context = navigatorKey.currentContext;
+//     if (context != null && context.mounted) {
+//       context.go('/login');
+//     }
+//   }
 // }
 
-import 'dart:developer';
-import 'dart:io';
+// lib/core/network/dio_client.dart
 
-import 'package:csv/csv.dart';
+import 'dart:io';
+import 'dart:developer';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:csv/csv.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
+
 import 'package:saleup_app/core/network/api_endpoints.dart';
 import 'package:saleup_app/model/ledger_report_response.dart';
 import 'package:saleup_app/model/trial_balance_report_response.dart';
 import 'package:saleup_app/services/auth_service.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
 
 class DioClient {
   static final DioClient _instance = DioClient._internal();
@@ -958,6 +927,8 @@ class DioClient {
 
   late final Dio dio;
   late final CookieJar cookieJar;
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   DioClient._internal() {
     dio = Dio();
@@ -971,7 +942,6 @@ class DioClient {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       }
-      // ✅ FIXED: was < 500, now < 600 so 500 errors reach your bloc
       ..validateStatus = (status) => status != null && status < 600;
 
     cookieJar = CookieJar();
@@ -987,10 +957,9 @@ class DioClient {
       InterceptorsWrapper(
         onRequest: (options, handler) async {
           options.extra['requestStartTime'] = DateTime.now();
-
           await Future.delayed(const Duration(milliseconds: 100));
 
-          log('→ START [${options.method}] ${options.uri.toString()}');
+          log('→ START [${options.method}] ${options.uri}');
           log('  Using base URL: ${options.baseUrl}');
 
           final unauthenticatedEndpoints = [
@@ -999,6 +968,7 @@ class DioClient {
             '/auth/forgot_password/',
             '/auth/verify_forgot_password_otp/',
             '/auth/reset_password/',
+            '/auth/refresh/',
             '/chat/',
           ];
 
@@ -1009,11 +979,8 @@ class DioClient {
             if (token != null) {
               options.headers['Authorization'] = 'Bearer $token';
               log('Authorization header set for ${options.path}');
-            } else {
-              log('WARNING: No token available for protected endpoint ${options.path}');
             }
           }
-
           handler.next(options);
         },
         onResponse: (response, handler) {
@@ -1022,9 +989,7 @@ class DioClient {
           final duration = start != null
               ? DateTime.now().difference(start).inMilliseconds
               : 0;
-
           log('← DONE [${response.statusCode}] ${response.requestOptions.path} (${duration}ms)');
-
           handler.next(response);
         },
         onError: (DioException error, handler) async {
@@ -1036,24 +1001,60 @@ class DioClient {
 
           log('✗ ERROR after ${duration}ms → ${error.message} → ${error.requestOptions.uri}');
 
-          if (error.response?.statusCode == 401 &&
+          final statusCode = error.response?.statusCode;
+          final data = error.response?.data;
+
+          bool isTokenInvalid = false;
+
+          if (statusCode == 401) {
+            if (data is Map<String, dynamic>) {
+              final code = data['code']?.toString();
+              final detail = (data['detail'] ?? '').toString().toLowerCase();
+
+              if (code == 'token_not_valid' ||
+                  detail.contains('token not valid') ||
+                  detail.contains('invalid or expired') ||
+                  detail.contains('expired')) {
+                isTokenInvalid = true;
+              }
+            }
+          }
+
+          if (isTokenInvalid &&
               !error.requestOptions.path.contains('/auth/login/') &&
               !error.requestOptions.path.contains('/auth/refresh/')) {
-            log('401 detected - attempting token refresh');
+            log('🚨 TOKEN EXPIRED/INVALID detected');
 
+            await AuthService().clearTokens();
+            await cookieJar.deleteAll();
+            Api.resetToPublic();
+
+            final context = navigatorKey.currentContext;
+
+            if (context != null && context.mounted) {
+              final rememberMe = await AuthService().getRememberMe();
+
+              if (rememberMe) {
+                log('Remember Me = true → Silent redirect to /login');
+                context.go('/login');
+              } else {
+                log('Remember Me = false → Showing Session Timeout popup');
+                _showSessionTimeoutDialog(context);
+              }
+            }
+            return;
+          }
+
+          // Optional refresh for normal 401
+          if (statusCode == 401 && !isTokenInvalid) {
+            log('401 detected - attempting token refresh');
             final refreshed = await refreshToken();
             if (refreshed) {
-              log('Token refreshed - retrying original request');
               final token = await AuthService().getAccessToken();
               if (token != null) {
                 error.requestOptions.headers['Authorization'] = 'Bearer $token';
                 return handler.resolve(await dio.fetch(error.requestOptions));
               }
-            } else {
-              log('Refresh failed - logging out');
-              await AuthService().clearTokens();
-              await cookieJar.deleteAll();
-              Api.resetToPublic();
             }
           }
 
@@ -1063,25 +1064,39 @@ class DioClient {
     );
   }
 
+  // Session Timeout Popup
+  void _showSessionTimeoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text("Session Timeout"),
+        content: const Text(
+          "Your session has expired.\nPlease login again to continue.",
+          style: TextStyle(fontSize: 16),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+            child: const Text(
+              "OK",
+              style:
+                  TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void updateBaseUrl(String newBaseUrl) {
     dio.options.baseUrl = newBaseUrl;
     log('Dio baseUrl CHANGED to → $newBaseUrl', name: 'DioClient');
-  }
-
-  Future<bool> isTokenValid() async {
-    try {
-      return await AuthService().getAccessToken() != null;
-    } catch (e) {
-      log('Token check error: $e');
-      return false;
-    }
-  }
-
-  Future<void> logout(BuildContext context) async {
-    await AuthService().clearTokens();
-    await cookieJar.deleteAll();
-    Api.resetToPublic();
-    context.go('/login');
   }
 
   Future<bool> refreshToken() async {
@@ -1108,6 +1123,14 @@ class DioClient {
     return false;
   }
 
+  Future<void> logout(BuildContext context) async {
+    await AuthService().clearTokens();
+    await cookieJar.deleteAll();
+    Api.resetToPublic();
+    if (context.mounted) context.go('/login');
+  }
+
+  // ====================== PERMISSION HELPERS ======================
   Future<bool> _requestPermission() async {
     if (Platform.isAndroid) {
       var status = await Permission.storage.request();
@@ -1127,9 +1150,7 @@ class DioClient {
     return await getApplicationDocumentsDirectory();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // PDF HELPER WIDGETS
-  // ─────────────────────────────────────────────────────────────
+  // ====================== PDF & EXCEL HELPERS (All your original code) ======================
   pw.Widget _headerCell(String text) => pw.Container(
         padding: const pw.EdgeInsets.all(6),
         alignment: pw.Alignment.center,
@@ -1171,47 +1192,24 @@ class DioClient {
         ),
       );
 
-  // ─────────────────────────────────────────────────────────────
-  // SAFE HELPERS
-  // ─────────────────────────────────────────────────────────────
-  String? _safeString(
-    Map<String, dynamic>? map,
-    Object key1, [
-    Object? key2,
-    Object? key3,
-    Object? key4,
-  ]) {
+  String? _safeString(Map<String, dynamic>? map, Object key1,
+      [Object? key2, Object? key3, Object? key4]) {
     if (map == null) return null;
     try {
       dynamic value = map[key1];
       if (value == null) return null;
-      if (key2 != null) {
-        if (value is List && key2 is int && key2 < value.length) {
-          value = value[key2];
-        } else if (value is Map) {
-          value = value[key2];
-        } else {
-          return null;
-        }
-      }
-      if (key3 != null) {
-        if (value is List && key3 is int && key3 < value.length) {
-          value = value[key3];
-        } else if (value is Map) {
-          value = value[key3];
-        } else {
-          return null;
-        }
-      }
-      if (key4 != null) {
-        if (value is List && key4 is int && key4 < value.length) {
-          value = value[key4];
-        } else if (value is Map) {
-          value = value[key4];
-        } else {
-          return null;
-        }
-      }
+      if (key2 != null)
+        value = value is Map
+            ? value[key2]
+            : (value is List && key2 is int ? value[key2] : null);
+      if (key3 != null)
+        value = value is Map
+            ? value[key3]
+            : (value is List && key3 is int ? value[key3] : null);
+      if (key4 != null)
+        value = value is Map
+            ? value[key4]
+            : (value is List && key4 is int ? value[key4] : null);
       return value?.toString();
     } catch (e) {
       return null;
@@ -1225,9 +1223,6 @@ class DioClient {
     return 0.0;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // STOCK LEDGER HELPERS
-  // ─────────────────────────────────────────────────────────────
   double _getQty(Map<String, dynamic>? data, String section, [String? subKey]) {
     try {
       dynamic list = data?[section];
@@ -1240,12 +1235,8 @@ class DioClient {
     return 0.0;
   }
 
-  double _getRate(
-    Map<String, dynamic>? data,
-    String section,
-    String? subKey,
-    String rateType,
-  ) {
+  double _getRate(Map<String, dynamic>? data, String section, String? subKey,
+      String rateType) {
     try {
       dynamic list = data?[section];
       if (subKey != null) list = list?[subKey];
@@ -1814,6 +1805,19 @@ class DioClient {
     } catch (e) {
       log('Trial Balance CSV failed: $e');
       rethrow;
+    }
+  }
+
+  // Public method to logout from invalid token (called from CompanyBloc)
+  Future<void> logoutFromInvalidToken() async {
+    log('🔄 Force Logout from CompanyBloc');
+    await AuthService().clearTokens();
+    await cookieJar.deleteAll();
+    Api.resetToPublic();
+
+    final context = navigatorKey.currentContext;
+    if (context != null && context.mounted) {
+      context.go('/login');
     }
   }
 }

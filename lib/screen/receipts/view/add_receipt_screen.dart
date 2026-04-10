@@ -248,7 +248,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
               child: state.isLoadingParties
                   ? _loadingBox()
                   : DropdownButtonFormField<PartyData>(
-                      value: _selectedParty,
+                      initialValue: _selectedParty,
                       hint: const Text('Select Customer'),
                       isExpanded: true,
                       decoration: InputDecoration(
@@ -313,7 +313,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
         isLoading
             ? _loadingBox()
             : DropdownButtonFormField<RemainingReceiptData>(
-                value: _selectedInvoice,
+                initialValue: _selectedInvoice,
                 hint: const Text('Select Invoice'),
                 isExpanded: true,
                 decoration: InputDecoration(
@@ -350,7 +350,7 @@ class _AddReceiptScreenState extends State<AddReceiptScreen> {
             style: TextStyle(fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _selectedDepositMode,
+          initialValue: _selectedDepositMode,
           hint: const Text('Select Deposit Mode'),
           isExpanded: true,
           decoration: InputDecoration(
