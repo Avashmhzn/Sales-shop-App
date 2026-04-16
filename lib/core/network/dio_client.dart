@@ -1198,18 +1198,21 @@ class DioClient {
     try {
       dynamic value = map[key1];
       if (value == null) return null;
-      if (key2 != null)
+      if (key2 != null) {
         value = value is Map
             ? value[key2]
             : (value is List && key2 is int ? value[key2] : null);
-      if (key3 != null)
+      }
+      if (key3 != null) {
         value = value is Map
             ? value[key3]
             : (value is List && key3 is int ? value[key3] : null);
-      if (key4 != null)
+      }
+      if (key4 != null) {
         value = value is Map
             ? value[key4]
             : (value is List && key4 is int ? value[key4] : null);
+      }
       return value?.toString();
     } catch (e) {
       return null;

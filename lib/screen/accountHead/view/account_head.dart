@@ -1,6 +1,7 @@
 // import 'package:flutter/material.dart';
 // import 'package:flutter_bloc/flutter_bloc.dart';
 // import 'package:shimmer/shimmer.dart';
+// import 'package:saleup_app/core/network/dio_client.dart';
 // import 'package:saleup_app/model/account_heads_response.dart';
 // import 'package:saleup_app/screen/accountHead/bloc/account_head_bloc.dart';
 // import 'package:saleup_app/screen/accountHead/bloc/account_head_event.dart';
@@ -91,85 +92,384 @@
 
 //   int _totalPages(int count) => (count / _kPageSize).ceil().clamp(1, 9999);
 
-//   // New function: Show view detail popup
-//   void _showAccountDetailPopup(BuildContext context, AccountHeadData head) {
+//   // ─── Edit Account Head Dialog ─────────────────────────────────────────────
+
+//   void _showEditAccountHeadDialog(AccountHeadData head) {
+//     // ✅ Capture from screen context BEFORE showDialog
+//     final bloc = context.read<AccountHeadBloc>();
+//     final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+//     final nameController = TextEditingController(text: head.name ?? '');
+//     final openingBalanceController = TextEditingController(
+//         text: head.openingBalance?.toStringAsFixed(2) ?? '');
+
+//     String? selectedMainGroup = head.mainGroup;
+//     String? selectedParent = head.parent;
+//     String? selectedDrCr = head.drCr;
+//     String? selectedAccountType = head.accountType;
+//     bool status = head.status ?? true;
+//     bool isLoading = false;
+
 //     showDialog(
 //       context: context,
-//       builder: (context) {
-//         return Dialog(
-//           shape:
-//               RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-//           child: Container(
-//             padding: const EdgeInsets.all(20),
-//             constraints: const BoxConstraints(maxWidth: 380),
-//             child: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 // Header with close button
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   children: [
-//                     const Text(
-//                       'Account Details',
-//                       style:
-//                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//       barrierDismissible: false,
+//       builder: (context) => StatefulBuilder(
+//         builder: (context, setDialogState) {
+//           final screenWidth = MediaQuery.of(context).size.width;
+//           final dialogWidth = screenWidth < 600 ? screenWidth * 0.95 : 520.0;
+
+//           return Dialog(
+//             shape:
+//                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+//             backgroundColor: Colors.white,
+//             insetPadding:
+//                 const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+//             child: Container(
+//               width: dialogWidth,
+//               padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+//               child: isLoading
+//                   ? const SizedBox(
+//                       height: 200,
+//                       child: Center(child: CircularProgressIndicator()),
+//                     )
+//                   : SingleChildScrollView(
+//                       child: Column(
+//                         mainAxisSize: MainAxisSize.min,
+//                         crossAxisAlignment: CrossAxisAlignment.start,
+//                         children: [
+//                           // ── Header ──
+//                           Row(
+//                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                             children: [
+//                               const Text(
+//                                 'Edit Account',
+//                                 style: TextStyle(
+//                                   fontSize: 17,
+//                                   fontFamily: 'Inter',
+//                                   fontWeight: FontWeight.bold,
+//                                   color: Colors.black87,
+//                                 ),
+//                               ),
+//                               GestureDetector(
+//                                 onTap: () => Navigator.pop(context),
+//                                 child: const Icon(Icons.close,
+//                                     color: Colors.black54, size: 20),
+//                               ),
+//                             ],
+//                           ),
+//                           const SizedBox(height: 8),
+//                           const Divider(height: 1, color: Color(0xFFEEEEEE)),
+//                           const SizedBox(height: 20),
+
+//                           // ── Row 1: Account ID + Name ──
+//                           Row(
+//                             children: [
+//                               Expanded(
+//                                 child: _buildEditFormField(
+//                                   label: '* Account ID',
+//                                   child: TextFormField(
+//                                     initialValue: head.id.toString(),
+//                                     readOnly: true,
+//                                     style: const TextStyle(
+//                                       color: Colors.black45,
+//                                       fontFamily: 'Inter',
+//                                     ),
+//                                     decoration: _editInputDecoration(),
+//                                   ),
+//                                 ),
+//                               ),
+//                               const SizedBox(width: 16),
+//                               Expanded(
+//                                 child: _buildEditFormField(
+//                                   label: '* Name',
+//                                   child: TextFormField(
+//                                     controller: nameController,
+//                                     decoration: _editInputDecoration(),
+//                                     style: const TextStyle(
+//                                       color: Colors.black,
+//                                       fontFamily: 'Inter',
+//                                     ),
+//                                   ),
+//                                 ),
+//                               ),
+//                             ],
+//                           ),
+//                           const SizedBox(height: 16),
+
+//                           // ── Row 2: Main Group + Parent ──
+//                           Row(
+//                             children: [
+//                               Expanded(
+//                                 child: _buildEditFormField(
+//                                   label: '* Main Group:',
+//                                   child: DropdownButtonFormField<String>(
+//                                     initialValue: selectedMainGroup,
+//                                     decoration: _editInputDecoration(),
+//                                     isExpanded: true,
+//                                     items: const [
+//                                       'Capital Account',
+//                                       'Reserves & Surplus',
+//                                       'Secured Loans',
+//                                       'Unsecured Loans',
+//                                       'Bank OD',
+//                                       'Bank OCC Account',
+//                                       'Current Assets',
+//                                       'Fixed Assets',
+//                                       'Current Liabilities',
+//                                       'Direct Income',
+//                                       'Indirect Income',
+//                                       'Direct Expenses',
+//                                       'Indirect Expenses',
+//                                       'Bank Account',
+//                                       'Cash-in-Hand',
+//                                       'Sundry Debtors',
+//                                       'Sundry Creditors',
+//                                       'Loans & Advances',
+//                                       'Provisions',
+//                                     ]
+//                                         .map((e) => DropdownMenuItem(
+//                                             value: e, child: Text(e)))
+//                                         .toList(),
+//                                     onChanged: (val) => setDialogState(
+//                                         () => selectedMainGroup = val),
+//                                   ),
+//                                 ),
+//                               ),
+//                               const SizedBox(width: 16),
+//                               Expanded(
+//                                 child: _buildEditFormField(
+//                                   label: '* Parent:',
+//                                   child: DropdownButtonFormField<String>(
+//                                     initialValue: selectedParent,
+//                                     decoration: _editInputDecoration(),
+//                                     isExpanded: true,
+//                                     items: const [
+//                                       'Assets',
+//                                       'Liabilities',
+//                                       'Income',
+//                                       'Expenses',
+//                                     ]
+//                                         .map((e) => DropdownMenuItem(
+//                                             value: e, child: Text(e)))
+//                                         .toList(),
+//                                     onChanged: (val) => setDialogState(
+//                                         () => selectedParent = val),
+//                                   ),
+//                                 ),
+//                               ),
+//                             ],
+//                           ),
+//                           const SizedBox(height: 16),
+
+//                           // ── Row 3: Dr/Cr + Account Type ──
+//                           Row(
+//                             children: [
+//                               Expanded(
+//                                 child: _buildEditFormField(
+//                                   label: '* Dr/Cr',
+//                                   child: DropdownButtonFormField<String>(
+//                                     initialValue: selectedDrCr,
+//                                     decoration: _editInputDecoration(),
+//                                     isExpanded: true,
+//                                     items: const ['Debit', 'Credit']
+//                                         .map((e) => DropdownMenuItem(
+//                                             value: e, child: Text(e)))
+//                                         .toList(),
+//                                     onChanged: (val) => setDialogState(
+//                                         () => selectedDrCr = val),
+//                                   ),
+//                                 ),
+//                               ),
+//                               const SizedBox(width: 16),
+//                               Expanded(
+//                                 child: _buildEditFormField(
+//                                   label: '* Account Type',
+//                                   child: DropdownButtonFormField<String>(
+//                                     initialValue: selectedAccountType,
+//                                     decoration: _editInputDecoration(),
+//                                     isExpanded: true,
+//                                     items: const ['Real', 'Personal', 'Nominal']
+//                                         .map((e) => DropdownMenuItem(
+//                                             value: e, child: Text(e)))
+//                                         .toList(),
+//                                     onChanged: (val) => setDialogState(
+//                                         () => selectedAccountType = val),
+//                                   ),
+//                                 ),
+//                               ),
+//                             ],
+//                           ),
+//                           const SizedBox(height: 16),
+
+//                           // ── Opening Balance (left half only) ──
+//                           SizedBox(
+//                             width: (dialogWidth - 48) / 2,
+//                             child: _buildEditFormField(
+//                               label: '* Opening Balance:',
+//                               child: TextFormField(
+//                                 controller: openingBalanceController,
+//                                 keyboardType:
+//                                     const TextInputType.numberWithOptions(
+//                                         decimal: true),
+//                                 decoration: _editInputDecoration(),
+//                               ),
+//                             ),
+//                           ),
+//                           const SizedBox(height: 16),
+
+//                           // ── Status ──
+//                           Column(
+//                             crossAxisAlignment: CrossAxisAlignment.start,
+//                             children: [
+//                               const Text(
+//                                 'Status:',
+//                                 style: TextStyle(
+//                                   fontSize: 13,
+//                                   fontWeight: FontWeight.w500,
+//                                   color: Colors.black87,
+//                                 ),
+//                               ),
+//                               Switch(
+//                                 value: status,
+//                                 onChanged: (val) =>
+//                                     setDialogState(() => status = val),
+//                                 activeThumbColor: const Color(0xFFFF9800),
+//                               ),
+//                             ],
+//                           ),
+//                           const SizedBox(height: 20),
+
+//                           // ── Save Changes Button ──
+//                           SizedBox(
+//                             width: double.infinity,
+//                             child: ElevatedButton(
+//                               onPressed: () async {
+//                                 setDialogState(() => isLoading = true);
+//                                 final navigator = Navigator.of(context);
+
+//                                 final updatedData = {
+//                                   "name": nameController.text.trim(),
+//                                   "main_group": selectedMainGroup,
+//                                   "parent": selectedParent,
+//                                   "dr_cr": selectedDrCr,
+//                                   "account_type": selectedAccountType,
+//                                   "opening_balance": double.tryParse(
+//                                           openingBalanceController.text
+//                                               .trim()) ??
+//                                       0.0,
+//                                   "status": status,
+//                                 };
+
+//                                 try {
+//                                   final response = await DioClient().dio.put(
+//                                         '/account-heads/update_account_head/?account_head_id=${head.id}',
+//                                         data: updatedData,
+//                                       );
+
+//                                   final data = response.data;
+//                                   final isSuccess =
+//                                       response.statusCode == 200 &&
+//                                           (data is Map &&
+//                                               (data['success'] == true ||
+//                                                   data['success'] == 'true'));
+
+//                                   if (isSuccess) {
+//                                     navigator.pop();
+//                                     scaffoldMessenger.showSnackBar(
+//                                       SnackBar(
+//                                         content: Text(data['message'] ??
+//                                             'Account updated successfully'),
+//                                         backgroundColor: Colors.green,
+//                                       ),
+//                                     );
+//                                     bloc.add(const FetchAccountHeads());
+//                                   } else {
+//                                     throw Exception(data is Map
+//                                         ? (data['message'] ?? 'Update failed')
+//                                         : 'Update failed');
+//                                   }
+//                                 } catch (e) {
+//                                   scaffoldMessenger.showSnackBar(
+//                                     SnackBar(
+//                                       content: Text('Failed to update: $e'),
+//                                       backgroundColor: Colors.red,
+//                                     ),
+//                                   );
+//                                 } finally {
+//                                   if (context.mounted) {
+//                                     setDialogState(() => isLoading = false);
+//                                   }
+//                                 }
+//                               },
+//                               style: ElevatedButton.styleFrom(
+//                                 backgroundColor: const Color(0xFFFF9800),
+//                                 foregroundColor: Colors.white,
+//                                 padding:
+//                                     const EdgeInsets.symmetric(vertical: 14),
+//                                 shape: RoundedRectangleBorder(
+//                                   borderRadius: BorderRadius.circular(8),
+//                                 ),
+//                               ),
+//                               child: const Text(
+//                                 'Save Changes',
+//                                 style: TextStyle(
+//                                     fontSize: 15, fontWeight: FontWeight.w600),
+//                               ),
+//                             ),
+//                           ),
+//                         ],
+//                       ),
 //                     ),
-//                     IconButton(
-//                       icon: const Icon(Icons.close, color: Colors.grey),
-//                       onPressed: () => Navigator.pop(context),
-//                     ),
-//                   ],
-//                 ),
-//                 const SizedBox(height: 16),
-//                 const Divider(),
-//                 const SizedBox(height: 12),
-
-//                 // Details in table-like rows
-//                 _buildDetailRow('ID', head.id.toString()),
-//                 _buildDetailRow('Name', head.name ?? 'N/A'),
-//                 _buildDetailRow('Main Group', head.mainGroup ?? 'N/A'),
-//                 _buildDetailRow('Parent', head.parent ?? 'N/A'),
-//                 _buildDetailRow('Dr/Cr', head.drCr ?? 'N/A'),
-//                 _buildDetailRow('Account Type', head.accountType ?? 'N/A'),
-//                 _buildDetailRow('Opening Balance',
-//                     head.openingBalance?.toStringAsFixed(2) ?? '-'),
-//                 _buildDetailRow(
-//                     'Status', head.status == true ? 'True' : 'False'),
-
-//                 const SizedBox(height: 20),
-//               ],
 //             ),
-//           ),
-//         );
-//       },
-//     );
-//   }
-
-//   Widget _buildDetailRow(String label, String value) {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 8),
-//       child: Row(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           SizedBox(
-//             width: 140,
-//             child: Text(
-//               label,
-//               style: const TextStyle(
-//                   fontWeight: FontWeight.w600, color: Colors.black87),
-//             ),
-//           ),
-//           Expanded(
-//             child: Text(
-//               value,
-//               style: const TextStyle(color: Colors.black54),
-//             ),
-//           ),
-//         ],
+//           );
+//         },
 //       ),
 //     );
 //   }
+
+//   // ─── Edit Dialog Helpers ──────────────────────────────────────────────────
+
+//   Widget _buildEditFormField({required String label, required Widget child}) {
+//     return Column(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         Text(
+//           label,
+//           style: const TextStyle(
+//             fontSize: 12,
+//             fontWeight: FontWeight.w600,
+//             color: Color(0xFFE8891A),
+//           ),
+//         ),
+//         const SizedBox(height: 6),
+//         child,
+//       ],
+//     );
+//   }
+
+//   InputDecoration _editInputDecoration({String? hint}) {
+//     return InputDecoration(
+//       hintText: hint,
+//       hintStyle: const TextStyle(color: Colors.black38, fontSize: 13),
+//       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+//       border: OutlineInputBorder(
+//         borderRadius: BorderRadius.circular(8),
+//         borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
+//       ),
+//       enabledBorder: OutlineInputBorder(
+//         borderRadius: BorderRadius.circular(8),
+//         borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
+//       ),
+//       focusedBorder: OutlineInputBorder(
+//         borderRadius: BorderRadius.circular(8),
+//         borderSide: const BorderSide(color: Color(0xFFFF9800), width: 1.5),
+//       ),
+//       filled: true,
+//       fillColor: Colors.white,
+//     );
+//   }
+
+//   // ─── Build ────────────────────────────────────────────────────────────────
 
 //   @override
 //   Widget build(BuildContext context) {
@@ -193,22 +493,14 @@
 //               parentToGroups.putIfAbsent(parent, () => {}).add(mainGroup);
 //             }
 //             final sortedParents = parentToGroups.keys.toList()..sort();
-//             // final filteredHeads = state.getFilteredData();
-//             // final totalPages = _totalPages(filteredHeads.length);
 
-//             // if (_currentPage > totalPages && totalPages > 0) {
-//             //   WidgetsBinding.instance.addPostFrameCallback((_) {
-//             //     if (mounted) setState(() => _currentPage = totalPages);
-//             //   });
-//             // }
 //             final baseFiltered = state.getFilteredData();
 //             final searchLower = _searchController.text.trim().toLowerCase();
 //             final filteredHeads = searchLower.isEmpty
 //                 ? baseFiltered
 //                 : baseFiltered
 //                     .where((head) =>
-//                         (head.name.toLowerCase().contains(searchLower) ??
-//                             false) ||
+//                         (head.name.toLowerCase().contains(searchLower)) ||
 //                         (head.mainGroup?.toLowerCase().contains(searchLower) ??
 //                             false) ||
 //                         (head.parent?.toLowerCase().contains(searchLower) ??
@@ -242,12 +534,16 @@
 //                       style: TextStyle(
 //                           fontSize: 26,
 //                           fontWeight: FontWeight.w800,
+//                           fontFamily: 'Inter',
 //                           color: Color(0xFF1A1A1A)),
 //                     ),
 //                     const SizedBox(height: 4),
 //                     Text(
 //                       'Manage and categorize different account types',
-//                       style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+//                       style: TextStyle(
+//                           fontSize: 13,
+//                           fontFamily: 'Inter',
+//                           color: Colors.grey[600]),
 //                     ),
 //                     const SizedBox(height: 12),
 //                     Row(
@@ -267,7 +563,9 @@
 //                               decoration: const InputDecoration(
 //                                 hintText: 'Search...',
 //                                 hintStyle: TextStyle(
-//                                     color: Color(0xFFAAAAAA), fontSize: 13),
+//                                     fontFamily: 'Inter',
+//                                     color: Color(0xFFAAAAAA),
+//                                     fontSize: 13),
 //                                 prefixIcon: Icon(Icons.search,
 //                                     color: Color(0xFFAAAAAA), size: 18),
 //                                 border: InputBorder.none,
@@ -282,11 +580,15 @@
 //                           onPressed: () {},
 //                           icon: const Icon(Icons.add,
 //                               size: 18, color: Colors.white),
-//                           label: const Text('New Account',
-//                               style: TextStyle(
-//                                   fontSize: 13,
-//                                   fontWeight: FontWeight.w600,
-//                                   color: Colors.white)),
+//                           label: const Text(
+//                             'New Account',
+//                             style: TextStyle(
+//                               fontSize: 13,
+//                               fontFamily: 'Inter',
+//                               fontWeight: FontWeight.w600,
+//                               color: Colors.white,
+//                             ),
+//                           ),
 //                           style: ElevatedButton.styleFrom(
 //                             backgroundColor: _orange,
 //                             padding: const EdgeInsets.symmetric(
@@ -311,6 +613,7 @@
 //                         label: Text('Delete All',
 //                             style: TextStyle(
 //                                 fontSize: 13,
+//                                 fontFamily: 'Inter',
 //                                 color: _selectedIds.isEmpty
 //                                     ? Colors.grey
 //                                     : const Color(0xFFD9534F))),
@@ -321,8 +624,6 @@
 //                     const SizedBox(height: 12),
 //                     _buildFilterChips(sortedParents, parentToGroups),
 //                     const SizedBox(height: 16),
-
-//                     // ── SHIMMER LOADING ────────────────────────────────
 //                     state.isLoading
 //                         ? _buildShimmer()
 //                         : Container(
@@ -348,10 +649,14 @@
 //                                                   size: 48,
 //                                                   color: Color(0xFFCCCCCC)),
 //                                               SizedBox(height: 12),
-//                                               Text('No account heads found',
-//                                                   style: TextStyle(
-//                                                       color: Color(0xFF888888),
-//                                                       fontSize: 14)),
+//                                               Text(
+//                                                 'No account heads found',
+//                                                 style: TextStyle(
+//                                                   fontFamily: 'Inter',
+//                                                   color: Color(0xFF888888),
+//                                                   fontSize: 14,
+//                                                 ),
+//                                               ),
 //                                             ],
 //                                           ),
 //                                         )
@@ -363,6 +668,8 @@
 //                                               _toggleSelectAll(pageItems, v),
 //                                           onSelect: _toggleSelect,
 //                                           orange: _orange,
+//                                           // ✅ pass edit callback
+//                                           onEdit: _showEditAccountHeadDialog,
 //                                         ),
 //                                 ),
 //                                 const Divider(
@@ -432,6 +739,7 @@
 //                 parent,
 //                 style: TextStyle(
 //                     fontSize: 12,
+//                     fontFamily: 'Inter',
 //                     fontWeight: FontWeight.w500,
 //                     color: isSelected ? Colors.white : const Color(0xFF555555)),
 //               ),
@@ -480,6 +788,7 @@
 //                         group,
 //                         style: TextStyle(
 //                           fontSize: 11,
+//                           fontFamily: 'Inter',
 //                           fontWeight: FontWeight.w500,
 //                           color: isSelected ? _orange : const Color(0xFF777777),
 //                         ),
@@ -508,6 +817,7 @@
 //                   Text('Clear',
 //                       style: TextStyle(
 //                           fontSize: 11,
+//                           fontFamily: 'Inter',
 //                           fontWeight: FontWeight.w500,
 //                           color: Color(0xFFD9534F))),
 //                 ],
@@ -542,6 +852,8 @@
 //   }
 // }
 
+// // ─── Table Widget ─────────────────────────────────────────────────────────────
+
 // class _TableWithSharedScroll extends StatefulWidget {
 //   final List<AccountHeadData> pageItems;
 //   final Set<int> selectedIds;
@@ -549,6 +861,7 @@
 //   final void Function(bool?) onSelectAll;
 //   final void Function(int, bool?) onSelect;
 //   final Color orange;
+//   final void Function(AccountHeadData) onEdit; // ✅ edit callback
 
 //   const _TableWithSharedScroll({
 //     required this.pageItems,
@@ -557,6 +870,7 @@
 //     required this.onSelectAll,
 //     required this.onSelect,
 //     required this.orange,
+//     required this.onEdit,
 //   });
 
 //   @override
@@ -581,8 +895,13 @@
 //   @override
 //   Widget build(BuildContext context) {
 //     const headerStyle = TextStyle(
-//         fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF555555));
-//     const rs = TextStyle(fontSize: 13, color: Color(0xFF333333));
+//       fontSize: 12,
+//       fontFamily: 'Inter',
+//       fontWeight: FontWeight.w600,
+//       color: Color(0xFF555555),
+//     );
+//     const rs =
+//         TextStyle(fontSize: 13, fontFamily: 'Inter', color: Color(0xFF333333));
 
 //     return RawScrollbar(
 //       controller: _hScroll,
@@ -683,9 +1002,9 @@
 //                               child: Row(
 //                                 mainAxisAlignment: MainAxisAlignment.center,
 //                                 children: [
+//                                   // View
 //                                   GestureDetector(
 //                                     onTap: () {
-//                                       // Show popup for view detail
 //                                       showDialog(
 //                                         context: context,
 //                                         builder: (context) {
@@ -703,7 +1022,6 @@
 //                                                 crossAxisAlignment:
 //                                                     CrossAxisAlignment.start,
 //                                                 children: [
-//                                                   // Header
 //                                                   Row(
 //                                                     mainAxisAlignment:
 //                                                         MainAxisAlignment
@@ -712,10 +1030,11 @@
 //                                                       const Text(
 //                                                         'Account Details',
 //                                                         style: TextStyle(
-//                                                             fontSize: 18,
-//                                                             fontWeight:
-//                                                                 FontWeight
-//                                                                     .bold),
+//                                                           fontSize: 18,
+//                                                           fontWeight:
+//                                                               FontWeight.bold,
+//                                                           fontFamily: 'Inter',
+//                                                         ),
 //                                                       ),
 //                                                       IconButton(
 //                                                         icon: const Icon(
@@ -728,7 +1047,6 @@
 //                                                     ],
 //                                                   ),
 //                                                   const SizedBox(height: 8),
-//                                                   // Grid rows with dividers
 //                                                   _buildGridRow(
 //                                                       'ID',
 //                                                       head.id.toString(),
@@ -772,12 +1090,14 @@
 //                                         color: Color(0xFF888888)),
 //                                   ),
 //                                   const SizedBox(width: 10),
+//                                   // ✅ Edit — wired up
 //                                   GestureDetector(
-//                                     onTap: () {},
+//                                     onTap: () => widget.onEdit(head),
 //                                     child: const Icon(Icons.edit_outlined,
 //                                         size: 16, color: Color(0xFF888888)),
 //                                   ),
 //                                   const SizedBox(width: 10),
+//                                   // Delete (unchanged)
 //                                   GestureDetector(
 //                                     onTap: () {},
 //                                     child: const Icon(Icons.delete_outline,
@@ -802,11 +1122,7 @@
 //   }
 
 //   Widget _buildGridRow(
-//     String label1,
-//     String value1,
-//     String label2,
-//     String value2,
-//   ) {
+//       String label1, String value1, String label2, String value2) {
 //     return Container(
 //       color: Colors.white,
 //       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -822,16 +1138,22 @@
 //   Widget _buildLabelValue(String label, String value) {
 //     return RichText(
 //       text: TextSpan(
-//         style: const TextStyle(fontSize: 14, color: Colors.black87),
+//         style: const TextStyle(
+//             fontSize: 14, fontFamily: 'Inter', color: Colors.black87),
 //         children: [
 //           TextSpan(
 //             text: '$label: ',
-//             style: const TextStyle(fontWeight: FontWeight.bold),
+//             style: const TextStyle(
+//               fontWeight: FontWeight.bold,
+//               fontFamily: 'Inter',
+//             ),
 //           ),
 //           TextSpan(
 //             text: value,
 //             style: const TextStyle(
-//                 fontWeight: FontWeight.normal, color: Colors.black54),
+//                 fontWeight: FontWeight.normal,
+//                 fontFamily: 'Inter',
+//                 color: Colors.black54),
 //           ),
 //         ],
 //       ),
@@ -839,7 +1161,8 @@
 //   }
 // }
 
-// // Pagination (your original code - unchanged)
+// // ─── Pagination (unchanged) ───────────────────────────────────────────────────
+
 // class _PaginationBar extends StatelessWidget {
 //   final int currentPage;
 //   final int totalPages;
@@ -885,8 +1208,10 @@
 //                 const Padding(
 //                     padding: EdgeInsets.symmetric(horizontal: 2),
 //                     child: Text('…',
-//                         style:
-//                             TextStyle(color: Color(0xFF888888), fontSize: 13)))
+//                         style: TextStyle(
+//                             color: Color(0xFF888888),
+//                             fontFamily: 'Inter',
+//                             fontSize: 13)))
 //               else
 //                 _PagePill(
 //                     page: p,
@@ -930,6 +1255,7 @@
 //         child: Text('$page',
 //             style: TextStyle(
 //                 fontSize: 12,
+//                 fontFamily: 'Inter',
 //                 fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
 //                 color: isActive
 //                     ? const Color(0xFF1A1A1A)
@@ -957,6 +1283,7 @@
 //     );
 //   }
 // }
+// File: lib/screen/accountHead/view/account_head.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -966,15 +1293,10 @@ import 'package:saleup_app/model/account_heads_response.dart';
 import 'package:saleup_app/screen/accountHead/bloc/account_head_bloc.dart';
 import 'package:saleup_app/screen/accountHead/bloc/account_head_event.dart';
 import 'package:saleup_app/screen/accountHead/bloc/account_head_state.dart';
+import 'package:saleup_app/screen/accountHead/widgets/account_head_card.dart';
 
-const double _kCheckboxW = 24;
-const double _kGapW = 10;
-const double _kIdW = 48;
-const double _kActionW = 90;
-const double _kTableMinWidth = 810.0;
 const int _kPageSize = 10;
 const double _kRowHeight = 72.0;
-const double _kHeaderHeight = 60.0;
 
 class AccountHead extends StatefulWidget {
   const AccountHead({super.key});
@@ -992,6 +1314,8 @@ class _AccountHeadState extends State<AccountHead> {
 
   static const _orange = Color(0xFFE8891A);
 
+  // ─── Lifecycle ────────────────────────────────────────────────────────────
+
   @override
   void initState() {
     super.initState();
@@ -1005,6 +1329,8 @@ class _AccountHeadState extends State<AccountHead> {
     _searchController.dispose();
     super.dispose();
   }
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
 
   void _onSearchChanged() {
     setState(() => _currentPage = 1);
@@ -1052,10 +1378,9 @@ class _AccountHeadState extends State<AccountHead> {
 
   int _totalPages(int count) => (count / _kPageSize).ceil().clamp(1, 9999);
 
-  // ─── Edit Account Head Dialog ─────────────────────────────────────────────
+  // ─── Edit Dialog ──────────────────────────────────────────────────────────
 
   void _showEditAccountHeadDialog(AccountHeadData head) {
-    // ✅ Capture from screen context BEFORE showDialog
     final bloc = context.read<AccountHeadBloc>();
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
@@ -1090,8 +1415,7 @@ class _AccountHeadState extends State<AccountHead> {
               child: isLoading
                   ? const SizedBox(
                       height: 200,
-                      child: Center(child: CircularProgressIndicator()),
-                    )
+                      child: Center(child: CircularProgressIndicator()))
                   : SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -1101,15 +1425,12 @@ class _AccountHeadState extends State<AccountHead> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                'Edit Account',
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontFamily: 'Inter',
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
+                              const Text('Edit Account',
+                                  style: TextStyle(
+                                      fontSize: 17,
+                                      fontFamily: 'Inter',
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87)),
                               GestureDetector(
                                 onTap: () => Navigator.pop(context),
                                 child: const Icon(Icons.close,
@@ -1131,9 +1452,8 @@ class _AccountHeadState extends State<AccountHead> {
                                     initialValue: head.id.toString(),
                                     readOnly: true,
                                     style: const TextStyle(
-                                      color: Colors.black45,
-                                      fontFamily: 'Inter',
-                                    ),
+                                        color: Colors.black45,
+                                        fontFamily: 'Inter'),
                                     decoration: _editInputDecoration(),
                                   ),
                                 ),
@@ -1146,9 +1466,8 @@ class _AccountHeadState extends State<AccountHead> {
                                     controller: nameController,
                                     decoration: _editInputDecoration(),
                                     style: const TextStyle(
-                                      color: Colors.black,
-                                      fontFamily: 'Inter',
-                                    ),
+                                        color: Colors.black,
+                                        fontFamily: 'Inter'),
                                   ),
                                 ),
                               ),
@@ -1163,7 +1482,7 @@ class _AccountHeadState extends State<AccountHead> {
                                 child: _buildEditFormField(
                                   label: '* Main Group:',
                                   child: DropdownButtonFormField<String>(
-                                    initialValue: selectedMainGroup,
+                                    value: selectedMainGroup,
                                     decoration: _editInputDecoration(),
                                     isExpanded: true,
                                     items: const [
@@ -1200,7 +1519,7 @@ class _AccountHeadState extends State<AccountHead> {
                                 child: _buildEditFormField(
                                   label: '* Parent:',
                                   child: DropdownButtonFormField<String>(
-                                    initialValue: selectedParent,
+                                    value: selectedParent,
                                     decoration: _editInputDecoration(),
                                     isExpanded: true,
                                     items: const [
@@ -1228,7 +1547,7 @@ class _AccountHeadState extends State<AccountHead> {
                                 child: _buildEditFormField(
                                   label: '* Dr/Cr',
                                   child: DropdownButtonFormField<String>(
-                                    initialValue: selectedDrCr,
+                                    value: selectedDrCr,
                                     decoration: _editInputDecoration(),
                                     isExpanded: true,
                                     items: const ['Debit', 'Credit']
@@ -1245,7 +1564,7 @@ class _AccountHeadState extends State<AccountHead> {
                                 child: _buildEditFormField(
                                   label: '* Account Type',
                                   child: DropdownButtonFormField<String>(
-                                    initialValue: selectedAccountType,
+                                    value: selectedAccountType,
                                     decoration: _editInputDecoration(),
                                     isExpanded: true,
                                     items: const ['Real', 'Personal', 'Nominal']
@@ -1261,7 +1580,7 @@ class _AccountHeadState extends State<AccountHead> {
                           ),
                           const SizedBox(height: 16),
 
-                          // ── Opening Balance (left half only) ──
+                          // ── Opening Balance ──
                           SizedBox(
                             width: (dialogWidth - 48) / 2,
                             child: _buildEditFormField(
@@ -1281,14 +1600,11 @@ class _AccountHeadState extends State<AccountHead> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Status:',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
-                              ),
+                              const Text('Status:',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.black87)),
                               Switch(
                                 value: status,
                                 onChanged: (val) =>
@@ -1299,7 +1615,7 @@ class _AccountHeadState extends State<AccountHead> {
                           ),
                           const SizedBox(height: 20),
 
-                          // ── Save Changes Button ──
+                          // ── Save Button ──
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
@@ -1337,10 +1653,9 @@ class _AccountHeadState extends State<AccountHead> {
                                     navigator.pop();
                                     scaffoldMessenger.showSnackBar(
                                       SnackBar(
-                                        content: Text(data['message'] ??
-                                            'Account updated successfully'),
-                                        backgroundColor: Colors.green,
-                                      ),
+                                          content: Text(data['message'] ??
+                                              'Account updated successfully'),
+                                          backgroundColor: Colors.green),
                                     );
                                     bloc.add(const FetchAccountHeads());
                                   } else {
@@ -1349,12 +1664,9 @@ class _AccountHeadState extends State<AccountHead> {
                                         : 'Update failed');
                                   }
                                 } catch (e) {
-                                  scaffoldMessenger.showSnackBar(
-                                    SnackBar(
+                                  scaffoldMessenger.showSnackBar(SnackBar(
                                       content: Text('Failed to update: $e'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
+                                      backgroundColor: Colors.red));
                                 } finally {
                                   if (context.mounted) {
                                     setDialogState(() => isLoading = false);
@@ -1367,14 +1679,12 @@ class _AccountHeadState extends State<AccountHead> {
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 14),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                                    borderRadius: BorderRadius.circular(8)),
                               ),
-                              child: const Text(
-                                'Save Changes',
-                                style: TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.w600),
-                              ),
+                              child: const Text('Save Changes',
+                                  style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ],
@@ -1393,14 +1703,11 @@ class _AccountHeadState extends State<AccountHead> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFFE8891A),
-          ),
-        ),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFE8891A))),
         const SizedBox(height: 6),
         child,
       ],
@@ -1413,19 +1720,108 @@ class _AccountHeadState extends State<AccountHead> {
       hintStyle: const TextStyle(color: Colors.black38, fontSize: 13),
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
-      ),
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFDDDDDD))),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFDDDDDD)),
-      ),
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFDDDDDD))),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFFF9800), width: 1.5),
-      ),
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFFF9800), width: 1.5)),
       filled: true,
       fillColor: Colors.white,
+    );
+  }
+
+  // ─── View Dialog ──────────────────────────────────────────────────────────
+
+  void _showAccountDetailPopup(BuildContext context, AccountHeadData head) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            constraints: const BoxConstraints(maxWidth: 700),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Account Details',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Inter')),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Divider(),
+                const SizedBox(height: 12),
+                _buildGridRow(
+                    'ID', head.id.toString(), 'Name', head.name ?? 'N/A'),
+                const Divider(height: 1),
+                _buildGridRow('Main Group', head.mainGroup ?? 'N/A', 'Parent',
+                    head.parent ?? 'N/A'),
+                const Divider(height: 1),
+                _buildGridRow('Dr Cr', head.drCr ?? 'N/A', 'Account Type',
+                    head.accountType ?? 'N/A'),
+                const Divider(height: 1),
+                _buildGridRow(
+                  'Opening Balance',
+                  head.openingBalance?.toStringAsFixed(2) ?? '-',
+                  'Status',
+                  head.status == true ? 'Active' : 'Inactive',
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGridRow(
+      String label1, String value1, String label2, String value2) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Expanded(child: _buildLabelValue(label1, value1)),
+          Expanded(child: _buildLabelValue(label2, value2)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLabelValue(String label, String value) {
+    return RichText(
+      text: TextSpan(
+        style: const TextStyle(
+            fontSize: 14, fontFamily: 'Inter', color: Colors.black87),
+        children: [
+          TextSpan(
+              text: '$label: ',
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, fontFamily: 'Inter')),
+          TextSpan(
+              text: value,
+              style: const TextStyle(
+                  fontWeight: FontWeight.normal,
+                  fontFamily: 'Inter',
+                  color: Colors.black54)),
+        ],
+      ),
     );
   }
 
@@ -1439,12 +1835,12 @@ class _AccountHeadState extends State<AccountHead> {
         body: BlocConsumer<AccountHeadBloc, AccountHeadState>(
           listener: (context, state) {
             if (state.errorMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.errorMessage!)),
-              );
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(state.errorMessage!)));
             }
           },
           builder: (context, state) {
+            // ── Derived data ──
             final allHeads = state.accountHeads;
             final parentToGroups = <String, Set<String>>{};
             for (final head in allHeads) {
@@ -1472,7 +1868,6 @@ class _AccountHeadState extends State<AccountHead> {
                     .toList();
 
             final totalPages = _totalPages(filteredHeads.length);
-
             if (_currentPage > totalPages && totalPages > 0) {
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (mounted) setState(() => _currentPage = totalPages);
@@ -1489,34 +1884,32 @@ class _AccountHeadState extends State<AccountHead> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Account',
-                      style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'Inter',
-                          color: Color(0xFF1A1A1A)),
-                    ),
+                    // ── Title ──
+                    const Text('Account',
+                        style: TextStyle(
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'Inter',
+                            color: Color(0xFF1A1A1A))),
                     const SizedBox(height: 4),
-                    Text(
-                      'Manage and categorize different account types',
-                      style: TextStyle(
-                          fontSize: 13,
-                          fontFamily: 'Inter',
-                          color: Colors.grey[600]),
-                    ),
+                    Text('Manage and categorize different account types',
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontFamily: 'Inter',
+                            color: Colors.grey[600])),
                     const SizedBox(height: 12),
+
+                    // ── Search + New Account ──
                     Row(
                       children: [
                         Expanded(
                           child: Container(
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(200),
-                              border:
-                                  Border.all(color: const Color(0xFFE0E0E0)),
-                            ),
+                                color: Colors.grey[100],
+                                borderRadius: BorderRadius.circular(200),
+                                border:
+                                    Border.all(color: const Color(0xFFE0E0E0))),
                             child: TextField(
                               controller: _searchController,
                               style: const TextStyle(fontSize: 13),
@@ -1540,65 +1933,104 @@ class _AccountHeadState extends State<AccountHead> {
                           onPressed: () {},
                           icon: const Icon(Icons.add,
                               size: 18, color: Colors.white),
-                          label: const Text(
-                            'New Account',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
+                          label: const Text('New Account',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontFamily: 'Inter',
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white)),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _orange,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8)),
-                            elevation: 0,
-                          ),
+                              backgroundColor: _orange,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 10),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8)),
+                              elevation: 0),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: _selectedIds.isEmpty ? null : () {},
-                        icon: Icon(Icons.delete_outline,
-                            size: 16,
-                            color: _selectedIds.isEmpty
-                                ? Colors.grey
-                                : const Color(0xFFD9534F)),
-                        label: Text('Delete All',
-                            style: TextStyle(
-                                fontSize: 13,
-                                fontFamily: 'Inter',
-                                color: _selectedIds.isEmpty
-                                    ? Colors.grey
-                                    : const Color(0xFFD9534F))),
-                        style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero, minimumSize: Size.zero),
-                      ),
+
+                    // ── Select All + Delete All row ──
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        // Select all checkbox for current page
+                        if (pageItems.isNotEmpty)
+                          Row(
+                            children: [
+                              SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: Checkbox(
+                                  value: pageAllSelected,
+                                  onChanged: (v) =>
+                                      _toggleSelectAll(pageItems, v),
+                                  activeColor: _orange,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4)),
+                                  side: const BorderSide(
+                                      color: Color(0xFFCCCCCC), width: 1.5),
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Select All',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    fontFamily: 'Inter',
+                                    color: Colors.grey[600]),
+                              ),
+                            ],
+                          )
+                        else
+                          const SizedBox.shrink(),
+
+                        // Delete All button
+                        TextButton.icon(
+                          onPressed: _selectedIds.isEmpty ? null : () {},
+                          icon: Icon(Icons.delete_outline,
+                              size: 16,
+                              color: _selectedIds.isEmpty
+                                  ? Colors.grey
+                                  : const Color(0xFFD9534F)),
+                          label: Text('Delete All',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontFamily: 'Inter',
+                                  color: _selectedIds.isEmpty
+                                      ? Colors.grey
+                                      : const Color(0xFFD9534F))),
+                          style: TextButton.styleFrom(
+                              padding: EdgeInsets.zero, minimumSize: Size.zero),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
+
+                    // ── Filter chips ──
                     _buildFilterChips(sortedParents, parentToGroups),
                     const SizedBox(height: 16),
+
+                    // ── List or shimmer ──
                     state.isLoading
                         ? _buildShimmer()
                         : Container(
-                            height: 847,
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              border:
-                                  Border.all(color: const Color(0xFFEEEEEE)),
-                            ),
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border:
+                                    Border.all(color: const Color(0xFFEEEEEE))),
                             child: Column(
                               children: [
-                                Expanded(
-                                  child: pageItems.isEmpty
-                                      ? const Center(
+                                // ── Items ──
+                                pageItems.isEmpty
+                                    ? const SizedBox(
+                                        height: 200,
+                                        child: Center(
                                           child: Column(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.center,
@@ -1612,26 +2044,45 @@ class _AccountHeadState extends State<AccountHead> {
                                               Text(
                                                 'No account heads found',
                                                 style: TextStyle(
-                                                  fontFamily: 'Inter',
-                                                  color: Color(0xFF888888),
-                                                  fontSize: 14,
-                                                ),
+                                                    fontFamily: 'Inter',
+                                                    color: Color(0xFF888888),
+                                                    fontSize: 14),
                                               ),
                                             ],
                                           ),
-                                        )
-                                      : _TableWithSharedScroll(
-                                          pageItems: pageItems,
-                                          selectedIds: _selectedIds,
-                                          pageAllSelected: pageAllSelected,
-                                          onSelectAll: (v) =>
-                                              _toggleSelectAll(pageItems, v),
-                                          onSelect: _toggleSelect,
-                                          orange: _orange,
-                                          // ✅ pass edit callback
-                                          onEdit: _showEditAccountHeadDialog,
                                         ),
-                                ),
+                                      )
+                                    : ListView.builder(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 8),
+                                        itemCount: pageItems.length,
+                                        itemBuilder: (context, index) {
+                                          final head = pageItems[index];
+                                          final isSelected =
+                                              _selectedIds.contains(head.id);
+
+                                          return AccountHeadCard(
+                                            head: head,
+                                            isSelected: isSelected,
+                                            onSelect: (v) =>
+                                                _toggleSelect(head.id, v),
+                                            onView: () =>
+                                                _showAccountDetailPopup(
+                                                    context, head),
+                                            onEdit: () =>
+                                                _showEditAccountHeadDialog(
+                                                    head),
+                                            onDelete: () {
+                                              // TODO: implement delete
+                                            },
+                                          );
+                                        },
+                                      ),
+
+                                // ── Divider + Pagination ──
                                 const Divider(
                                     height: 1, color: Color(0xFFEEEEEE)),
                                 SizedBox(
@@ -1655,6 +2106,8 @@ class _AccountHeadState extends State<AccountHead> {
       ),
     );
   }
+
+  // ─── Filter Chips ─────────────────────────────────────────────────────────
 
   Widget _buildFilterChips(
       List<String> sortedParents, Map<String, Set<String>> parentToGroups) {
@@ -1698,10 +2151,11 @@ class _AccountHeadState extends State<AccountHead> {
               child: Text(
                 parent,
                 style: TextStyle(
-                    fontSize: 12,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w500,
-                    color: isSelected ? Colors.white : const Color(0xFF555555)),
+                  fontSize: 12,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Colors.white : const Color(0xFF555555),
+                ),
               ),
             ),
           );
@@ -1717,11 +2171,9 @@ class _AccountHeadState extends State<AccountHead> {
                     _selectedMainGroup = isSelected ? null : group;
                     _currentPage = 1;
                   });
-                  context.read<AccountHeadBloc>().add(
-                        isSelected
-                            ? const UpdateSubFilter(null)
-                            : UpdateSubFilter(group),
-                      );
+                  context.read<AccountHeadBloc>().add(isSelected
+                      ? const UpdateSubFilter(null)
+                      : UpdateSubFilter(group));
                 },
                 child: Container(
                   padding:
@@ -1739,19 +2191,19 @@ class _AccountHeadState extends State<AccountHead> {
                         width: 6,
                         height: 6,
                         decoration: BoxDecoration(
-                          color: isSelected ? _orange : const Color(0xFFCCCCCC),
-                          shape: BoxShape.circle,
-                        ),
+                            color:
+                                isSelected ? _orange : const Color(0xFFCCCCCC),
+                            shape: BoxShape.circle),
                       ),
                       const SizedBox(width: 6),
                       Text(
                         group,
                         style: TextStyle(
-                          fontSize: 11,
-                          fontFamily: 'Inter',
-                          fontWeight: FontWeight.w500,
-                          color: isSelected ? _orange : const Color(0xFF777777),
-                        ),
+                            fontSize: 11,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w500,
+                            color:
+                                isSelected ? _orange : const Color(0xFF777777)),
                       ),
                     ],
                   ),
@@ -1788,340 +2240,31 @@ class _AccountHeadState extends State<AccountHead> {
     );
   }
 
+  // ─── Shimmer ──────────────────────────────────────────────────────────────
+
   Widget _buildShimmer() {
     return Shimmer.fromColors(
       baseColor: Colors.grey[200]!,
       highlightColor: Colors.grey[50]!,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEEEEEE)),
-        ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFEEEEEE))),
         child: Column(
           children: List.generate(
-            10,
-            (_) => Column(children: [
-              Container(height: _kRowHeight, color: Colors.white),
-              const Divider(height: 1, color: Color(0xFFEEEEEE)),
-            ]),
-          ),
+              10,
+              (_) => Column(children: [
+                    Container(height: _kRowHeight, color: Colors.white),
+                    const Divider(height: 1, color: Color(0xFFEEEEEE))
+                  ])),
         ),
       ),
     );
   }
 }
 
-// ─── Table Widget ─────────────────────────────────────────────────────────────
-
-class _TableWithSharedScroll extends StatefulWidget {
-  final List<AccountHeadData> pageItems;
-  final Set<int> selectedIds;
-  final bool pageAllSelected;
-  final void Function(bool?) onSelectAll;
-  final void Function(int, bool?) onSelect;
-  final Color orange;
-  final void Function(AccountHeadData) onEdit; // ✅ edit callback
-
-  const _TableWithSharedScroll({
-    required this.pageItems,
-    required this.selectedIds,
-    required this.pageAllSelected,
-    required this.onSelectAll,
-    required this.onSelect,
-    required this.orange,
-    required this.onEdit,
-  });
-
-  @override
-  State<_TableWithSharedScroll> createState() => _TableWithSharedScrollState();
-}
-
-class _TableWithSharedScrollState extends State<_TableWithSharedScroll> {
-  late final ScrollController _hScroll;
-
-  @override
-  void initState() {
-    super.initState();
-    _hScroll = ScrollController();
-  }
-
-  @override
-  void dispose() {
-    _hScroll.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    const headerStyle = TextStyle(
-      fontSize: 12,
-      fontFamily: 'Inter',
-      fontWeight: FontWeight.w600,
-      color: Color(0xFF555555),
-    );
-    const rs =
-        TextStyle(fontSize: 13, fontFamily: 'Inter', color: Color(0xFF333333));
-
-    return RawScrollbar(
-      controller: _hScroll,
-      thumbVisibility: true,
-      thickness: 4,
-      radius: const Radius.circular(2),
-      thumbColor: const Color(0xFFCCCCCC),
-      scrollbarOrientation: ScrollbarOrientation.bottom,
-      child: SingleChildScrollView(
-        controller: _hScroll,
-        scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: _kTableMinWidth,
-          child: Column(
-            children: [
-              Container(
-                height: _kHeaderHeight,
-                decoration: const BoxDecoration(
-                    color: Color(0xFFFAFAFA),
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(12))),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: [
-                    SizedBox(
-                        width: _kCheckboxW,
-                        child: Checkbox(
-                            value: widget.pageAllSelected,
-                            onChanged: widget.onSelectAll)),
-                    const SizedBox(width: _kGapW),
-                    const SizedBox(
-                        width: _kIdW, child: Text('ID', style: headerStyle)),
-                    const SizedBox(
-                        width: 200, child: Text('Name', style: headerStyle)),
-                    const SizedBox(
-                        width: 140,
-                        child: Text('Main Group', style: headerStyle)),
-                    const SizedBox(
-                        width: 120, child: Text('Parent', style: headerStyle)),
-                    const SizedBox(
-                        width: 120,
-                        child: Text('Account Type', style: headerStyle)),
-                    const SizedBox(
-                        width: _kActionW + 20,
-                        child: Text('Action',
-                            style: headerStyle, textAlign: TextAlign.center)),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: Color(0xFFEEEEEE)),
-              Column(
-                children: widget.pageItems.asMap().entries.map((entry) {
-                  final head = entry.value;
-                  final isSelected = widget.selectedIds.contains(head.id);
-
-                  return Column(
-                    children: [
-                      Container(
-                        height: _kRowHeight,
-                        color: isSelected
-                            ? const Color(0xFFFFF8F0)
-                            : Colors.transparent,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                                width: _kCheckboxW,
-                                child: Checkbox(
-                                    value: isSelected,
-                                    onChanged: (v) =>
-                                        widget.onSelect(head.id, v))),
-                            const SizedBox(width: _kGapW),
-                            SizedBox(
-                                width: _kIdW,
-                                child: Text('${head.id}', style: rs)),
-                            SizedBox(
-                                width: 200,
-                                child: Text(head.name ?? '',
-                                    style: rs,
-                                    overflow: TextOverflow.ellipsis)),
-                            SizedBox(
-                                width: 140,
-                                child: Text(head.mainGroup ?? 'N/A',
-                                    style: rs,
-                                    overflow: TextOverflow.ellipsis)),
-                            SizedBox(
-                                width: 120,
-                                child: Text(head.parent ?? 'N/A',
-                                    style: rs,
-                                    overflow: TextOverflow.ellipsis)),
-                            SizedBox(
-                                width: 120,
-                                child: Text(head.accountType ?? 'N/A',
-                                    style: rs,
-                                    overflow: TextOverflow.ellipsis)),
-                            SizedBox(
-                              width: _kActionW + 20,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  // View
-                                  GestureDetector(
-                                    onTap: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) {
-                                          return Dialog(
-                                            backgroundColor: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(16)),
-                                            child: Container(
-                                              padding: const EdgeInsets.all(20),
-                                              constraints: const BoxConstraints(
-                                                  maxWidth: 700),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      const Text(
-                                                        'Account Details',
-                                                        style: TextStyle(
-                                                          fontSize: 18,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontFamily: 'Inter',
-                                                        ),
-                                                      ),
-                                                      IconButton(
-                                                        icon: const Icon(
-                                                            Icons.close,
-                                                            color: Colors.grey),
-                                                        onPressed: () =>
-                                                            Navigator.pop(
-                                                                context),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  _buildGridRow(
-                                                      'ID',
-                                                      head.id.toString(),
-                                                      'Name',
-                                                      head.name ?? 'N/A'),
-                                                  const Divider(height: 1),
-                                                  _buildGridRow(
-                                                      'Main Group',
-                                                      head.mainGroup ?? 'N/A',
-                                                      'Parent',
-                                                      head.parent ?? 'N/A'),
-                                                  const Divider(height: 1),
-                                                  _buildGridRow(
-                                                      'Dr Cr',
-                                                      head.drCr ?? 'N/A',
-                                                      'Account Type',
-                                                      head.accountType ??
-                                                          'N/A'),
-                                                  const Divider(height: 1),
-                                                  _buildGridRow(
-                                                    'Opening Balance',
-                                                    head.openingBalance
-                                                            ?.toStringAsFixed(
-                                                                2) ??
-                                                        '-',
-                                                    'Status',
-                                                    head.status == true
-                                                        ? 'True'
-                                                        : 'False',
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                      );
-                                    },
-                                    child: const Icon(
-                                        Icons.remove_red_eye_outlined,
-                                        size: 16,
-                                        color: Color(0xFF888888)),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  // ✅ Edit — wired up
-                                  GestureDetector(
-                                    onTap: () => widget.onEdit(head),
-                                    child: const Icon(Icons.edit_outlined,
-                                        size: 16, color: Color(0xFF888888)),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  // Delete (unchanged)
-                                  GestureDetector(
-                                    onTap: () {},
-                                    child: const Icon(Icons.delete_outline,
-                                        size: 16, color: Color(0xFF888888)),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Divider(height: 1, color: Color(0xFFEEEEEE)),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGridRow(
-      String label1, String value1, String label2, String value2) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Expanded(child: _buildLabelValue(label1, value1)),
-          Expanded(child: _buildLabelValue(label2, value2)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLabelValue(String label, String value) {
-    return RichText(
-      text: TextSpan(
-        style: const TextStyle(
-            fontSize: 14, fontFamily: 'Inter', color: Colors.black87),
-        children: [
-          TextSpan(
-            text: '$label: ',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Inter',
-            ),
-          ),
-          TextSpan(
-            text: value,
-            style: const TextStyle(
-                fontWeight: FontWeight.normal,
-                fontFamily: 'Inter',
-                color: Colors.black54),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Pagination (unchanged) ───────────────────────────────────────────────────
+// ─── Pagination Bar ───────────────────────────────────────────────────────────
 
 class _PaginationBar extends StatelessWidget {
   final int currentPage;
@@ -2191,6 +2334,8 @@ class _PaginationBar extends StatelessWidget {
   }
 }
 
+// ─── Page Pill ────────────────────────────────────────────────────────────────
+
 class _PagePill extends StatelessWidget {
   final int page;
   final bool isActive;
@@ -2207,10 +2352,9 @@ class _PagePill extends StatelessWidget {
         width: 30,
         height: 30,
         decoration: BoxDecoration(
-          border: Border.all(
-              color: isActive ? const Color(0xFFAAAAAA) : Colors.transparent),
-          borderRadius: BorderRadius.circular(6),
-        ),
+            border: Border.all(
+                color: isActive ? const Color(0xFFAAAAAA) : Colors.transparent),
+            borderRadius: BorderRadius.circular(6)),
         alignment: Alignment.center,
         child: Text('$page',
             style: TextStyle(
@@ -2224,6 +2368,8 @@ class _PagePill extends StatelessWidget {
     );
   }
 }
+
+// ─── Page Button ──────────────────────────────────────────────────────────────
 
 class _PageBtn extends StatelessWidget {
   final IconData icon;

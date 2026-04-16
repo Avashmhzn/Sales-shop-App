@@ -261,14 +261,16 @@ class CompanyBloc extends Bloc<CompanyEvent, CompanyState> {
           final innerData = rawData['data'] as Map<String, dynamic>?;
           if (innerData != null) {
             final companiesFromInner = innerData['companies'] as List<dynamic>?;
-            if (companiesFromInner != null)
+            if (companiesFromInner != null) {
               companyListData = companiesFromInner;
+            }
           }
 
           if (companyListData.isEmpty) {
-            if (rawData['companies'] is List)
+            if (rawData['companies'] is List) {
               companyListData = rawData['companies'];
-            else if (rawData['data'] is List) companyListData = rawData['data'];
+            } else if (rawData['data'] is List)
+              companyListData = rawData['data'];
           }
         }
 
