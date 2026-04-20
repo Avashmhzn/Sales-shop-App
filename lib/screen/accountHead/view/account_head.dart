@@ -1482,7 +1482,7 @@ class _AccountHeadState extends State<AccountHead> {
                                 child: _buildEditFormField(
                                   label: '* Main Group:',
                                   child: DropdownButtonFormField<String>(
-                                    value: selectedMainGroup,
+                                    initialValue: selectedMainGroup,
                                     decoration: _editInputDecoration(),
                                     isExpanded: true,
                                     items: const [
@@ -1519,7 +1519,7 @@ class _AccountHeadState extends State<AccountHead> {
                                 child: _buildEditFormField(
                                   label: '* Parent:',
                                   child: DropdownButtonFormField<String>(
-                                    value: selectedParent,
+                                    initialValue: selectedParent,
                                     decoration: _editInputDecoration(),
                                     isExpanded: true,
                                     items: const [
@@ -1547,7 +1547,7 @@ class _AccountHeadState extends State<AccountHead> {
                                 child: _buildEditFormField(
                                   label: '* Dr/Cr',
                                   child: DropdownButtonFormField<String>(
-                                    value: selectedDrCr,
+                                    initialValue: selectedDrCr,
                                     decoration: _editInputDecoration(),
                                     isExpanded: true,
                                     items: const ['Debit', 'Credit']
@@ -1564,7 +1564,7 @@ class _AccountHeadState extends State<AccountHead> {
                                 child: _buildEditFormField(
                                   label: '* Account Type',
                                   child: DropdownButtonFormField<String>(
-                                    value: selectedAccountType,
+                                    initialValue: selectedAccountType,
                                     decoration: _editInputDecoration(),
                                     isExpanded: true,
                                     items: const ['Real', 'Personal', 'Nominal']

@@ -839,6 +839,8 @@
 // =============================================
 // add_purchase_screen.dart  → UI matches image design
 // =============================================
+//update added
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
