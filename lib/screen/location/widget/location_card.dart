@@ -224,14 +224,14 @@ class LocationCard extends StatelessWidget {
             const SizedBox(height: 10),
 
             // ── Row 2: Location Code chip ──
-            if (location.code != null && location.code!.isNotEmpty)
+            if (location.code.isNotEmpty)
               Wrap(
                 spacing: 6,
                 runSpacing: 6,
                 children: [
                   _Chip(
                     icon: Icons.location_on_outlined,
-                    label: location.code!,
+                    label: location.code,
                     color: const Color(0xFF4A90D9),
                     bgColor: const Color(0xFFEBF4FF),
                   ),

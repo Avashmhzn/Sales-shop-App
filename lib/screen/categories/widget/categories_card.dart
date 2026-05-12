@@ -116,11 +116,11 @@ class CategoryCard extends StatelessWidget {
                     bgColor: const Color(0xFFF3E5F5),
                   )
                 else
-                  _Chip(
+                  const _Chip(
                     icon: Icons.folder_outlined,
                     label: 'Top Level',
-                    color: const Color(0xFF27AE60),
-                    bgColor: const Color(0xFFE8F8F0),
+                    color: Color(0xFF27AE60),
+                    bgColor: Color(0xFFE8F8F0),
                   ),
                 _Chip(
                   icon: category.status

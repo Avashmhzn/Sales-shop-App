@@ -1544,19 +1544,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
   void _toggleSelect(int id, bool? value) {
     setState(() {
-      if (value == true)
+      if (value == true) {
         _selectedIds.add(id);
-      else
+      } else {
         _selectedIds.remove(id);
+      }
     });
   }
 
   void _toggleSelectAll(List<CategoryData> items, bool? value) {
     setState(() {
-      if (value == true)
+      if (value == true) {
         _selectedIds.addAll(items.map((c) => c.id));
-      else
+      } else {
         _selectedIds.removeAll(items.map((c) => c.id));
+      }
     });
   }
 
@@ -1996,8 +1998,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                           .replaceFirst('Exception: ', '')),
                                       backgroundColor: Colors.red));
                                 } finally {
-                                  if (context.mounted)
+                                  if (context.mounted) {
                                     setDialogState(() => isLoading = false);
+                                  }
                                 }
                               },
                               style: ElevatedButton.styleFrom(
