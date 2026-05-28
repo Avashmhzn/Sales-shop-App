@@ -236,11 +236,7 @@
 //       debugPrint('Full response: ${e.response?.data}');
 //     }
 //   }
-// }
-// file: lib/core/services/day_closing_service.dart
-// lib/core/services/day_closing_service.dart (updated)
-
-import 'dart:developer';
+// }// lib/core/services/day_closing_service.dart
 
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
@@ -261,7 +257,7 @@ class DayClosingService {
         if (body['success'] == true) {
           final data = body['data'] as Map<String, dynamic>?;
           debugPrint('getDayData success: $data');
-          return body; // return full body to check message
+          return body;
         } else {
           debugPrint('getDayData: ${body['message']}');
         }
@@ -269,17 +265,6 @@ class DayClosingService {
       return null;
     } on DioException catch (e) {
       _logDioError('getDayData', e);
-      if (e.response?.statusCode == 401) {
-        final refreshed = await _refreshTokenIfNeeded();
-        if (refreshed) {
-          try {
-            final retry = await _dio.get('/day-closing/get_day_data/');
-            if (retry.statusCode == 200 && retry.data['success'] == true) {
-              return retry.data;
-            }
-          } catch (_) {}
-        }
-      }
       return null;
     } catch (e) {
       debugPrint('getDayData error: $e');
@@ -302,7 +287,6 @@ class DayClosingService {
       };
     }
 
-    // Special case: "No open day found"
     if (responseBody['data'] == null &&
         responseBody['message']
                 ?.toString()
@@ -397,9 +381,6 @@ class DayClosingService {
       return false;
     } on DioException catch (e) {
       _logDioError('openToday', e);
-      if (e.response?.statusCode == 401) {
-        if (await _refreshTokenIfNeeded()) return openToday();
-      }
       return false;
     }
   }
@@ -422,7 +403,7 @@ class DayClosingService {
     }
   }
 
-  // ── BULK CLOSE DAYS (UPDATED) ─────────────────────────────────
+  // ── BULK CLOSE DAYS ─────────────────────────────────
   Future<String?> bulkCloseDays() async {
     const String endpoint = '/day-closing/bulk_close_days/';
 
@@ -432,20 +413,16 @@ class DayClosingService {
       if (res.statusCode == 200) {
         final responseData = res.data as Map<String, dynamic>;
         if (responseData['success'] == true) {
-          log('Bulk day close success: ${responseData['message']}');
+          debugPrint('Bulk day close success: ${responseData['message']}');
           return responseData['message'];
         }
       }
-      log('Bulk close failed — status: ${res.statusCode}');
+      debugPrint('Bulk close failed — status: ${res.statusCode}');
       return null;
     } catch (e, stack) {
-      log('Bulk day close error: $e\n$stack');
+      debugPrint('Bulk day close error: $e\n$stack');
       return null;
     }
-  }
-
-  Future<bool> _refreshTokenIfNeeded() async {
-    return await DioClient().refreshToken();
   }
 
   void _logDioError(String method, DioException e) {

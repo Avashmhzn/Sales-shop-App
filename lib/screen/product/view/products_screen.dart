@@ -3312,7 +3312,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                hasValue ? value! : label,
+                hasValue ? value : label,
                 style: TextStyle(
                   fontSize: 12,
                   fontFamily: 'Inter',

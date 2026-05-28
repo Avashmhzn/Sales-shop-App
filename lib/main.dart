@@ -1,3 +1,5 @@
+// // lib/main.dart
+
 // import 'dart:developer';
 
 // import 'package:flutter/material.dart';
@@ -14,6 +16,7 @@
 // import 'package:saleup_app/screen/voucher/bloc/voucher_event.dart';
 // import 'package:saleup_app/services/session_manager.dart';
 // import 'package:saleup_app/services/user_services.dart';
+// import 'package:saleup_app/core/network/dio_client.dart'; // ← Added
 
 // void main() async {
 //   WidgetsFlutterBinding.ensureInitialized();
@@ -80,7 +83,6 @@
 //   Widget build(BuildContext context) {
 //     return MultiBlocProvider(
 //       providers: [
-//         // ... (existing providers)
 //         BlocProvider<AccountHeadBloc>(
 //           create: (context) =>
 //               AccountHeadBloc()..add(const FetchAccountHeads()),
@@ -103,6 +105,13 @@
 //           useMaterial3: true,
 //         ),
 //         routerConfig: _router,
+//         builder: (context, child) => Navigator(
+//           // ← Added for navigatorKey
+//           key: DioClient.navigatorKey,
+//           onGenerateRoute: (settings) => MaterialPageRoute(
+//             builder: (context) => child ?? const SizedBox.shrink(),
+//           ),
+//         ),
 //       ),
 //     );
 //   }
@@ -126,7 +135,7 @@ import 'package:saleup_app/screen/voucher/bloc/voucher_bloc.dart';
 import 'package:saleup_app/screen/voucher/bloc/voucher_event.dart';
 import 'package:saleup_app/services/session_manager.dart';
 import 'package:saleup_app/services/user_services.dart';
-import 'package:saleup_app/core/network/dio_client.dart'; // ← Added
+import 'package:saleup_app/core/network/dio_client.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -136,6 +145,9 @@ void main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
+
+  // ★ Initialize persistent cookie jar (survives app restarts)
+  await DioClient().initCookieJar();
 
   // Check session on start
   final shouldAutoLogin = await SessionManager().shouldAutoLogin();
@@ -165,6 +177,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _router = buildRouter(widget.shouldAutoLogin);
+
+    // ═══════════════════════════════════════════════════════════════
+    // ★ PASS GoRouter TO DioClient — this lets DioClient navigate
+    // to /login from inside interceptors WITHOUT needing a BuildContext
+    // ═══════════════════════════════════════════════════════════════
+    DioClient().setGoRouter(_router);
   }
 
   @override
@@ -215,13 +233,19 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           useMaterial3: true,
         ),
         routerConfig: _router,
-        builder: (context, child) => Navigator(
-          // ← Added for navigatorKey
-          key: DioClient.navigatorKey,
-          onGenerateRoute: (settings) => MaterialPageRoute(
-            builder: (context) => child ?? const SizedBox.shrink(),
-          ),
-        ),
+        // ═══════════════════════════════════════════════════════════════
+        // ★ REMOVED the broken `builder` wrapper that caused:
+        // "No GoRouter found in context" assertion error
+        //
+        // The old code wrapped MaterialApp.router's child with a
+        // separate Navigator using DioClient.navigatorKey. This
+        // isolated the GoRouter from any context derived from
+        // navigatorKey.currentContext, causing the crash when
+        // DioClient tried to call context.go('/login').
+        //
+        // Now DioClient uses _goRouter.go('/login') directly,
+        // so it doesn't need navigatorKey or BuildContext at all.
+        // ═══════════════════════════════════════════════════════════════
       ),
     );
   }

@@ -898,7 +898,6 @@
 //     }
 //   }
 // }
-
 // lib/core/network/dio_client.dart
 
 import 'dart:io';
@@ -910,6 +909,7 @@ import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -917,6 +917,7 @@ import 'package:csv/csv.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart' as xlsio;
 
 import 'package:saleup_app/core/network/api_endpoints.dart';
+import 'package:saleup_app/core/network/auth_token_cache.dart';
 import 'package:saleup_app/model/ledger_report_response.dart';
 import 'package:saleup_app/model/trial_balance_report_response.dart';
 import 'package:saleup_app/services/auth_service.dart';
@@ -926,26 +927,73 @@ class DioClient {
   factory DioClient() => _instance;
 
   late final Dio dio;
-  late final CookieJar cookieJar;
+
+  late CookieJar _cookieJar;
+  bool _cookieJarInitialized = false;
+
+  late final Dio _refreshDio;
+
+  bool _isHandlingUnauthorized = false;
+
+  // ★ GoRouter reference for navigation without context
+  GoRouter? _goRouter;
+
+  // ★ Call this after creating your GoRouter in main.dart
+  void setGoRouter(GoRouter router) {
+    _goRouter = router;
+  }
+
+  // Keep for dialog usage if needed
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
 
   DioClient._internal() {
-    dio = Dio();
+    final normalizedBaseUrl = Api.currentBaseUrl.endsWith('/')
+        ? Api.currentBaseUrl
+        : '${Api.currentBaseUrl}/';
 
-    dio.options
-      ..baseUrl = Api.currentBaseUrl
-      ..connectTimeout = const Duration(seconds: 60)
-      ..receiveTimeout = const Duration(seconds: 120)
-      ..sendTimeout = const Duration(seconds: 60)
-      ..headers = {
+    _cookieJar = CookieJar();
+
+    // ═══════════════════════════════════════════════════════════════
+    // SEPARATE _refreshDio — no auth/401 interceptor!
+    // ═══════════════════════════════════════════════════════════════
+    _refreshDio = Dio(BaseOptions(
+      baseUrl: normalizedBaseUrl,
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 120),
+      sendTimeout: const Duration(seconds: 60),
+      headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-      }
-      ..validateStatus = (status) => status != null && status < 600;
+      },
+      validateStatus: (status) => status != null && status < 500,
+    ));
 
-    cookieJar = CookieJar();
-    dio.interceptors.add(CookieManager(cookieJar));
+    _refreshDio.interceptors.add(CookieManager(_cookieJar));
+
+    (_refreshDio.httpClientAdapter as IOHttpClientAdapter).createHttpClient =
+        () {
+      final client = HttpClient();
+      client.badCertificateCallback = (cert, host, port) => true;
+      return client;
+    };
+
+    // ═══════════════════════════════════════════════════════════════
+    // MAIN dio instance
+    // ═══════════════════════════════════════════════════════════════
+    dio = Dio(BaseOptions(
+      baseUrl: normalizedBaseUrl,
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 120),
+      sendTimeout: const Duration(seconds: 60),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      validateStatus: (status) => status != null && status < 600,
+    ));
+
+    dio.interceptors.add(CookieManager(_cookieJar));
 
     (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
@@ -953,184 +1001,324 @@ class DioClient {
       return client;
     };
 
+    // ═══════════════════════════════════════════════════════════════
+    // INTERCEPTORS
+    // ═══════════════════════════════════════════════════════════════
     dio.interceptors.add(
-      InterceptorsWrapper(
-        onRequest: (options, handler) async {
-          options.extra['requestStartTime'] = DateTime.now();
-          await Future.delayed(const Duration(milliseconds: 100));
-
-          log('→ START [${options.method}] ${options.uri}');
-          log('  Using base URL: ${options.baseUrl}');
-
-          final unauthenticatedEndpoints = [
-            '/auth/login/',
-            '/auth/register/',
-            '/auth/forgot_password/',
-            '/auth/verify_forgot_password_otp/',
-            '/auth/reset_password/',
-            '/auth/refresh/',
-            '/chat/',
-          ];
-
-          if (!unauthenticatedEndpoints.contains(options.path)) {
-            final token = await AuthService().getAccessToken();
-            log('Token check for ${options.path}: ${token != null ? "YES (len ${token.length})" : "NULL"}');
-
-            if (token != null) {
-              options.headers['Authorization'] = 'Bearer $token';
-              log('Authorization header set for ${options.path}');
-            }
-          }
-          handler.next(options);
-        },
-        onResponse: (response, handler) {
-          final start =
-              response.requestOptions.extra['requestStartTime'] as DateTime?;
-          final duration = start != null
-              ? DateTime.now().difference(start).inMilliseconds
-              : 0;
-          log('← DONE [${response.statusCode}] ${response.requestOptions.path} (${duration}ms)');
-          handler.next(response);
-        },
-        onError: (DioException error, handler) async {
-          final start =
-              error.requestOptions.extra['requestStartTime'] as DateTime?;
-          final duration = start != null
-              ? DateTime.now().difference(start).inMilliseconds
-              : 0;
-
-          log('✗ ERROR after ${duration}ms → ${error.message} → ${error.requestOptions.uri}');
-
-          final statusCode = error.response?.statusCode;
-          final data = error.response?.data;
-
-          bool isTokenInvalid = false;
-
-          if (statusCode == 401) {
-            if (data is Map<String, dynamic>) {
-              final code = data['code']?.toString();
-              final detail = (data['detail'] ?? '').toString().toLowerCase();
-
-              if (code == 'token_not_valid' ||
-                  detail.contains('token not valid') ||
-                  detail.contains('invalid or expired') ||
-                  detail.contains('expired')) {
-                isTokenInvalid = true;
-              }
-            }
-          }
-
-          if (isTokenInvalid &&
-              !error.requestOptions.path.contains('/auth/login/') &&
-              !error.requestOptions.path.contains('/auth/refresh/')) {
-            log('🚨 TOKEN EXPIRED/INVALID detected');
-
-            await AuthService().clearTokens();
-            await cookieJar.deleteAll();
-            Api.resetToPublic();
-
-            final context = navigatorKey.currentContext;
-
-            if (context != null && context.mounted) {
-              final rememberMe = await AuthService().getRememberMe();
-
-              if (rememberMe) {
-                log('Remember Me = true → Silent redirect to /login');
-                context.go('/login');
-              } else {
-                log('Remember Me = false → Showing Session Timeout popup');
-                _showSessionTimeoutDialog(context);
-              }
-            }
-            return;
-          }
-
-          // Optional refresh for normal 401
-          if (statusCode == 401 && !isTokenInvalid) {
-            log('401 detected - attempting token refresh');
-            final refreshed = await refreshToken();
-            if (refreshed) {
-              final token = await AuthService().getAccessToken();
-              if (token != null) {
-                error.requestOptions.headers['Authorization'] = 'Bearer $token';
-                return handler.resolve(await dio.fetch(error.requestOptions));
-              }
-            }
-          }
-
-          handler.next(error);
-        },
+      QueuedInterceptorsWrapper(
+        onRequest: _onRequest,
+        onResponse: _onResponse,
+        onError: _onError,
       ),
     );
   }
 
-  // Session Timeout Popup
-  void _showSessionTimeoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text("Session Timeout"),
-        content: const Text(
-          "Your session has expired.\nPlease login again to continue.",
-          style: TextStyle(fontSize: 16),
+  // ═══════════════════════════════════════════════════════════════
+  // REQUEST INTERCEPTOR — Token Injection
+  // ═══════════════════════════════════════════════════════════════
+  void _onRequest(
+      RequestOptions options, RequestInterceptorHandler handler) async {
+    options.extra['requestStartTime'] = DateTime.now();
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    if (options.path.startsWith('/')) {
+      options.path = options.path.substring(1);
+    }
+
+    log('→ START [${options.method}] ${options.uri}');
+
+    final unauthenticatedEndpoints = [
+      'auth/login/',
+      '/auth/login/',
+      'auth/register/',
+      '/auth/register/',
+      'auth/forgot_password/',
+      'auth/verify_forgot_password_otp/',
+      'auth/reset_password/',
+      'auth/refresh/',
+      '/auth/refresh/',
+      'chat/',
+    ];
+
+    final shouldSkipToken =
+        unauthenticatedEndpoints.any((path) => options.path.contains(path));
+
+    if (!shouldSkipToken) {
+      String? token = AuthTokenCache().currentToken;
+      if (token == null) {
+        token = await AuthService().getAccessToken();
+        if (token != null) {
+          AuthTokenCache().setToken(token);
+          log('✅ Token restored from storage to cache');
+        }
+      }
+
+      if (token != null) {
+        options.headers['Authorization'] = 'Bearer $token';
+        log('✅ Bearer token injected for ${options.path}');
+      } else {
+        log('⚠️ No token available for ${options.path}');
+      }
+    } else {
+      log('⏭️ Skipping token for auth endpoint: ${options.path}');
+    }
+
+    handler.next(options);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // RESPONSE INTERCEPTOR
+  // ═══════════════════════════════════════════════════════════════
+  void _onResponse(
+      Response response, ResponseInterceptorHandler handler) async {
+    final statusCode = response.statusCode;
+    final path = response.requestOptions.path;
+
+    // ═══════════════════════════════════════════════════════════════
+    // HANDLE 401/403 DIRECTLY HERE
+    // ═══════════════════════════════════════════════════════════════
+    if (statusCode == 401 || statusCode == 403) {
+      log('🚨 401/403 detected in onResponse for $path');
+
+      final isRefreshCall = path.contains('auth/refresh');
+      final isLoginCall = path.contains('auth/login');
+      final isLogoutCall = path.contains('auth/logout');
+      final alreadyRetried = response.requestOptions.extra['retried'] == true;
+
+      if (!isRefreshCall && !isLoginCall && !isLogoutCall && !alreadyRetried) {
+        log('🔄 Attempting token refresh from onResponse...');
+        final refreshed = await _refreshAccessToken();
+
+        if (refreshed) {
+          log('✅ Token refreshed — retrying original request: $path');
+
+          final requestOptions = response.requestOptions;
+          requestOptions.extra['retried'] = true;
+          final newToken = AuthTokenCache().currentToken;
+          if (newToken != null) {
+            requestOptions.headers['Authorization'] = 'Bearer $newToken';
+          }
+
+          try {
+            final retryResponse = await dio.fetch(requestOptions);
+            return handler.resolve(retryResponse);
+          } catch (retryError) {
+            log('⚠️ Retry after refresh failed: $retryError');
+            return handler.reject(
+              DioException(
+                requestOptions: response.requestOptions,
+                response: response,
+                type: DioExceptionType.badResponse,
+                message: 'Token is invalid or expired',
+              ),
+            );
+          }
+        }
+      }
+
+      // ─────────────────────────────────────────────────────────────
+      // Refresh failed or not applicable → LOGOUT
+      // ─────────────────────────────────────────────────────────────
+      if (!_isHandlingUnauthorized) {
+        _isHandlingUnauthorized = true;
+        log('🚨 Refresh failed — triggering logout (gatekeeper active)');
+
+        AuthTokenCache().setToken(null);
+        await AuthService().clearTokens();
+        await _cookieJar.deleteAll();
+        Api.resetToPublic();
+
+        // ★ Use GoRouter directly — no context needed!
+        _goRouter?.go('/login');
+
+        Future.delayed(const Duration(seconds: 5), () {
+          _isHandlingUnauthorized = false;
+          log('🔄 Auth gatekeeper flag reset');
+        });
+      }
+
+      return handler.reject(
+        DioException(
+          requestOptions: response.requestOptions,
+          response: response,
+          type: DioExceptionType.badResponse,
+          message: 'Token is invalid or expired',
         ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-            child: const Text(
-              "OK",
-              style:
-                  TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
+      );
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Normal response (200, 201, etc.)
+    // ═══════════════════════════════════════════════════════════════
+    final start =
+        response.requestOptions.extra['requestStartTime'] as DateTime?;
+    final duration =
+        start != null ? DateTime.now().difference(start).inMilliseconds : 0;
+    log('← DONE [${response.statusCode}] ${response.requestOptions.path} (${duration}ms)');
+
+    final setCookie = response.headers['set-cookie'];
+    if (setCookie != null) {
+      log('🍪 Set-Cookie header received — CookieManager storing automatically');
+    }
+
+    handler.next(response);
   }
 
-  void updateBaseUrl(String newBaseUrl) {
-    dio.options.baseUrl = newBaseUrl;
-    log('Dio baseUrl CHANGED to → $newBaseUrl', name: 'DioClient');
+  // ═══════════════════════════════════════════════════════════════
+  // ERROR INTERCEPTOR — Only handles REAL network errors
+  // ═══════════════════════════════════════════════════════════════
+  void _onError(DioException err, ErrorInterceptorHandler handler) async {
+    final start = err.requestOptions.extra['requestStartTime'] as DateTime?;
+    final duration =
+        start != null ? DateTime.now().difference(start).inMilliseconds : 0;
+
+    log('✗ NETWORK ERROR after ${duration}ms [${err.requestOptions.method} ${err.requestOptions.uri}]: ${err.message}');
+
+    handler.next(err);
   }
 
-  Future<bool> refreshToken() async {
-    final refreshToken = await AuthService().getRefreshToken();
-    if (refreshToken == null) return false;
-
+  // ═══════════════════════════════════════════════════════════════
+  // TOKEN REFRESH — Uses separate _refreshDio
+  // ═══════════════════════════════════════════════════════════════
+  Future<bool> _refreshAccessToken() async {
     try {
-      final response = await dio.post(
-        '/auth/refresh/',
+      final refreshToken = await AuthService().getRefreshToken();
+      if (refreshToken == null) {
+        log('❌ No refresh token available');
+        return false;
+      }
+
+      log('🔄 Calling /auth/refresh/ via _refreshDio...');
+
+      final response = await _refreshDio.post(
+        'auth/refresh/',
         data: {'refresh_token': refreshToken},
       );
-      if (response.statusCode == 200 && response.data['success'] == true) {
-        final data = response.data['data'];
-        await AuthService().saveTokens(
-          accessToken: data['access_token'],
-          refreshToken: data['refresh_token'] ?? refreshToken,
-          userId: await AuthService().getUserId() ?? 0,
-        );
-        return true;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        dynamic responseData = response.data;
+
+        Map<String, dynamic>? tokenData;
+        if (responseData is Map<String, dynamic>) {
+          if (responseData['success'] == true && responseData['data'] != null) {
+            tokenData = responseData['data'] as Map<String, dynamic>;
+          } else if (responseData['access_token'] != null) {
+            tokenData = responseData;
+          }
+        }
+
+        if (tokenData != null) {
+          final newAccessToken =
+              tokenData['access_token'] ?? tokenData['accessToken'];
+          final newRefreshToken = tokenData['refresh_token'] ??
+              tokenData['refreshToken'] ??
+              refreshToken;
+
+          if (newAccessToken != null) {
+            AuthTokenCache().setToken(newAccessToken);
+
+            await AuthService().saveTokens(
+              accessToken: newAccessToken,
+              refreshToken: newRefreshToken,
+              userId: await AuthService().getUserId() ?? 0,
+            );
+
+            log('✅ Access token refreshed successfully');
+            return true;
+          }
+        }
+
+        log('⚠️ Refresh response missing access_token');
+        return false;
       }
+
+      log('⚠️ Refresh returned HTTP ${response.statusCode} — refresh token may be expired');
+      return false;
+    } on DioException catch (e) {
+      log('❌ Token refresh DioException: ${e.response?.statusCode} — ${e.message}');
+      return false;
     } catch (e) {
-      log('Refresh failed: $e');
+      log('❌ Token refresh failed: $e');
+      return false;
     }
-    return false;
+  }
+
+  // Public wrapper for backward compatibility
+  Future<bool> refreshToken() async {
+    return await _refreshAccessToken();
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // PERSISTENT COOKIE JAR
+  // ═══════════════════════════════════════════════════════════════
+  Future<void> initCookieJar() async {
+    if (_cookieJarInitialized || kIsWeb) return;
+
+    try {
+      final dir = await getApplicationDocumentsDirectory();
+      final storage = FileStorage('${dir.path}/.cookies/');
+      _cookieJar = PersistCookieJar(storage: storage);
+
+      _refreshDio.interceptors.removeWhere((i) => i is CookieManager);
+      dio.interceptors.removeWhere((i) => i is CookieManager);
+
+      _refreshDio.interceptors.add(CookieManager(_cookieJar));
+      dio.interceptors.add(CookieManager(_cookieJar));
+
+      _cookieJarInitialized = true;
+      log('✅ Persistent cookie jar initialized');
+    } catch (e) {
+      log('⚠️ Failed to init persistent cookie jar: $e');
+    }
+  }
+
+  Future<void> clearCookies() async {
+    try {
+      await _cookieJar.deleteAll();
+      log('🗑️ All cookies cleared');
+    } catch (e) {
+      log('⚠️ Failed to clear cookies: $e');
+    }
   }
 
   Future<void> logout(BuildContext context) async {
+    AuthTokenCache().setToken(null);
     await AuthService().clearTokens();
-    await cookieJar.deleteAll();
+    await clearCookies();
     Api.resetToPublic();
-    if (context.mounted) context.go('/login');
+
+    // ★ Use GoRouter directly, fallback to context
+    if (_goRouter != null) {
+      _goRouter!.go('/login');
+    } else if (context.mounted) {
+      context.go('/login');
+    }
   }
 
-  // ====================== PERMISSION HELPERS ======================
+  void updateBaseUrl(String newBaseUrl) {
+    final normalized = newBaseUrl.endsWith('/') ? newBaseUrl : '$newBaseUrl/';
+    dio.options.baseUrl = normalized;
+    _refreshDio.options.baseUrl = normalized;
+    log('Dio baseUrl CHANGED to → $normalized', name: 'DioClient');
+  }
+
+  Future<bool> isTokenValid() async {
+    return await AuthService().getAccessToken() != null;
+  }
+
+  Future<void> logoutFromInvalidToken() async {
+    log('🔄 Force Logout');
+    AuthTokenCache().setToken(null);
+    await AuthService().clearTokens();
+    await clearCookies();
+    Api.resetToPublic();
+
+    // ★ Use GoRouter directly — no context needed!
+    _goRouter?.go('/login');
+  }
+
+  // ====================== PERMISSION & PDF/EXCEL HELPERS ======================
+
   Future<bool> _requestPermission() async {
     if (Platform.isAndroid) {
       var status = await Permission.storage.request();
@@ -1150,46 +1338,37 @@ class DioClient {
     return await getApplicationDocumentsDirectory();
   }
 
-  // ====================== PDF & EXCEL HELPERS (All your original code) ======================
   pw.Widget _headerCell(String text) => pw.Container(
         padding: const pw.EdgeInsets.all(6),
         alignment: pw.Alignment.center,
-        child: pw.Text(
-          text,
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
-        ),
+        child: pw.Text(text,
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11)),
       );
 
   pw.Widget _subHeaderCell(String text) => pw.Container(
         padding: const pw.EdgeInsets.all(4),
         alignment: pw.Alignment.center,
-        child: pw.Text(
-          text,
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
-        ),
+        child: pw.Text(text,
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9)),
       );
 
   pw.Widget _dataCell(String? text, {bool bold = false}) => pw.Container(
         padding: const pw.EdgeInsets.all(4),
         alignment: pw.Alignment.center,
-        child: pw.Text(
-          text ?? '0.00',
-          style: pw.TextStyle(
-            fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
-            fontSize: 10,
-          ),
-        ),
+        child: pw.Text(text ?? '0.00',
+            style: pw.TextStyle(
+              fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
+              fontSize: 10,
+            )),
       );
 
   pw.Widget _sectionLabelOneLine(String text) => pw.Container(
         padding: const pw.EdgeInsets.all(6),
         alignment: pw.Alignment.center,
         decoration: const pw.BoxDecoration(color: PdfColors.grey300),
-        child: pw.Text(
-          text,
-          style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
-          textAlign: pw.TextAlign.center,
-        ),
+        child: pw.Text(text,
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
+            textAlign: pw.TextAlign.center),
       );
 
   String? _safeString(Map<String, dynamic>? map, Object key1,
@@ -1263,9 +1442,6 @@ class DioClient {
         'Unnamed Product';
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // STOCK LEDGER PDF
-  // ─────────────────────────────────────────────────────────────
   Future<void> downloadStockLedgerAsPdf(
     Map<String, dynamic> json,
     String startDate,
@@ -1277,9 +1453,6 @@ class DioClient {
       if (!granted) throw Exception('Permission denied');
 
       final pdf = pw.Document();
-
-      log('PDF EXPORT STARTED → rateType: $rateType');
-
       final responseData = json['data'] as Map<String, dynamic>?;
       if (responseData == null) throw Exception('No data in response');
 
@@ -1313,10 +1486,9 @@ class DioClient {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'Stock Ledger Summary (${rateType == 'selling' ? 'Selling Price' : 'Cost Price'})',
-                style:
-                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-              ),
+                  'Stock Ledger Summary (${rateType == 'selling' ? 'Selling Price' : 'Cost Price'})',
+                  style: pw.TextStyle(
+                      fontSize: 18, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 4),
               pw.Text('Product: $productName'),
               pw.Text('Period: $startDate to $endDate'),
@@ -1400,9 +1572,6 @@ class DioClient {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // STOCK LEDGER EXCEL
-  // ─────────────────────────────────────────────────────────────
   Future<void> downloadStockLedgerAsExcel(
     Map<String, dynamic> json,
     String startDate,
@@ -1412,8 +1581,6 @@ class DioClient {
     try {
       final granted = await _requestPermission();
       if (!granted) throw Exception('Permission denied');
-
-      log('EXCEL EXPORT STARTED → rateType: $rateType');
 
       final responseData = json['data'] as Map<String, dynamic>?;
       if (responseData == null) throw Exception('No data in response');
@@ -1531,9 +1698,6 @@ class DioClient {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // LEDGER PDF
-  // ─────────────────────────────────────────────────────────────
   Future<void> downloadAsPdf(
     LedgerReport ledgerReport,
     String startDate,
@@ -1591,9 +1755,6 @@ class DioClient {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // LEDGER EXCEL
-  // ─────────────────────────────────────────────────────────────
   Future<void> downloadAsExcel(
     LedgerReport ledgerReport,
     String startDate,
@@ -1632,9 +1793,6 @@ class DioClient {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // TRIAL BALANCE
-  // ─────────────────────────────────────────────────────────────
   Future<TrialBalanceReport> fetchTrialBalance(String start, String end) async {
     final response = await dio.get(
       '/ledger/get_trial_balance/',
@@ -1808,19 +1966,6 @@ class DioClient {
     } catch (e) {
       log('Trial Balance CSV failed: $e');
       rethrow;
-    }
-  }
-
-  // Public method to logout from invalid token (called from CompanyBloc)
-  Future<void> logoutFromInvalidToken() async {
-    log('🔄 Force Logout from CompanyBloc');
-    await AuthService().clearTokens();
-    await cookieJar.deleteAll();
-    Api.resetToPublic();
-
-    final context = navigatorKey.currentContext;
-    if (context != null && context.mounted) {
-      context.go('/login');
     }
   }
 }
