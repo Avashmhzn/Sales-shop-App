@@ -900,6 +900,7 @@
 // }
 // lib/core/network/dio_client.dart
 
+//fix in session expired case, if token refresh fails, logout user and navigate to login screen
 import 'dart:io';
 import 'dart:developer';
 import 'package:cookie_jar/cookie_jar.dart';
