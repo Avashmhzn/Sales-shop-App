@@ -242,11 +242,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
-import 'package:saleup_app/services/auth_service.dart';
 
 class DayClosingService {
   final Dio _dio = DioClient().dio;
-  final AuthService _authService = AuthService();
 
   Future<Map<String, dynamic>?> getDayData() async {
     try {

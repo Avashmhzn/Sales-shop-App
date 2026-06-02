@@ -118,6 +118,47 @@ class StockLedgerAccount extends Equatable {
   List<Object?> get props => [productName, ledger];
 }
 
+// @JsonSerializable()
+// class StockLedgerEntry extends Equatable {
+//   final String? date;
+//   final double? opening;
+//   final double? purchase;
+//   final double? sales;
+//   final double? costPrice;
+//   final double? sellingPrice;
+
+//   // Use @JsonKey to handle mutable closing
+//   @JsonKey(name: 'closing')
+//   double? _closing;
+//   double? get closing => _closing;
+//   set closing(double? value) => _closing = value;
+
+//   StockLedgerEntry({
+//     this.date,
+//     this.opening,
+//     this.purchase,
+//     this.sales,
+//     this.costPrice,
+//     this.sellingPrice,
+//     double? closing,
+//   }) : _closing = closing;
+
+//   factory StockLedgerEntry.fromJson(Map<String, dynamic> json) =>
+//       _$StockLedgerEntryFromJson(json);
+
+//   Map<String, dynamic> toJson() => _$StockLedgerEntryToJson(this);
+
+//   @override
+//   List<Object?> get props => [
+//         date,
+//         opening,
+//         purchase,
+//         sales,
+//         _closing,
+//         costPrice,
+//         sellingPrice,
+//       ];
+// }
 @JsonSerializable()
 class StockLedgerEntry extends Equatable {
   final String? date;
@@ -126,22 +167,17 @@ class StockLedgerEntry extends Equatable {
   final double? sales;
   final double? costPrice;
   final double? sellingPrice;
+  final double? closing;
 
-  // Use @JsonKey to handle mutable closing
-  @JsonKey(name: 'closing')
-  double? _closing;
-  double? get closing => _closing;
-  set closing(double? value) => _closing = value;
-
-  StockLedgerEntry({
+  const StockLedgerEntry({
     this.date,
     this.opening,
     this.purchase,
     this.sales,
     this.costPrice,
     this.sellingPrice,
-    double? closing,
-  }) : _closing = closing;
+    this.closing,
+  });
 
   factory StockLedgerEntry.fromJson(Map<String, dynamic> json) =>
       _$StockLedgerEntryFromJson(json);
@@ -154,7 +190,7 @@ class StockLedgerEntry extends Equatable {
         opening,
         purchase,
         sales,
-        _closing,
+        closing,
         costPrice,
         sellingPrice,
       ];

@@ -1464,29 +1464,29 @@ class AddPurchaseScreen extends StatelessWidget {
     );
   }
 
-  Widget _headerCell(String label, {required int flex}) {
-    return Expanded(
-      flex: flex,
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF555555),
-        ),
-      ),
-    );
-  }
+  // Widget _headerCell(String label, {required int flex}) {
+  //   return Expanded(
+  //     flex: flex,
+  //     child: Text(
+  //       label,
+  //       style: const TextStyle(
+  //         fontSize: 12,
+  //         fontWeight: FontWeight.w600,
+  //         color: Color(0xFF555555),
+  //       ),
+  //     ),
+  //   );
+  // }
 
-  Widget _dataCell(String value, {required int flex}) {
-    return Expanded(
-      flex: flex,
-      child: Text(
-        value,
-        style: const TextStyle(fontSize: 13, color: Color(0xFF333333)),
-      ),
-    );
-  }
+  // Widget _dataCell(String value, {required int flex}) {
+  //   return Expanded(
+  //     flex: flex,
+  //     child: Text(
+  //       value,
+  //       style: const TextStyle(fontSize: 13, color: Color(0xFF333333)),
+  //     ),
+  //   );
+  // }
 }
 
 class _DashedLinePainter extends CustomPainter {

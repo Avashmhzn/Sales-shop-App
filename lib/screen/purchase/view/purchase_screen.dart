@@ -549,7 +549,6 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
 
   final TextEditingController _searchCtrl = TextEditingController();
 
-  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -672,7 +671,6 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
 
     if (confirmed != true || !mounted) return;
 
-    setState(() => _isDeleting = true);
 
     try {
       final res = await DioClient().dio.delete(
@@ -706,7 +704,7 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
         ),
       );
     } finally {
-      if (mounted) setState(() => _isDeleting = false);
+      if (mounted)
     }
   }
 

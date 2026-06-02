@@ -1024,95 +1024,97 @@ class CompanySelectionScreen extends StatelessWidget {
                               final isSelected =
                                   state.selectedCompany?.id == company.id;
 
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: InkWell(
-                                  onTap: () {
-                                    context
-                                        .read<CompanyBloc>()
-                                        .add(SelectCompany(company.id));
-                                    Api.switchToPrivate(company.domain);
-                                    Future.microtask(() {
-                                      if (context.mounted) {
-                                        context.go('/home');
-                                      }
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(16),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? Colors.orange
-                                            : Colors.grey.shade300,
-                                        width: isSelected ? 2 : 1,
+                              return RepaintBoundary(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: InkWell(
+                                    onTap: () {
+                                      context
+                                          .read<CompanyBloc>()
+                                          .add(SelectCompany(company.id));
+                                      Api.switchToPrivate(company.domain);
+                                      Future.microtask(() {
+                                        if (context.mounted) {
+                                          context.go('/home');
+                                        }
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 8,
                                       ),
-                                      borderRadius: BorderRadius.circular(20),
-                                      color: isSelected
-                                          ? Colors.orange.withOpacity(0.05)
-                                          : null,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 50,
-                                          height: 50,
-                                          decoration: BoxDecoration(
-                                            color: Colors.black,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: Center(
-                                            child: Image.asset(
-                                              'assets/images/sales_up_logo.png',
-                                              width: 50,
-                                              height: 50,
-                                              fit: BoxFit.contain,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: isSelected
+                                              ? Colors.orange
+                                              : Colors.grey.shade300,
+                                          width: isSelected ? 2 : 1,
+                                        ),
+                                        borderRadius: BorderRadius.circular(20),
+                                        color: isSelected
+                                            ? Colors.orange.withOpacity(0.05)
+                                            : null,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 50,
+                                            height: 50,
+                                            decoration: BoxDecoration(
+                                              color: Colors.black,
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Center(
+                                              child: Image.asset(
+                                                'assets/images/sales_up_logo.png',
+                                                width: 50,
+                                                height: 50,
+                                                fit: BoxFit.contain,
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                company.displayName,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.grey,
-                                                  fontWeight: FontWeight.w600,
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  company.displayName,
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.grey,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                                 ),
-                                              ),
-                                              const SizedBox(height: 3),
-                                              Text(
-                                                company.domain ??
-                                                    'No domain set',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  color: Colors.grey[600],
+                                                const SizedBox(height: 3),
+                                                Text(
+                                                  company.domain ??
+                                                      'No domain set',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.grey[600],
+                                                  ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        if (isSelected)
-                                          const Icon(
-                                            Icons.check_circle,
-                                            color: Colors.green,
-                                            size: 28,
-                                          )
-                                        else
-                                          const Icon(
-                                            Icons.chevron_right,
-                                            color: Colors.grey,
-                                          ),
-                                      ],
+                                          if (isSelected)
+                                            const Icon(
+                                              Icons.check_circle,
+                                              color: Colors.green,
+                                              size: 28,
+                                            )
+                                          else
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.grey,
+                                            ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),

@@ -1419,7 +1419,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             fit: BoxFit.fill,
                           ),
                         ),
-                        const ChartPanel(),
+                        const RepaintBoundary(
+                          child: ChartPanel(),
+                        ),
                       ],
                     );
                   },

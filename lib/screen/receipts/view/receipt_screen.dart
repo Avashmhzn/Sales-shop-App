@@ -566,11 +566,13 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                             SizedBox(height: sh * 0.012),
                         itemBuilder: (context, index) {
                           final receipt = filtered[index];
-                          return _ReceiptCard(
-                            receipt: receipt,
-                            screenWidth: sw,
-                            screenHeight: sh,
-                            onTap: () => _showDetailsPopup(context, receipt),
+                          return RepaintBoundary(
+                            child: _ReceiptCard(
+                              receipt: receipt,
+                              screenWidth: sw,
+                              screenHeight: sh,
+                              onTap: () => _showDetailsPopup(context, receipt),
+                            ),
                           );
                         },
                       ),
@@ -619,7 +621,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                         decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(4))),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Container(
                         height: 12,
                         width: sw * 0.25,
@@ -638,7 +640,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                       decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(4))),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Container(
                       height: 20,
                       width: 45,

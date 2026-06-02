@@ -103,71 +103,73 @@ class DashboardCard extends StatelessWidget {
     return SizedBox(
       width: cardWidth,
       height: 160,
-      child: Container(
-        margin: const EdgeInsets.all(8.0),
-        padding: const EdgeInsets.all(14.0),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(16.0),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.15),
-              spreadRadius: 3,
-              blurRadius: 2,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Inter',
-                      color: textColor,
+      child: RepaintBoundary(
+        child: Container(
+          margin: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(14.0),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(16.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.15),
+                spreadRadius: 3,
+                blurRadius: 2,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Inter',
+                        color: textColor,
+                      ),
                     ),
                   ),
-                ),
-                // Replaced Icon(...) with Image.asset
-                Image.asset(
-                  iconPath,
-                  width: 22,
-                  height: 22,
-                  fit: BoxFit.contain,
-                  color: textColor.withOpacity(0.7), // optional tint
-                  // colorBlendMode: BlendMode.srcIn,          // use if tint looks wrong
-                ),
-              ],
-            ),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 8,
-                fontFamily: 'Inter',
-                color: textColor.withOpacity(0.6),
+                  // Replaced Icon(...) with Image.asset
+                  Image.asset(
+                    iconPath,
+                    width: 22,
+                    height: 22,
+                    fit: BoxFit.contain,
+                    color: textColor.withOpacity(0.7), // optional tint
+                    // colorBlendMode: BlendMode.srcIn,          // use if tint looks wrong
+                  ),
+                ],
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Inter',
-                color: textColor,
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 8,
+                  fontFamily: 'Inter',
+                  color: textColor.withOpacity(0.6),
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+              const SizedBox(height: 10),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Inter',
+                  color: textColor,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

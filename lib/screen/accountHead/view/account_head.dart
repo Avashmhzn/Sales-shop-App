@@ -99,7 +99,7 @@ class _AccountHeadState extends State<AccountHead> {
     final bloc = context.read<AccountHeadBloc>();
     final scaffoldMessenger = ScaffoldMessenger.of(context);
 
-    final nameController = TextEditingController(text: head.name ?? '');
+    final nameController = TextEditingController(text: head.name);
     final openingBalanceController = TextEditingController(
         text: head.openingBalance?.toStringAsFixed(2) ?? '');
 
@@ -482,8 +482,7 @@ class _AccountHeadState extends State<AccountHead> {
                 const SizedBox(height: 8),
                 const Divider(),
                 const SizedBox(height: 12),
-                _buildGridRow(
-                    'ID', head.id.toString(), 'Name', head.name ?? 'N/A'),
+                _buildGridRow('ID', head.id.toString(), 'Name', head.name),
                 const Divider(height: 1),
                 _buildGridRow('Main Group', head.mainGroup ?? 'N/A', 'Parent',
                     head.parent ?? 'N/A'),
@@ -790,9 +789,7 @@ class _AccountHeadState extends State<AccountHead> {
                                             onEdit: () =>
                                                 _showEditAccountHeadDialog(
                                                     head),
-                                            onDelete: () {
-                                              // TODO: implement delete
-                                            },
+                                            onDelete: () {},
                                           );
                                         },
                                       ),

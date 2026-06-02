@@ -62,7 +62,7 @@ class _EditPurchaseScreenState extends State<EditPurchaseScreen> {
         expiryDate: item.expiryDate != null
             ? DateFormat('yyyy-MM-dd').format(item.expiryDate!)
             : null,
-        isComplementary: item.isComplementary ?? false,
+        isComplementary: item.isComplementary,
       );
     }).toList();
 
@@ -291,7 +291,7 @@ class _EditPurchaseScreenState extends State<EditPurchaseScreen> {
           'selling_price': double.tryParse(item.sellingPrice.text) ?? 0.0,
           'batch_number': item.batchNumber.text.trim(),
           'expiry_date': item.expiryDate ?? '',
-          'is_complementary': item.isComplementary ?? false,
+          'is_complementary': item.isComplementary,
         };
 
         final itemRes = await dio.put(

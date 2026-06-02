@@ -3071,17 +3071,19 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                           final product = pageItems[index];
                                           final isSelected = _selectedIds
                                               .contains(product.id ?? 0);
-                                          return _ProductCard(
-                                            product: product,
-                                            isSelected: isSelected,
-                                            onSelect: (v) => _toggleSelect(
-                                                product.id ?? 0, v),
-                                            onView: () =>
-                                                _showViewDialog(product),
-                                            onEdit: () =>
-                                                _showEditDialog(product),
-                                            onDelete: () =>
-                                                _deleteProduct(product),
+                                          return RepaintBoundary(
+                                            child: _ProductCard(
+                                              product: product,
+                                              isSelected: isSelected,
+                                              onSelect: (v) => _toggleSelect(
+                                                  product.id ?? 0, v),
+                                              onView: () =>
+                                                  _showViewDialog(product),
+                                              onEdit: () =>
+                                                  _showEditDialog(product),
+                                              onDelete: () =>
+                                                  _deleteProduct(product),
+                                            ),
                                           );
                                         },
                                       ),
