@@ -332,7 +332,6 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:saleup_app/model/receipt_response.dart';
 import 'package:saleup_app/screen/receipts/bloc/receipt_bloc.dart';
 import 'package:saleup_app/screen/receipts/bloc/receipt_event.dart';

@@ -1295,7 +1295,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
               const Divider(),
               _viewRow('ID', location.id.toString()),
               const Divider(height: 1, color: Color(0xFFEEEEEE)),
-              _viewRow('Location Code', location.code ?? 'N/A'),
+              _viewRow('Location Code', location.code),
               const Divider(height: 1, color: Color(0xFFEEEEEE)),
               _viewRow('Name', location.name),
             ],
@@ -1386,8 +1386,7 @@ class _LocationsScreenState extends State<LocationsScreen> {
                               child: _buildField(
                                 label: '* Location ID',
                                 child: TextFormField(
-                                  initialValue:
-                                      location.code ?? location.id.toString(),
+                                  initialValue: location.code,
                                   readOnly: true,
                                   style: const TextStyle(
                                       color: Colors.black45,

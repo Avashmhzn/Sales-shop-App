@@ -1,4 +1,4 @@
-// // lib/screen/stock_ledger/bloc/stock_ledger_event.dart
+// // stock_ledger_event.dart
 // abstract class StockLedgerEvent {}
 
 // class FetchFilterOptions extends StockLedgerEvent {}
@@ -8,32 +8,52 @@
 //   final String? endDate;
 //   final int? productId;
 //   final int? categoryId;
+//   final String rateType; // 'cost' or 'selling'
 
 //   FetchStockLedgerReport({
 //     this.startDate,
 //     this.endDate,
 //     this.productId,
 //     this.categoryId,
+//     required this.rateType,
 //   });
 // }
-// lib/screen/stock_ledger/bloc/stock_ledger_event.dart
-// stock_ledger_event.dart
+
+// lib/screen/reports/bloc/stock_ledger_event.dart
+
 abstract class StockLedgerEvent {}
 
-class FetchFilterOptions extends StockLedgerEvent {}
+/// One-shot init: fiscal year + day closing + products + categories + first report
+class InitializeStockLedger extends StockLedgerEvent {}
 
+/// Fetch / refill report with current filters
 class FetchStockLedgerReport extends StockLedgerEvent {
-  final String? startDate;
-  final String? endDate;
+  final String startDate;
+  final String endDate;
   final int? productId;
   final int? categoryId;
-  final String rateType; // 'cost' or 'selling'
+  final String rateType; // 'cost' | 'selling'
 
   FetchStockLedgerReport({
-    this.startDate,
-    this.endDate,
+    required this.startDate,
+    required this.endDate,
     this.productId,
     this.categoryId,
     required this.rateType,
+  });
+}
+
+/// Server-side export via /export/report/
+class ExportStockLedger extends StockLedgerEvent {
+  final String startDate;
+  final String endDate;
+  final int? productId;
+  final int? categoryId;
+
+  ExportStockLedger({
+    required this.startDate,
+    required this.endDate,
+    this.productId,
+    this.categoryId,
   });
 }
