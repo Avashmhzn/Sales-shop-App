@@ -232,10 +232,8 @@
 //     }
 //   }
 // }
-
 // lib/screen/reports/bloc/stock_ledger_bloc.dart
 
-import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:saleup_app/model/product_category_response.dart';
@@ -247,7 +245,6 @@ import 'stock_ledger_state.dart';
 class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
   final ReportService reportService;
 
-  // ─── Persistent filter metadata ───
   List<ProductData> _products = [];
   List<CategoryData> _categories = [];
   DateTime _defaultStart = DateTime.now().subtract(const Duration(days: 30));
@@ -259,15 +256,9 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
     on<ExportStockLedger>(_onExport);
   }
 
-  // ═══════════════════════════════════════════════════
-  //  INITIALIZE — fiscal year + day closing + filters
-  // ═══════════════════════════════════════════════════
   Future<void> _onInitialize(
-    InitializeStockLedger event,
-    Emitter<StockLedgerState> emit,
-  ) async {
+      InitializeStockLedger event, Emitter<StockLedgerState> emit) async {
     emit(StockLedgerLoading());
-
     try {
       final results = await Future.wait([
         reportService.getDefaultDateRange(),
@@ -279,15 +270,11 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
       _products = results[1] as List<ProductData>;
       _categories = results[2] as List<CategoryData>;
 
-      if (dateRange.startDate != null) {
+      if (dateRange.startDate != null)
         _defaultStart =
             DateTime.tryParse(dateRange.startDate!) ?? _defaultStart;
-      }
-      if (dateRange.endDate != null) {
+      if (dateRange.endDate != null)
         _defaultEnd = DateTime.tryParse(dateRange.endDate!) ?? _defaultEnd;
-      }
-
-      log('📅 Default range: ${_fmt(_defaultStart)} → ${_fmt(_defaultEnd)}');
 
       add(FetchStockLedgerReport(
         startDate: _fmt(_defaultStart),
@@ -299,13 +286,8 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
     }
   }
 
-  // ═══════════════════════════════════════════════════
-  //  LOAD REPORT
-  // ═══════════════════════════════════════════════════
   Future<void> _loadReport(
-    FetchStockLedgerReport event,
-    Emitter<StockLedgerState> emit,
-  ) async {
+      FetchStockLedgerReport event, Emitter<StockLedgerState> emit) async {
     emit(StockLedgerLoading());
 
     final params = <String, dynamic>{
@@ -314,8 +296,6 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
       if (event.productId != null) 'product_id': event.productId,
       if (event.categoryId != null) 'category_id': event.categoryId,
     };
-
-    log('📊 Stock Ledger → $params');
 
     try {
       final raw =
@@ -326,85 +306,11 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
         return;
       }
 
-      final dataJson = raw['data'] as Map<String, dynamic>;
-      final Map<String, Map<String, double>> productTotals = {};
-
-      void add(
-          String name, String qtyKey, double qty, String valKey, double val) {
-        name = name.trim();
-        productTotals.putIfAbsent(name, _emptyRow);
-        final t = productTotals[name]!;
-        t[qtyKey] = (t[qtyKey] ?? 0) + qty;
-        t[valKey] = (t[valKey] ?? 0) + val;
-      }
-
-      void process(
-        List<dynamic>? list,
-        String qtyKey,
-        String rateKey,
-        String totalQtyKey,
-        String totalValKey, {
-        bool negative = false,
-      }) {
-        if (list == null || list.isEmpty) return;
-        for (final item in list) {
-          final name = _productName(item);
-          final qty = _dbl(item[qtyKey]);
-          final rate = _dbl(item[rateKey]);
-          final val = qty * rate;
-          add(name, totalQtyKey, negative ? -qty : qty, totalValKey,
-              negative ? -val : val);
-        }
-      }
-
-      process(dataJson['opening_stock']?['summary'], 'quantity', 'cost_price',
-          'opening_qty', 'opening_val');
-      process(dataJson['purchases'], 'quantity', 'cost_price', 'purchase_qty',
-          'purchase_val');
-      process(dataJson['purchase_returns'], 'quantity', 'cost_price',
-          'pur_ret_qty', 'pur_ret_val',
-          negative: true);
-      process(
-          dataJson['sales'],
-          'quantity',
-          event.rateType == 'cost' ? 'cost_price' : 'selling_price',
-          'sales_qty',
-          'sales_val',
-          negative: true);
-      process(
-          dataJson['sale_returns'],
-          'quantity',
-          event.rateType == 'cost' ? 'cost_price' : 'selling_price',
-          'sales_ret_qty',
-          'sales_ret_val');
-      process(dataJson['closing_stock']?['summary'], 'quantity', 'cost_price',
-          'closing_qty', 'closing_val');
-
-      final accounts = productTotals.entries.map((e) {
-        final t = e.value;
-        return StockLedgerAccount(
-          productName: e.key,
-          ledger: [
-            StockLedgerEntry(
-              date: event.endDate,
-              opening: t['opening_qty']!,
-              purchase: t['purchase_qty']!,
-              sales: t['sales_qty']!,
-              closing: t['closing_qty']!,
-              costPrice: t['closing_qty']! > 0
-                  ? t['closing_val']! / t['closing_qty']!
-                  : 0,
-              sellingPrice: 0,
-            ),
-          ],
-        );
-      }).toList();
+      // ★ The model's custom fromJson handles the complex nesting automatically!
+      final report = StockLedgerReport.fromJson(raw);
 
       emit(StockLedgerSuccess(
-        report: StockLedgerReport(
-            success: true,
-            message: 'Success',
-            data: accounts.isNotEmpty ? accounts : null),
+        report: report,
         rawJson: raw,
         products: _products,
         categories: _categories,
@@ -417,13 +323,8 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
     }
   }
 
-  // ═══════════════════════════════════════════════════
-  //  EXPORT via /export/report/
-  // ═══════════════════════════════════════════════════
   Future<void> _onExport(
-    ExportStockLedger event,
-    Emitter<StockLedgerState> emit,
-  ) async {
+      ExportStockLedger event, Emitter<StockLedgerState> emit) async {
     emit(StockLedgerExporting());
     try {
       final path = await reportService.exportReport(
@@ -437,37 +338,6 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
     } catch (e) {
       emit(StockLedgerFailure('Export failed: $e'));
     }
-  }
-
-  // ─── Helpers ──────────────────────────────────────
-  Map<String, double> _emptyRow() => {
-        'opening_qty': 0,
-        'opening_val': 0,
-        'purchase_qty': 0,
-        'purchase_val': 0,
-        'pur_ret_qty': 0,
-        'pur_ret_val': 0,
-        'sales_qty': 0,
-        'sales_val': 0,
-        'sales_ret_qty': 0,
-        'sales_ret_val': 0,
-        'closing_qty': 0,
-        'closing_val': 0,
-      };
-
-  double _dbl(dynamic v) {
-    if (v == null) return 0;
-    if (v is num) return v.toDouble();
-    if (v is String) return double.tryParse(v.trim()) ?? 0;
-    return 0;
-  }
-
-  String _productName(dynamic item) {
-    if (item['product_name'] != null)
-      return (item['product_name'] as String).trim();
-    if (item['product'] != null && item['product'] is Map)
-      return (item['product']['name'] ?? 'Unknown').toString().trim();
-    return 'Unknown Product';
   }
 
   String _fmt(DateTime d) =>

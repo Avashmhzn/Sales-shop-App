@@ -22,13 +22,13 @@ Map<String, dynamic> _$ReceiptResponseToJson(ReceiptResponse instance) =>
 
 ReceiptData _$ReceiptDataFromJson(Map<String, dynamic> json) => ReceiptData(
       id: (json['id'] as num).toInt(),
-      refNumber: json['ref_number'] as String?,
+      refNumber: ReceiptData._parseString(json['ref_number']),
       customer: json['customer'] as String?,
       amount: ReceiptData._parseDouble(json['amount']),
       depositedIn: json['deposited_in'] as String?,
       chequeNumber: json['cheque_number'] as String?,
       chequeDate: json['cheque_date'] as String?,
-      signature: json['signature'] as String?,
+      signature: ReceiptData._parseString(json['signature']),
       narration: json['narration'] as String?,
       createdOn: json['created_on'] as String?,
       updatedOn: json['updated_on'] as String?,

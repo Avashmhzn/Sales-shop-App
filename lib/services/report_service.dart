@@ -194,12 +194,10 @@
 // lib/screen/reports/services/report_service.dart
 
 import 'dart:io';
-import 'dart:developer';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
-import 'package:saleup_app/model/fiscal_year_response.dart';
 import 'package:saleup_app/model/product_category_response.dart';
 import 'package:saleup_app/screen/dayClosing/model/day_closing_model.dart';
 
@@ -240,8 +238,9 @@ class ReportService {
           response.data is Map<String, dynamic>
               ? response.data
               : Map<String, dynamic>.from(response.data));
-      if (dayClosingResponse.success && dayClosingResponse.data != null)
+      if (dayClosingResponse.success && dayClosingResponse.data != null) {
         return dayClosingResponse.data!.date;
+      }
       return null;
     } catch (e) {
       return null;
