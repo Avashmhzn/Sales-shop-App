@@ -270,11 +270,13 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
       _products = results[1] as List<ProductData>;
       _categories = results[2] as List<CategoryData>;
 
-      if (dateRange.startDate != null)
+      if (dateRange.startDate != null) {
         _defaultStart =
             DateTime.tryParse(dateRange.startDate!) ?? _defaultStart;
-      if (dateRange.endDate != null)
+      }
+      if (dateRange.endDate != null) {
         _defaultEnd = DateTime.tryParse(dateRange.endDate!) ?? _defaultEnd;
+      }
 
       add(FetchStockLedgerReport(
         startDate: _fmt(_defaultStart),

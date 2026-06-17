@@ -40,7 +40,22 @@
 //   List<ProductData> _products = [];
 //   List<CategoryData> _categories = [];
 
+//   // ★ FIX: Cache the last successful state so the list doesn't disappear during export
+//   StockLedgerSuccess? _lastSuccessState;
+
 //   String _fmt(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
+
+//   // ★ UX FIX: Number formatters with commas for readability
+//   String _fmtQty(double value) {
+//     if (value == 0) return '-';
+//     return value.toStringAsFixed(0).replaceAllMapped(
+//         RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},');
+//   }
+
+//   String _fmtCurrency(double value) {
+//     if (value == 0) return '-';
+//     return 'Rs. ${value.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}';
+//   }
 
 //   void _filter() {
 //     if (startDate == null || endDate == null) return;
@@ -123,12 +138,42 @@
 //           if (state is StockLedgerSuccess) {
 //             _products = state.products;
 //             _categories = state.categories;
+//             _lastSuccessState = state; // ★ Cache data
 //           }
 
-//           return Column(
+//           // ★ FIX: Use Stack to overlay loading on top of data, preventing blank screen
+//           return Stack(
 //             children: [
-//               _buildActiveFiltersBar(),
-//               Expanded(child: _buildBody(state)),
+//               Column(
+//                 children: [
+//                   _buildActiveFiltersBar(),
+//                   Expanded(child: _buildBody(state)),
+//                 ],
+//               ),
+
+//               // ★ Show loading overlay ONLY when exporting
+//               if (state is StockLedgerExporting)
+//                 Container(
+//                   color: Colors.black.withOpacity(0.3),
+//                   child: Center(
+//                     child: Card(
+//                       child: Padding(
+//                         padding: const EdgeInsets.all(20.0),
+//                         child: Column(
+//                           mainAxisSize: MainAxisSize.min,
+//                           children: [
+//                             const CircularProgressIndicator(),
+//                             const SizedBox(height: 12),
+//                             Text('Generating Report...',
+//                                 style: TextStyle(
+//                                     color: Colors.grey[800],
+//                                     fontWeight: FontWeight.w500)),
+//                           ],
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                 ),
 //             ],
 //           );
 //         },
@@ -152,7 +197,7 @@
 //           Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
 //           const SizedBox(width: 8),
 //           Text(
-//             '${startDate != null ? DateFormat('dd MMM').format(startDate!) : '...'} - ${endDate != null ? DateFormat('dd MMM').format(endDate!) : '...'}',
+//             '${startDate != null ? DateFormat('dd MMM yyyy').format(startDate!) : '...'} - ${endDate != null ? DateFormat('dd MMM yyyy').format(endDate!) : '...'}',
 //             style: TextStyle(
 //                 fontSize: 12,
 //                 color: Colors.grey[800],
@@ -347,7 +392,7 @@
 //       required List<T> items,
 //       required ValueChanged<T?> onChanged}) {
 //     return DropdownButtonFormField<T>(
-//       value: value,
+//       initialValue: value,
 //       hint: Text(hint, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
 //       decoration: InputDecoration(
 //         contentPadding:
@@ -394,18 +439,24 @@
 //   }
 
 //   // ═══════════════════════════════════════════════════════
-//   //  BODY - Beautiful, Mobile-First List Layout
+//   //  BODY - Enhanced UI/UX (Accounting Standards)
 //   // ═══════════════════════════════════════════════════════
 //   Widget _buildBody(StockLedgerState state) {
-//     if (state is StockLedgerLoading) {
+//     // ★ FIX: If we are exporting, use cached state so screen isn't blank
+//     final displayState =
+//         (state is StockLedgerExporting || state is StockLedgerExportSuccess)
+//             ? _lastSuccessState
+//             : state;
+
+//     if (state is StockLedgerLoading && _lastSuccessState == null) {
 //       return const Center(child: CircularProgressIndicator());
 //     }
-//     if (state is StockLedgerFailure) {
+//     if (displayState is StockLedgerFailure) {
 //       return Center(
 //           child: Column(mainAxisSize: MainAxisSize.min, children: [
 //         const Icon(Icons.error_outline, size: 40, color: Colors.red),
 //         const SizedBox(height: 12),
-//         Text(state.message, style: const TextStyle(color: Colors.red)),
+//         Text(displayState.message, style: const TextStyle(color: Colors.red)),
 //         const SizedBox(height: 12),
 //         ElevatedButton.icon(
 //             onPressed: _filter,
@@ -413,8 +464,8 @@
 //             label: const Text('Retry')),
 //       ]));
 //     }
-//     if (state is StockLedgerSuccess) {
-//       final accounts = state.report.data ?? [];
+//     if (displayState is StockLedgerSuccess) {
+//       final accounts = displayState.report.data ?? [];
 //       if (accounts.isEmpty) {
 //         return Center(
 //             child: Column(mainAxisSize: MainAxisSize.min, children: [
@@ -435,14 +486,14 @@
 
 //           return Padding(
 //             padding:
-//                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+//                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
 //             child: Column(
 //               crossAxisAlignment: CrossAxisAlignment.start,
 //               children: [
 //                 // Row 1: Product Name & Closing Qty
 //                 Row(
 //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   crossAxisAlignment: CrossAxisAlignment.center,
 //                   children: [
 //                     Expanded(
 //                       child: Text(
@@ -453,71 +504,95 @@
 //                             color: Colors.black87),
 //                       ),
 //                     ),
-//                     const SizedBox(width: 16),
-//                     Column(
-//                       crossAxisAlignment: CrossAxisAlignment.end,
-//                       children: [
-//                         Text(
-//                           (entry?.closing ?? 0).toStringAsFixed(0),
-//                           style: TextStyle(
-//                             fontWeight: FontWeight.w800,
-//                             fontSize: 15,
-//                             color: isNegativeClosing
-//                                 ? Colors.red
-//                                 : Colors.blue[700],
-//                           ),
-//                         ),
-//                         Text('Closing',
-//                             style: TextStyle(
-//                                 fontSize: 10, color: Colors.grey[500])),
-//                       ],
-//                     ),
+//                     // const SizedBox(width: 16),
+//                     // Container(
+//                     //   padding: const EdgeInsets.symmetric(
+//                     //       horizontal: 10, vertical: 4),
+//                     //   decoration: BoxDecoration(
+//                     //     color: isNegativeClosing
+//                     //         ? Colors.red.withOpacity(0.1)
+//                     //         : Colors.blue.withOpacity(0.1),
+//                     //     borderRadius: BorderRadius.circular(6),
+//                     //   ),
+//                     //   child: Column(
+//                     //     crossAxisAlignment: CrossAxisAlignment.end,
+//                     //     children: [
+//                     //       Text(
+//                     //         _fmtQty(
+//                     //             entry?.closing ?? 0), // ★ Formatted with commas
+//                     //         style: TextStyle(
+//                     //           fontWeight: FontWeight.w800,
+//                     //           fontSize: 15,
+//                     //           color: isNegativeClosing
+//                     //               ? Colors.red
+//                     //               : Colors.blue[700],
+//                     //         ),
+//                     //       ),
+//                     //       Text('Closing',
+//                     //           style: TextStyle(
+//                     //               fontSize: 9,
+//                     //               color: isNegativeClosing
+//                     //                   ? Colors.red
+//                     //                   : Colors.blue[700],
+//                     //               fontWeight: FontWeight.w600)),
+//                     //     ],
+//                     //   ),
+//                     // ),
 //                   ],
 //                 ),
-//                 const SizedBox(height: 12),
+//                 const SizedBox(height: 16),
 
-//                 // Row 2: Summary Grid
+//                 // Row 2: Summary Grid (Right Aligned for Accounting)
 //                 Row(
 //                   children: [
-//                     _summaryBlock(
-//                         'OPENING',
-//                         (entry?.opening ?? 0).toStringAsFixed(0),
-//                         (entry?.openingValue ?? 0).toStringAsFixed(0)),
-//                     _summaryBlock(
-//                         'PURCHASE',
-//                         (entry?.purchase ?? 0).toStringAsFixed(0),
-//                         (entry?.purchaseValue ?? 0).toStringAsFixed(0),
+//                     _summaryBlock('OPENING', _fmtQty(entry?.opening ?? 0),
+//                         _fmtCurrency(entry?.openingValue ?? 0)),
+//                     _summaryBlock('PURCHASE', _fmtQty(entry?.purchase ?? 0),
+//                         _fmtCurrency(entry?.purchaseValue ?? 0),
 //                         color: Colors.green),
-//                     _summaryBlock(
-//                         'SALES',
-//                         (entry?.sales ?? 0).toStringAsFixed(0),
-//                         (entry?.salesValue ?? 0).toStringAsFixed(0),
+//                     _summaryBlock('SALES', _fmtQty(entry?.sales ?? 0),
+//                         _fmtCurrency(entry?.salesValue ?? 0),
 //                         color: Colors.orange),
 //                     _summaryBlock(
-//                         'RETURNS',
-//                         (entry?.salesReturnQty ?? 0).toStringAsFixed(0),
-//                         (entry?.salesReturnValue ?? 0).toStringAsFixed(0),
-//                         color: Colors.red[300]),
-//                   ],
-//                 ),
-//                 const SizedBox(height: 8),
-
-//                 // Row 3: Avg Rate
-//                 Row(
-//                   mainAxisAlignment: MainAxisAlignment.end,
-//                   children: [
-//                     Text('Avg Rate: ',
-//                         style:
-//                             TextStyle(fontSize: 11, color: Colors.grey[500])),
-//                     Text(
-//                       'Rs.${rateType == 'cost' ? (entry?.costPrice ?? 0).toStringAsFixed(2) : (entry?.sellingPrice ?? 0).toStringAsFixed(2)}',
-//                       style: TextStyle(
-//                           fontSize: 11,
-//                           color: Colors.grey[700],
-//                           fontWeight: FontWeight.w600),
+//                       'RETURNS',
+//                       _fmtQty(entry?.salesReturnQty ?? 0),
+//                       _fmtCurrency(entry?.salesReturnValue ?? 0),
+//                       color: Colors.red[300],
+//                     ),
+//                     _summaryBlock(
+//                       'CLOSING',
+//                       _fmtQty(entry?.closing ?? 0),
+//                       _fmtCurrency(entry?.closingValue ?? 0),
+//                       color: Colors.red[300],
 //                     ),
 //                   ],
-//                 )
+//                 ),
+//                 // const SizedBox(height: 10),
+
+//                 // // Row 3: Avg Rate
+//                 // Container(
+//                 //   padding: const EdgeInsets.only(top: 8),
+//                 //   decoration: BoxDecoration(
+//                 //       border:
+//                 //           Border(top: BorderSide(color: Colors.grey[100]!))),
+//                 //   child: Row(
+//                 //     mainAxisAlignment: MainAxisAlignment.end,
+//                 //     children: [
+//                 //       Text('Avg Rate: ',
+//                 //           style:
+//                 //               TextStyle(fontSize: 11, color: Colors.grey[500])),
+//                 //       Text(
+//                 //         _fmtCurrency(rateType == 'cost'
+//                 //             ? (entry?.costPrice ?? 0)
+//                 //             : (entry?.sellingPrice ?? 0)),
+//                 //         style: TextStyle(
+//                 //             fontSize: 11,
+//                 //             color: Colors.grey[700],
+//                 //             fontWeight: FontWeight.w600),
+//                 //       ),
+//                 //     ],
+//                 //   ),
+//                 // )
 //               ],
 //             ),
 //           );
@@ -527,11 +602,13 @@
 //     return const SizedBox();
 //   }
 
-//   // Clean data block for Open/Pur/Sale grid
+//   // ★ UX ENHANCEMENT: Right-aligned data blocks, grayed out zeros for clean reading
 //   Widget _summaryBlock(String title, String qty, String value, {Color? color}) {
+//     final isZero = qty == '-';
+
 //     return Expanded(
 //       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
+//         crossAxisAlignment: CrossAxisAlignment.end, // ★ Right aligned
 //         children: [
 //           Text(title,
 //               style: TextStyle(
@@ -543,10 +620,16 @@
 //           Text(qty,
 //               style: TextStyle(
 //                   fontSize: 13,
-//                   color: color ?? Colors.black87,
+//                   color: isZero
+//                       ? Colors.grey[300]
+//                       : (color ?? Colors.black87), // ★ Gray out 0s
 //                   fontWeight: FontWeight.w600)),
-//           Text('Rs.$value',
-//               style: TextStyle(fontSize: 10, color: Colors.grey[600])),
+//           Text(value,
+//               style: TextStyle(
+//                   fontSize: 10,
+//                   color: isZero
+//                       ? Colors.grey[300]
+//                       : Colors.grey[600])), // ★ Gray out 0s
 //         ],
 //       ),
 //     );
@@ -681,12 +764,27 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
             );
           }
           if (state is StockLedgerSuccess && startDate == null) {
+            // ★ FIX: Backend might return swapped dates. Find the earliest date (Open Day).
+            DateTime openDay = state.defaultStartDate;
+            if (state.defaultStartDate.isAfter(state.defaultEndDate)) {
+              openDay = state.defaultEndDate;
+            }
+
             setState(() {
-              startDate = state.defaultStartDate;
-              endDate = state.defaultEndDate;
+              startDate = openDay; // Set Start Date to Open Day
+              endDate = openDay; // Set End Date strictly to Today
               _products = state.products;
               _categories = state.categories;
             });
+
+            // ★ FIX: Automatically fetch the report for Open Day -> Today
+            context.read<StockLedgerBloc>().add(FetchStockLedgerReport(
+                  startDate: _fmt(startDate!),
+                  endDate: _fmt(endDate!),
+                  productId: selectedProduct?.id,
+                  categoryId: selectedCategory?.id,
+                  rateType: rateType,
+                ));
           }
         },
         builder: (context, state) {
@@ -740,6 +838,20 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
   //  ACTIVE FILTERS BAR (Shows what filters are applied)
   // ═══════════════════════════════════════════════════════
   Widget _buildActiveFiltersBar() {
+    final chips = <Widget>[
+      Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
+      const SizedBox(width: 8),
+      Text(
+        '${startDate != null ? DateFormat('dd MMM yyyy').format(startDate!) : '...'} - ${endDate != null ? DateFormat('dd MMM yyyy').format(endDate!) : '...'}',
+        style: TextStyle(
+            fontSize: 12, color: Colors.grey[800], fontWeight: FontWeight.w500),
+      ),
+      const SizedBox(width: 12),
+      if (selectedProduct != null) _filterChip('${selectedProduct!.name} ×'),
+      if (selectedCategory != null) _filterChip('${selectedCategory!.name} ×'),
+      if (rateType == 'selling') _filterChip('Selling Price ×'),
+    ];
+
     return Container(
       height: 40,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -747,24 +859,12 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
         color: Colors.grey[50],
         border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
       ),
-      child: Row(
-        children: [
-          Icon(Icons.calendar_today, size: 14, color: Colors.grey[600]),
-          const SizedBox(width: 8),
-          Text(
-            '${startDate != null ? DateFormat('dd MMM yyyy').format(startDate!) : '...'} - ${endDate != null ? DateFormat('dd MMM yyyy').format(endDate!) : '...'}',
-            style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[800],
-                fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(width: 12),
-          if (selectedProduct != null)
-            _filterChip('${selectedProduct!.name} ×'),
-          if (selectedCategory != null)
-            _filterChip('${selectedCategory!.name} ×'),
-          if (rateType == 'selling') _filterChip('Selling Price ×'),
-        ],
+      // ★ FIX: Use SingleChildScrollView to prevent horizontal overflow
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: chips,
+        ),
       ),
     );
   }
@@ -797,121 +897,141 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
       builder: (context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setModalState) {
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                  16, 16, 16, MediaQuery.of(context).viewInsets.bottom),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                      child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(4)))),
-                  const SizedBox(height: 20),
-                  const Text('Filter Report',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 20),
-                  // Dropdowns
-                  Row(
-                    children: [
-                      Expanded(
-                          child: _buildDropdown<ProductData>(
-                        hint: 'All Products',
-                        value: selectedProduct,
-                        items: _products,
-                        onChanged: (v) {
-                          setState(() {
-                            selectedProduct = v;
-                            if (v != null) selectedCategory = null;
-                          });
-                          setModalState(() {});
-                        },
-                      )),
-                      const SizedBox(width: 12),
-                      Expanded(
-                          child: _buildDropdown<CategoryData>(
-                        hint: 'All Categories',
-                        value: selectedCategory,
-                        items: _categories,
-                        onChanged: (v) {
-                          setState(() {
-                            selectedCategory = v;
-                            if (v != null) selectedProduct = null;
-                          });
-                          setModalState(() {});
-                        },
-                      )),
-                    ],
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: 16,
+                  // ★ FIX: Properly handle keyboard inset without overflowing
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                ),
+                // ★ FIX: Constrain max height to 85% of screen
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.85,
                   ),
-                  const SizedBox(height: 16),
-                  // Dates
-                  Row(
-                    children: [
-                      Expanded(child: _buildDateField(isStart: true)),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildDateField(isStart: false)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Rate Type Toggle
-                  const Text('Rate Type',
-                      style: TextStyle(fontSize: 12, color: Colors.grey)),
-                  const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8)),
-                    child: Row(
+                  // ★ FIX: Make content scrollable to prevent vertical overflow
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                            child: _rateButton('Cost Price', rateType == 'cost',
-                                () {
-                          setState(() => rateType = 'cost');
-                          setModalState(() {});
-                        })),
-                        Expanded(
-                            child: _rateButton(
-                                'Selling Price', rateType == 'selling', () {
-                          setState(() => rateType = 'selling');
-                          setModalState(() {});
-                        })),
+                        Center(
+                            child: Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                    color: Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(4)))),
+                        const SizedBox(height: 20),
+                        const Text('Filter Report',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 20),
+                        // Dropdowns
+                        Row(
+                          children: [
+                            Expanded(
+                                child: _buildDropdown<ProductData>(
+                              hint: 'All Products',
+                              value: selectedProduct,
+                              items: _products,
+                              onChanged: (v) {
+                                setState(() {
+                                  selectedProduct = v;
+                                  if (v != null) selectedCategory = null;
+                                });
+                                setModalState(() {});
+                              },
+                            )),
+                            const SizedBox(width: 12),
+                            Expanded(
+                                child: _buildDropdown<CategoryData>(
+                              hint: 'All Categories',
+                              value: selectedCategory,
+                              items: _categories,
+                              onChanged: (v) {
+                                setState(() {
+                                  selectedCategory = v;
+                                  if (v != null) selectedProduct = null;
+                                });
+                                setModalState(() {});
+                              },
+                            )),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Dates
+                        Row(
+                          children: [
+                            Expanded(child: _buildDateField(isStart: true)),
+                            const SizedBox(width: 12),
+                            Expanded(child: _buildDateField(isStart: false)),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        // Rate Type Toggle
+                        const Text('Rate Type',
+                            style: TextStyle(fontSize: 12, color: Colors.grey)),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(8)),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                  child: _rateButton(
+                                      'Cost Price', rateType == 'cost', () {
+                                setState(() => rateType = 'cost');
+                                setModalState(() {});
+                              })),
+                              Expanded(
+                                  child: _rateButton(
+                                      'Selling Price', rateType == 'selling',
+                                      () {
+                                setState(() => rateType = 'selling');
+                                setModalState(() {});
+                              })),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        // Buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _reset,
+                                icon: const Icon(Icons.refresh, size: 16),
+                                label: const Text('Reset'),
+                                style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.all(14),
+                                    side: BorderSide(
+                                        color: Colors.grey.shade300)),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed:
+                                    (startDate != null && endDate != null)
+                                        ? _filter
+                                        : null,
+                                icon: const Icon(Icons.check, size: 16),
+                                label: const Text('Apply Filter'),
+                                style: ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.all(14),
+                                    elevation: 0),
+                              ),
+                            ),
+                          ],
+                        )
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  // Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _reset,
-                          icon: const Icon(Icons.refresh, size: 16),
-                          label: const Text('Reset'),
-                          style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.all(14),
-                              side: BorderSide(color: Colors.grey.shade300)),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: (startDate != null && endDate != null)
-                              ? _filter
-                              : null,
-                          icon: const Icon(Icons.check, size: 16),
-                          label: const Text('Apply Filter'),
-                          style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.all(14), elevation: 0),
-                        ),
-                      ),
-                    ],
-                  )
-                ],
+                ),
               ),
             );
           },
@@ -941,14 +1061,18 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
     );
   }
 
-  Widget _buildDropdown<T>(
-      {required String hint,
-      required T? value,
-      required List<T> items,
-      required ValueChanged<T?> onChanged}) {
+  Widget _buildDropdown<T>({
+    required String hint,
+    required T? value,
+    required List<T> items,
+    required ValueChanged<T?> onChanged,
+  }) {
     return DropdownButtonFormField<T>(
-      value: value,
-      hint: Text(hint, style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+      initialValue: value,
+      hint: Text(hint,
+          style: TextStyle(color: Colors.grey[600], fontSize: 13),
+          overflow: TextOverflow.ellipsis),
+      isExpanded: true, // ★ FIX: Allow dropdown to use full width
       decoration: InputDecoration(
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -957,10 +1081,15 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
       items: [
         DropdownMenuItem<T>(value: null, child: Text(hint)),
         ...items.map((item) => DropdownMenuItem<T>(
-            value: item,
-            child: Text((item as dynamic).name as String,
+              value: item,
+              // ★ FIX: Prevent long names from overflowing
+              child: Text(
+                (item as dynamic).name as String,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 13)))),
+                maxLines: 1,
+                style: const TextStyle(fontSize: 13),
+              ),
+            )),
       ],
       onChanged: onChanged,
     );
@@ -1059,40 +1188,6 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
                             color: Colors.black87),
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isNegativeClosing
-                            ? Colors.red.withOpacity(0.1)
-                            : Colors.blue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            _fmtQty(
-                                entry?.closing ?? 0), // ★ Formatted with commas
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: isNegativeClosing
-                                  ? Colors.red
-                                  : Colors.blue[700],
-                            ),
-                          ),
-                          Text('Closing',
-                              style: TextStyle(
-                                  fontSize: 9,
-                                  color: isNegativeClosing
-                                      ? Colors.red
-                                      : Colors.blue[700],
-                                  fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -1109,38 +1204,19 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
                         _fmtCurrency(entry?.salesValue ?? 0),
                         color: Colors.orange),
                     _summaryBlock(
-                        'RETURNS',
-                        _fmtQty(entry?.salesReturnQty ?? 0),
-                        _fmtCurrency(entry?.salesReturnValue ?? 0),
-                        color: Colors.red[300]),
+                      'RETURNS',
+                      _fmtQty(entry?.salesReturnQty ?? 0),
+                      _fmtCurrency(entry?.salesReturnValue ?? 0),
+                      color: Colors.red[300],
+                    ),
+                    _summaryBlock(
+                      'CLOSING',
+                      _fmtQty(entry?.closing ?? 0),
+                      _fmtCurrency(entry?.closingValue ?? 0),
+                      color: isNegativeClosing ? Colors.red : Colors.blue[700],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 10),
-
-                // Row 3: Avg Rate
-                Container(
-                  padding: const EdgeInsets.only(top: 8),
-                  decoration: BoxDecoration(
-                      border:
-                          Border(top: BorderSide(color: Colors.grey[100]!))),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text('Avg Rate: ',
-                          style:
-                              TextStyle(fontSize: 11, color: Colors.grey[500])),
-                      Text(
-                        _fmtCurrency(rateType == 'cost'
-                            ? (entry?.costPrice ?? 0)
-                            : (entry?.sellingPrice ?? 0)),
-                        style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[700],
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                )
               ],
             ),
           );
@@ -1155,30 +1231,42 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
     final isZero = qty == '-';
 
     return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end, // ★ Right aligned
-        children: [
-          Text(title,
-              style: TextStyle(
-                  fontSize: 9,
-                  color: Colors.grey[500],
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.5)),
-          const SizedBox(height: 4),
-          Text(qty,
-              style: TextStyle(
-                  fontSize: 13,
-                  color: isZero
-                      ? Colors.grey[300]
-                      : (color ?? Colors.black87), // ★ Gray out 0s
-                  fontWeight: FontWeight.w600)),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 10,
-                  color: isZero
-                      ? Colors.grey[300]
-                      : Colors.grey[600])), // ★ Gray out 0s
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end, // ★ Right aligned
+          children: [
+            Text(title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 9,
+                    color: Colors.grey[500],
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5)),
+            const SizedBox(height: 4),
+            // ★ FIX: FittedBox prevents qty overflow
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(qty,
+                  style: TextStyle(
+                      fontSize: 13,
+                      color:
+                          isZero ? Colors.grey[300] : (color ?? Colors.black87),
+                      fontWeight: FontWeight.w600)),
+            ),
+            // ★ FIX: FittedBox prevents value overflow
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(value,
+                  style: TextStyle(
+                      fontSize: 10,
+                      color: isZero ? Colors.grey[300] : Colors.grey[600])),
+            ),
+          ],
+        ),
       ),
     );
   }
