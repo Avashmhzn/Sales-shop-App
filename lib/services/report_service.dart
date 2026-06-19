@@ -198,6 +198,7 @@ import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
+import 'package:saleup_app/model/fiscal_year_response.dart';
 import 'package:saleup_app/model/product_category_response.dart';
 import 'package:saleup_app/screen/dayClosing/model/day_closing_model.dart';
 
@@ -359,5 +360,46 @@ class ReportService {
       if (externalDir != null) return externalDir;
     }
     return await getApplicationDocumentsDirectory();
+  }
+
+  Future<FiscalYearData?> getActiveFiscalYear() async {
+    try {
+      final resp =
+          await DioClient().dio.get('/fiscal-year/get_current_fiscal_year/');
+      final raw = resp.data;
+      if (raw is String) return null;
+
+      // This endpoint returns the single active fiscal year object directly
+      if (raw is Map<String, dynamic>) {
+        if (raw['success'] == true && raw['data'] != null) {
+          return FiscalYearData.fromJson(raw['data'] as Map<String, dynamic>);
+        } else {
+          // Fallback if it returns the object directly without success wrapper
+          return FiscalYearData.fromJson(raw);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Fetches the dynamic Day Open Date for the current user
+  Future<String?> getDayOpenDate() async {
+    try {
+      // ★ FIX: Use the exact endpoint you provided
+      final resp = await DioClient().dio.get('/day-closing/get_day_data/');
+      final raw = resp.data;
+      if (raw is Map<String, dynamic>) {
+        final data = raw['data'];
+        if (data is Map) {
+          // Extract the open date
+          return data['open_date'] as String? ?? data['date'] as String?;
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 }

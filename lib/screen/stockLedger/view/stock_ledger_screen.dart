@@ -635,9 +635,6 @@
 //     );
 //   }
 // }
-
-// lib/screen/reports/stock_ledger_screen.dart
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -764,20 +761,14 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
             );
           }
           if (state is StockLedgerSuccess && startDate == null) {
-            // ★ FIX: Backend might return swapped dates. Find the earliest date (Open Day).
-            DateTime openDay = state.defaultStartDate;
-            if (state.defaultStartDate.isAfter(state.defaultEndDate)) {
-              openDay = state.defaultEndDate;
-            }
-
+            // ★ Start Date = Fiscal Year start, End Date = Day close date
             setState(() {
-              startDate = openDay; // Set Start Date to Open Day
-              endDate = openDay; // Set End Date strictly to Today
+              startDate = state.defaultStartDate;
+              endDate = state.defaultEndDate;
               _products = state.products;
               _categories = state.categories;
             });
 
-            // ★ FIX: Automatically fetch the report for Open Day -> Today
             context.read<StockLedgerBloc>().add(FetchStockLedgerReport(
                   startDate: _fmt(startDate!),
                   endDate: _fmt(endDate!),
@@ -1097,13 +1088,23 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
 
   Widget _buildDateField({required bool isStart}) {
     final date = isStart ? startDate : endDate;
+
+    // ★ Restrict manual date selection strictly within the Fiscal Year bounds
+    DateTime firstDate = DateTime(2020);
+    DateTime lastDate = DateTime(2030);
+
+    if (_lastSuccessState != null) {
+      firstDate = _lastSuccessState!.defaultStartDate;
+      lastDate = _lastSuccessState!.defaultEndDate;
+    }
+
     return InkWell(
       onTap: () async {
         final d = await showDatePicker(
             context: context,
-            initialDate: date ?? DateTime.now(),
-            firstDate: DateTime(2020),
-            lastDate: DateTime(2030));
+            initialDate: date ?? (isStart ? firstDate : lastDate),
+            firstDate: firstDate, // ★ Cannot pick before FY start
+            lastDate: lastDate); // ★ Cannot pick after FY end
         if (d != null) setState(() => isStart ? startDate = d : endDate = d);
       },
       child: InputDecorator(
@@ -1256,7 +1257,7 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
                           isZero ? Colors.grey[300] : (color ?? Colors.black87),
                       fontWeight: FontWeight.w600)),
             ),
-            // ★ FIX: FittedBox prevents value overflow
+            const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerRight,

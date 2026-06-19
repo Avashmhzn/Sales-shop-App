@@ -232,8 +232,6 @@
 //     }
 //   }
 // }
-// lib/screen/reports/bloc/stock_ledger_bloc.dart
-
 import 'dart:developer';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:saleup_app/model/product_category_response.dart';
@@ -247,6 +245,7 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
 
   List<ProductData> _products = [];
   List<CategoryData> _categories = [];
+
   DateTime _defaultStart = DateTime.now().subtract(const Duration(days: 30));
   DateTime _defaultEnd = DateTime.now();
 
@@ -261,21 +260,35 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
     emit(StockLedgerLoading());
     try {
       final results = await Future.wait([
-        reportService.getDefaultDateRange(),
         reportService.getProducts(),
         reportService.getCategories(),
       ]);
 
-      final dateRange = results[0] as DefaultDateRange;
-      _products = results[1] as List<ProductData>;
-      _categories = results[2] as List<CategoryData>;
+      _products = results[0] as List<ProductData>;
+      _categories = results[1] as List<CategoryData>;
 
-      if (dateRange.startDate != null) {
+      // ★ 1. Get the active Fiscal Year
+      final fiscalYear = await reportService.getActiveFiscalYear();
+
+      if (fiscalYear != null && fiscalYear.startDate.isNotEmpty) {
+        // ★ Start Date = Fiscal Year Start Date
         _defaultStart =
-            DateTime.tryParse(dateRange.startDate!) ?? _defaultStart;
+            DateTime.tryParse(fiscalYear.startDate) ?? _defaultStart;
       }
-      if (dateRange.endDate != null) {
-        _defaultEnd = DateTime.tryParse(dateRange.endDate!) ?? _defaultEnd;
+
+      // ★ 2. End Date = Dynamic Day Open Date fetched from backend
+      final dayOpenDate = await reportService.getDayOpenDate();
+      if (dayOpenDate != null && dayOpenDate.isNotEmpty) {
+        _defaultEnd = DateTime.tryParse(dayOpenDate) ?? DateTime.now();
+      } else {
+        _defaultEnd = DateTime.now(); // Fallback to today if no day is open
+      }
+
+      // Guard: If start > end, swap them
+      if (_defaultStart.isAfter(_defaultEnd)) {
+        final tmp = _defaultStart;
+        _defaultStart = _defaultEnd;
+        _defaultEnd = tmp;
       }
 
       add(FetchStockLedgerReport(
@@ -308,8 +321,8 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
         return;
       }
 
-      // ★ The model's custom fromJson handles the complex nesting automatically!
-      final report = StockLedgerReport.fromJson(raw);
+      // ★ PARSE THE NEW JSON RESPONSE FORMAT
+      final report = _parseStockLedgerResponse(raw, event.rateType);
 
       emit(StockLedgerSuccess(
         report: report,
@@ -323,6 +336,133 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
       log('❌ Report error', error: e, stackTrace: s);
       emit(StockLedgerFailure('Failed: $e'));
     }
+  }
+
+  // ★ NEW PARSER: Correctly extracts data from your backend's JSON structure
+  StockLedgerReport _parseStockLedgerResponse(
+      Map<String, dynamic> raw, String rateType) {
+    final dataJson = raw['data'] as Map<String, dynamic>? ?? {};
+
+    final Map<int, Map<String, dynamic>> productData = {};
+
+    void processList(List<dynamic>? list, String targetKey,
+        {bool negative = false}) {
+      if (list == null) return;
+      for (var item in list) {
+        final id = item['product_id'] as int? ?? 0;
+        final name = item['product_name'] as String? ?? 'Unknown';
+        final qty = (item['quantity'] as num? ?? 0.0).toDouble();
+
+        // Use total_cost_price for all, fallback to total_amount
+        final val = (item['total_cost_price'] as num? ??
+                item['total_amount'] as num? ??
+                0.0)
+            .toDouble();
+
+        productData.putIfAbsent(
+            id,
+            () => {
+                  'name': name,
+                  'opening_qty': 0.0,
+                  'opening_val': 0.0,
+                  'purchase_qty': 0.0,
+                  'purchase_val': 0.0,
+                  'pur_ret_qty': 0.0,
+                  'pur_ret_val': 0.0,
+                  'sales_qty': 0.0,
+                  'sales_val': 0.0,
+                  'sales_ret_qty': 0.0,
+                  'sales_ret_val': 0.0,
+                  'closing_qty': 0.0,
+                  'closing_val': 0.0,
+                  'cost_price': 0.0,
+                  'selling_price': 0.0,
+                });
+
+        productData[id]!['name'] = name;
+        productData[id]![targetKey] =
+            (productData[id]![targetKey] as double) + (negative ? -qty : qty);
+        productData[id]![targetKey.replaceAll('qty', 'val')] =
+            (productData[id]![targetKey.replaceAll('qty', 'val')] as double) +
+                (negative ? -val.abs() : val.abs());
+      }
+    }
+
+    // Process all sections based on your JSON
+    processList(
+        dataJson['opening_stock']?['summary'] as List<dynamic>?, 'opening_qty');
+    processList(dataJson['purchases'] as List<dynamic>?, 'purchase_qty');
+    processList(dataJson['purchase_returns'] as List<dynamic>?, 'pur_ret_qty',
+        negative: true);
+    processList(dataJson['sales'] as List<dynamic>?, 'sales_qty',
+        negative: true);
+    processList(dataJson['sale_returns'] as List<dynamic>?, 'sales_ret_qty');
+
+    // Process closing stock summary
+    final closingSummary =
+        dataJson['closing_stock']?['summary'] as List<dynamic>?;
+    if (closingSummary != null) {
+      for (var item in closingSummary) {
+        final id = item['product_id'] as int? ?? 0;
+        final name = item['product_name'] as String? ?? 'Unknown';
+        productData.putIfAbsent(
+            id,
+            () => {
+                  'name': name,
+                  'opening_qty': 0.0,
+                  'opening_val': 0.0,
+                  'purchase_qty': 0.0,
+                  'purchase_val': 0.0,
+                  'pur_ret_qty': 0.0,
+                  'pur_ret_val': 0.0,
+                  'sales_qty': 0.0,
+                  'sales_val': 0.0,
+                  'sales_ret_qty': 0.0,
+                  'sales_ret_val': 0.0,
+                  'closing_qty': 0.0,
+                  'closing_val': 0.0,
+                  'cost_price': 0.0,
+                  'selling_price': 0.0,
+                });
+
+        productData[id]!['name'] = name;
+        productData[id]!['closing_qty'] =
+            (item['quantity'] as num? ?? 0.0).toDouble();
+        productData[id]!['closing_val'] =
+            (item['total_cost_price'] as num? ?? 0.0).toDouble();
+        productData[id]!['cost_price'] =
+            (item['weighted_avg_cost_price'] as num? ?? 0.0).toDouble();
+        productData[id]!['selling_price'] =
+            (item['weighted_avg_selling_price'] as num? ?? 0.0).toDouble();
+      }
+    }
+
+    // Map to StockLedgerAccount objects
+    final accounts = productData.entries.map((e) {
+      final t = e.value;
+      return StockLedgerAccount(
+        productName: t['name'] as String,
+        ledger: [
+          StockLedgerEntry(
+            date: '',
+            opening: t['opening_qty'] as double,
+            purchase: t['purchase_qty'] as double,
+            sales: t['sales_qty'] as double,
+            closing: t['closing_qty'] as double,
+            costPrice: t['cost_price'] as double,
+            sellingPrice: t['selling_price'] as double,
+            openingValue: t['opening_val'] as double,
+            purchaseValue: t['purchase_val'] as double,
+            salesValue: t['sales_val'] as double,
+            salesReturnQty: t['sales_ret_qty'] as double,
+            salesReturnValue: t['sales_ret_val'] as double,
+            closingValue: t['closing_val'] as double,
+          ),
+        ],
+      );
+    }).toList();
+
+    return StockLedgerReport(success: true, message: 'Success', data: accounts);
   }
 
   Future<void> _onExport(
