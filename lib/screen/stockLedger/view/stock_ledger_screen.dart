@@ -640,7 +640,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
 import 'package:saleup_app/model/product_category_response.dart';
-import 'package:saleup_app/model/stock_ledger_response.dart';
 import 'package:saleup_app/screen/stockLedger/bloc/stock_ledger_bloc.dart';
 import 'package:saleup_app/screen/stockLedger/bloc/stock_ledger_event.dart';
 import 'package:saleup_app/screen/stockLedger/bloc/stock_ledger_state.dart';
@@ -762,20 +761,24 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
           }
           if (state is StockLedgerSuccess && startDate == null) {
             // ★ Start Date = Fiscal Year start, End Date = Day close date
-            setState(() {
-              startDate = state.defaultStartDate;
-              endDate = state.defaultEndDate;
-              _products = state.products;
-              _categories = state.categories;
-            });
+            setState(
+              () {
+                startDate = state.defaultStartDate;
+                endDate = state.defaultEndDate;
+                _products = state.products;
+                _categories = state.categories;
+              },
+            );
 
-            context.read<StockLedgerBloc>().add(FetchStockLedgerReport(
-                  startDate: _fmt(startDate!),
-                  endDate: _fmt(endDate!),
-                  productId: selectedProduct?.id,
-                  categoryId: selectedCategory?.id,
-                  rateType: rateType,
-                ));
+            context.read<StockLedgerBloc>().add(
+                  FetchStockLedgerReport(
+                    startDate: _fmt(startDate!),
+                    endDate: _fmt(endDate!),
+                    productId: selectedProduct?.id,
+                    categoryId: selectedCategory?.id,
+                    rateType: rateType,
+                  ),
+                );
           }
         },
         builder: (context, state) {

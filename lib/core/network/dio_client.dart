@@ -1094,6 +1094,7 @@ import 'package:saleup_app/core/network/auth_token_cache.dart';
 import 'package:saleup_app/model/ledger_report_response.dart';
 import 'package:saleup_app/model/trial_balance_report_response.dart';
 import 'package:saleup_app/services/auth_service.dart';
+import 'package:saleup_app/utility/trial_balance_request.dart';
 
 class DioClient {
   static final DioClient _instance = DioClient._internal();
@@ -2029,11 +2030,35 @@ class DioClient {
   }
 
   Future<TrialBalanceReport> fetchTrialBalance(String start, String end) async {
-    final response = await dio.get(
-      '/ledger/get_trial_balance/',
-      queryParameters: {'start_date': start, 'end_date': end},
-    );
-    return TrialBalanceReport.fromJson(response.data);
+    final dateRanges = buildTrialBalanceRequestDateRanges(start, end);
+
+    for (final dateRange in dateRanges) {
+      try {
+        final response = await dio.get(
+          '/ledger/get_trial_balance/',
+          queryParameters: {
+            'start_date': dateRange.startDate,
+            'end_date': dateRange.endDate,
+          },
+        );
+        final report = TrialBalanceReport.fromJson(response.data);
+        if (report.success && (report.data?.isNotEmpty ?? false)) {
+          return report;
+        }
+      } catch (_) {
+        // Keep trying the fallback order if the first request fails.
+      }
+    }
+
+    try {
+      final response = await dio.get(
+        '/ledger/get_trial_balance/',
+        queryParameters: {'start_date': start, 'end_date': end},
+      );
+      return TrialBalanceReport.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to fetch trial balance: $e');
+    }
   }
 
   Future<void> downloadTrialBalanceAsPdf(

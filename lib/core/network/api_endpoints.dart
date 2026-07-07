@@ -132,7 +132,7 @@ class Api {
   // static const bool forceProduction = true;
   static const bool forceProduction = bool.fromEnvironment(
     'FORCE_PRODUCTION',
-    defaultValue: true,
+    defaultValue: false,
   );
 
   static bool get _useProduction => kReleaseMode || forceProduction;
@@ -141,12 +141,12 @@ class Api {
   // Base domain — no protocol, no subdomain, no /api
   // ─────────────────────────────────────────────────────────────
   static const String _productionMainDomain = "salesshopnepal.com";
-  static const String _devBaseUrl = "http://192.168.1.68:8000/api";
+  static const String _devBaseUrl = "http://192.168.1.70:8000/api";
 
   // ─────────────────────────────────────────────────────────────
   // PUBLIC base URL — used before login and company selection
   //   Production → https://salesshopnepal.com/api
-  //   Dev        → http://192.168.1.68:8000/api
+  //   Dev        → http://192.168.1.70:8000/api
   // ─────────────────────────────────────────────────────────────
   static String get publicBaseUrl {
     if (_useProduction) {
