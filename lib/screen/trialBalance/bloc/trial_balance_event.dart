@@ -1,4 +1,3 @@
-// lib/screen/trial_balance/bloc/trial_balance_event.dart
 import 'package:equatable/equatable.dart';
 
 abstract class TrialBalanceEvent extends Equatable {
@@ -7,13 +6,21 @@ abstract class TrialBalanceEvent extends Equatable {
   List<Object?> get props => [];
 }
 
+class InitializeTrialBalance extends TrialBalanceEvent {}
+
 class FetchTrialBalance extends TrialBalanceEvent {
   final String startDate;
   final String endDate;
+  final String balanceType;
 
-  const FetchTrialBalance(this.startDate, this.endDate);
+  const FetchTrialBalance({
+    required this.startDate,
+    required this.endDate,
+    this.balanceType = 'with_closing',
+  });
+
   @override
-  List<Object?> get props => [startDate, endDate];
+  List<Object?> get props => [startDate, endDate, balanceType];
 }
 
-class ClearTrialBalanceFilter extends TrialBalanceEvent {}
+class ResetTrialBalance extends TrialBalanceEvent {}

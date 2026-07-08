@@ -1,196 +1,183 @@
-// lib/screen/trial_balance/view/trial_balance_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:nepali_utils/nepali_utils.dart';
-import 'package:saleup_app/core/network/dio_client.dart';
 import 'package:saleup_app/model/trial_balance_report_response.dart';
 import 'package:saleup_app/screen/trialBalance/bloc/trial_balance_bloc.dart';
 import 'package:saleup_app/screen/trialBalance/bloc/trial_balance_event.dart';
 import 'package:saleup_app/screen/trialBalance/bloc/trial_balance_state.dart';
 import 'package:saleup_app/services/report_service.dart';
-import 'package:saleup_app/utility/datepiker.dart';
 import 'package:saleup_app/utility/trial_balance_grouping.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:printing/printing.dart';
+import 'package:saleup_app/core/network/dio_client.dart';
 
-class TrialBalanceScreen extends StatefulWidget {
+class TrialBalanceScreen extends StatelessWidget {
   const TrialBalanceScreen({super.key});
 
   @override
-  State<TrialBalanceScreen> createState() => _TrialBalanceScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) =>
+          TrialBalanceBloc(reportService: ReportService(dioClient: DioClient()))
+            ..add(InitializeTrialBalance()),
+      child: const _TrialBalanceView(),
+    );
+  }
 }
 
-class _TrialBalanceScreenState extends State<TrialBalanceScreen> {
-  late final TrialBalanceBloc _bloc;
-  DateTime? _start;
-  DateTime? _end;
-  bool _isLoadingInitialDates = true;
-  bool _downloadInProgress = false;
-  String _balanceType = 'closing';
-  final Set<String> _expandedParents = <String>{};
-  final Set<String> _expandedMainGroups = <String>{};
-
-  bool get _showOpening => _balanceType == 'opening';
-
-  void _toggleParent(String parentName) {
-    setState(() {
-      if (_expandedParents.contains(parentName)) {
-        _expandedParents.remove(parentName);
-      } else {
-        _expandedParents.add(parentName);
-      }
-    });
-  }
-
-  void _toggleMainGroup(String parentName, String mainGroupName) {
-    final key = '${parentName}__${mainGroupName}';
-    setState(() {
-      if (_expandedMainGroups.contains(key)) {
-        _expandedMainGroups.remove(key);
-      } else {
-        _expandedMainGroups.add(key);
-      }
-    });
-  }
-
-  bool _isParentExpanded(String parentName) =>
-      _expandedParents.contains(parentName);
-
-  bool _isMainGroupExpanded(String parentName, String mainGroupName) =>
-      _expandedMainGroups.contains('${parentName}__${mainGroupName}');
+class _TrialBalanceView extends StatefulWidget {
+  const _TrialBalanceView();
 
   @override
-  void initState() {
-    super.initState();
-    _bloc = TrialBalanceBloc(dioClient: DioClient());
-    _loadInitialDates();
+  State<_TrialBalanceView> createState() => _TrialBalanceViewState();
+}
+
+class _TrialBalanceViewState extends State<_TrialBalanceView> {
+  DateTime? _startDate;
+  DateTime? _endDate;
+  bool _isExporting = false;
+  String _balanceType = 'with_closing';
+
+  final Map<String, bool> _parentExpanded = {};
+  final Map<String, bool> _mainGroupExpanded = {};
+
+  static const _orange = Color(0xFFE8A020);
+  static const _lightOrange = Color(0xFFFFF3E0);
+
+  final _numFmt = NumberFormat('#,##,##0.00');
+
+  /// Formats a DateTime as "2082-04-31 (16 Aug)" — BS date + English day/month
+  String _fmtDate(DateTime d) {
+    final bs = d.toNepaliDateTime();
+    final bsStr = NepaliDateFormat('yyyy-MM-dd').format(bs);
+    final engStr = DateFormat('d MMM').format(d);
+    return '$bsStr ($engStr)';
   }
+
+  // Column flex ratios: accounts=3, debit=2, credit=2
+  static const int _accFlex = 3;
+  static const int _valFlex = 2;
 
   @override
-  void dispose() {
-    _bloc.close();
-    super.dispose();
-  }
-
-  Future<void> _loadInitialDates() async {
-    try {
-      final service = ReportService();
-      final results = await Future.wait([
-        service.getFiscalYearStartDate(),
-        service.getDayOpenDate(),
-      ]);
-      final fiscalStartStr = results[0];
-      final openDayStr = results[1];
-      debugPrint(
-          'TrialBalanceScreen: Loaded dates: fiscalStartStr = $fiscalStartStr, openDayStr = $openDayStr');
-
-      if (mounted) {
-        setState(() {
-          if (fiscalStartStr != null) {
-            _start = DateTime.tryParse(fiscalStartStr);
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FA),
+      appBar: AppBar(
+        title: const Text(
+          'Trial Balance',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 0,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: Colors.grey.shade200, height: 1),
+        ),
+        actions: [
+          BlocBuilder<TrialBalanceBloc, TrialBalanceState>(
+            builder: (context, state) {
+              if (state is TrialBalanceLoading) {
+                return const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                );
+              }
+              return IconButton(
+                icon: const Icon(Icons.filter_list_rounded),
+                tooltip: 'Filter',
+                onPressed: () => _showFilterSheet(context),
+              );
+            },
+          ),
+        ],
+      ),
+      body: BlocConsumer<TrialBalanceBloc, TrialBalanceState>(
+        listener: (context, state) {
+          if (state is TrialBalanceDatesLoaded) {
+            setState(() {
+              _startDate = state.startDate;
+              _endDate = state.endDate;
+            });
           }
-          // Fallback start date to Jan 1st of current year if null
-          _start ??= DateTime(DateTime.now().year, 1, 1);
-
-          if (openDayStr != null) {
-            _end = DateTime.tryParse(openDayStr);
+          if (state is TrialBalanceSuccess) {
+            setState(() {
+              _startDate = state.startDate;
+              _endDate = state.endDate;
+              _balanceType = state.balanceType;
+            });
           }
-          // Fallback end date to today if null
-          _end ??= DateTime.now();
-
-          _isLoadingInitialDates = false;
-        });
-
-        debugPrint(
-            'TrialBalanceScreen: Triggering API fetch with start = $_start, end = $_end');
-        _apply();
-      }
-    } catch (e) {
-      debugPrint('Error loading initial dates: $e');
-      if (mounted) {
-        setState(() {
-          _start ??= DateTime(DateTime.now().year, 1, 1);
-          _end ??= DateTime.now();
-          _isLoadingInitialDates = false;
-        });
-        _apply();
-      }
-    }
-  }
-
-  void _pickDate(bool isStart) async {
-    final current = isStart ? _start : _end;
-    final initialDate =
-        current != null ? current.toNepaliDateTime() : NepaliDateTime.now();
-
-    await showDialog(
-      context: context,
-      builder: (_) => NepaliDatePickerDialog(
-        initialDate: initialDate,
-        firstDate: NepaliDateTime(2075),
-        lastDate: NepaliDateTime(2090),
-        onDateSelected: (picked) {
-          setState(() {
-            if (isStart) {
-              _start = picked.toDateTime();
-            } else {
-              _end = picked.toDateTime();
-            }
-          });
-          if (context.canPop()) context.pop();
+          if (state is TrialBalanceFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red.shade600,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        },
+        builder: (context, state) {
+          return Column(
+            children: [
+              _buildDateBar(),
+              // Export Excel button
+              if (state is TrialBalanceSuccess)
+                Container(
+                  color: Colors.white,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  child: Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _isExporting ? null : _exportExcel,
+                        icon: _isExporting
+                            ? const SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white))
+                            : const Icon(Icons.download_rounded, size: 16),
+                        label: Text(
+                            _isExporting ? 'Exporting...' : 'Export Excel'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E7E34),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          elevation: 0,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              Expanded(child: _buildBody(context, state)),
+            ],
+          );
         },
       ),
     );
   }
 
-  void _apply() {
-    if (_start == null || _end == null) return;
-    _bloc.add(FetchTrialBalance(
-      DateFormat('yyyy-MM-dd').format(_start!),
-      DateFormat('yyyy-MM-dd').format(_end!),
-    ));
-  }
-
-  void _clear() {
-    setState(() {
-      _start = null;
-      _end = null;
-      _expandedParents.clear();
-      _expandedMainGroups.clear();
-    });
-    _bloc.add(ClearTrialBalanceFilter());
-    _loadInitialDates();
-  }
-
   Future<void> _exportExcel() async {
-    if (_start == null || _end == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select date range first'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    final sStr = DateFormat('yyyy-MM-dd').format(_start!);
-    final eStr = DateFormat('yyyy-MM-dd').format(_end!);
-
-    setState(() => _downloadInProgress = true);
+    if (_startDate == null || _endDate == null) return;
+    setState(() => _isExporting = true);
     try {
-      final path = await ReportService().exportReport(
+      final path = await context.read<TrialBalanceBloc>().reportService.exportReport(
         reportType: 'trial_balance',
-        startDate: sStr,
-        endDate: eStr,
+        startDate: DateFormat('yyyy-MM-dd').format(_startDate!),
+        endDate: DateFormat('yyyy-MM-dd').format(_endDate!),
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Excel exported successfully to: $path'),
-            backgroundColor: Colors.green,
+            content: Text('Exported: $path'),
+            backgroundColor: Colors.green.shade600,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -199,714 +186,366 @@ class _TrialBalanceScreenState extends State<TrialBalanceScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Export failed: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Colors.red.shade600,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _downloadInProgress = false);
-      }
+      if (mounted) setState(() => _isExporting = false);
     }
   }
 
-  Future<void> _printReport() async {
-    final state = _bloc.state;
-    if (state is! TrialBalanceLoaded) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No data loaded to print'),
-          backgroundColor: Colors.red,
+  Widget _buildDateBar() {
+    const balanceLabels = {
+      'with_closing': 'With Closing',
+      'without_closing': 'Without Closing',
+      'opening': 'Opening Balance',
+    };
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          const Icon(Icons.calendar_today_rounded, size: 15, color: _orange),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  balanceLabels[_balanceType] ?? 'Trial Balance',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: _orange,
+                  ),
+                ),
+                Text(
+                  _startDate != null && _endDate != null
+                      ? '${_fmtDate(_startDate!)}  →  ${_fmtDate(_endDate!)}'
+                      : 'Loading dates...',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => _showFilterSheet(context),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: _lightOrange,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.tune_rounded, size: 14, color: _orange),
+                  SizedBox(width: 4),
+                  Text('Filter',
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: _orange,
+                          fontWeight: FontWeight.w600)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Body ───────────────────────────────────────────────────────────────────
+  Widget _buildBody(BuildContext context, TrialBalanceState state) {
+    if (state is TrialBalanceInitial ||
+        state is TrialBalanceDatesLoaded ||
+        state is TrialBalanceLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state is TrialBalanceFailure) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline_rounded,
+                size: 48, color: Colors.red.shade300),
+            const SizedBox(height: 12),
+            Text(state.message,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade600)),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => context
+                  .read<TrialBalanceBloc>()
+                  .add(InitializeTrialBalance()),
+              icon: const Icon(Icons.refresh, size: 16),
+              label: const Text('Retry'),
+            ),
+          ],
         ),
       );
-      return;
     }
-
-    try {
-      final pdf = await _generatePdf(state.report);
-      await Printing.layoutPdf(
-        onLayout: (format) async => pdf.save(),
-      );
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to print: $e'),
-            backgroundColor: Colors.red,
+    if (state is TrialBalanceSuccess) {
+      if (state.accounts.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.receipt_long_outlined,
+                  size: 56, color: Colors.grey.shade300),
+              const SizedBox(height: 12),
+              Text('No data found for selected period',
+                  style:
+                      TextStyle(color: Colors.grey.shade500, fontSize: 14)),
+            ],
           ),
         );
       }
+      return _buildTable(state.grouping);
     }
+    return const SizedBox.shrink();
   }
 
-  Future<pw.Document> _generatePdf(TrialBalanceReport report) async {
-    final pdf = pw.Document();
-    final accounts = report.data ?? [];
-    final startStr =
-        _start != null ? DateFormat('yyyy-MM-dd').format(_start!) : '';
-    final endStr = _end != null ? DateFormat('yyyy-MM-dd').format(_end!) : '';
-
-    double totalDebit = 0;
-    double totalCredit = 0;
-    for (final acc in accounts) {
-      final amount = acc.totalAmount ?? 0.0;
-      if (acc.drCr == 'Debit') {
-        totalDebit += amount;
-      } else if (acc.drCr == 'Credit') {
-        totalCredit += amount;
-      }
-    }
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(32),
-        build: (context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Center(
-                child: pw.Text(
-                  'Trial Balance',
-                  style: pw.TextStyle(
-                    fontSize: 22,
-                    fontWeight: pw.FontWeight.bold,
-                  ),
-                ),
-              ),
-              pw.SizedBox(height: 8),
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text('Start Date: $startStr'),
-                  pw.Text('End Date: $endStr'),
-                ],
-              ),
-              pw.SizedBox(height: 16),
-              pw.Table(
-                border:
-                    pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
-                columnWidths: {
-                  0: const pw.FlexColumnWidth(4),
-                  1: const pw.FlexColumnWidth(2),
-                  2: const pw.FlexColumnWidth(2),
-                },
-                children: [
-                  // Table Header
-                  pw.TableRow(
-                    decoration:
-                        const pw.BoxDecoration(color: PdfColors.grey200),
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(6),
-                        child: pw.Text('Accounts',
-                            style:
-                                pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(6),
-                        child: pw.Text('Debit',
-                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                            textAlign: pw.TextAlign.right),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(6),
-                        child: pw.Text('Credit',
-                            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                            textAlign: pw.TextAlign.right),
-                      ),
-                    ],
-                  ),
-                  // Table Body
-                  ...accounts.map((acc) {
-                    final amount = acc.totalAmount ?? 0.0;
-                    final isDebit = acc.drCr == 'Debit';
-                    return pw.TableRow(
-                      children: [
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(6),
-                          child: pw.Text(acc.accountName ?? ''),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(6),
-                          child: pw.Text(
-                            isDebit ? '${formatNepaliNumber(amount)} Dr' : '-',
-                            textAlign: pw.TextAlign.right,
-                          ),
-                        ),
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.all(6),
-                          child: pw.Text(
-                            !isDebit ? '${formatNepaliNumber(amount)} Cr' : '-',
-                            textAlign: pw.TextAlign.right,
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                  // Grand Total
-                  pw.TableRow(
-                    decoration:
-                        const pw.BoxDecoration(color: PdfColors.grey100),
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(6),
-                        child: pw.Text('GRAND TOTAL',
-                            style:
-                                pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(6),
-                        child: pw.Text(
-                          totalDebit > 0
-                              ? '${formatNepaliNumber(totalDebit)} Dr'
-                              : '- Dr',
-                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                          textAlign: pw.TextAlign.right,
-                        ),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(6),
-                        child: pw.Text(
-                          totalCredit > 0
-                              ? '${formatNepaliNumber(totalCredit)} Cr'
-                              : '- Dr',
-                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-                          textAlign: pw.TextAlign.right,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          );
-        },
-      ),
-    );
-
-    return pdf;
-  }
-
-  String formatCombinedDate(DateTime date) {
-    final nepaliDate = date.toNepaliDateTime();
-    final bsPart =
-        '${nepaliDate.year}-${nepaliDate.month.toString().padLeft(2, '0')}-${nepaliDate.day.toString().padLeft(2, '0')}';
-    final adPart = '${date.day} ${DateFormat('MMM').format(date)}';
-    return '$bsPart ($adPart)';
-  }
-
-  String formatNepaliNumber(double amount) {
-    final isNegative = amount < 0;
-    final absAmount = amount.abs();
-    final parts = absAmount.toStringAsFixed(2).split('.');
-    final wholePart = parts[0];
-    final decimalPart = parts[1];
-
-    String formattedWhole;
-    if (wholePart.length <= 3) {
-      formattedWhole = wholePart;
-    } else {
-      final lastThree = wholePart.substring(wholePart.length - 3);
-      var remaining = wholePart.substring(0, wholePart.length - 3);
-      final chunks = <String>[];
-      while (remaining.isNotEmpty) {
-        if (remaining.length > 2) {
-          chunks.insert(0, remaining.substring(remaining.length - 2));
-          remaining = remaining.substring(0, remaining.length - 2);
-        } else {
-          chunks.insert(0, remaining);
-          remaining = '';
-        }
-      }
-      chunks.add(lastThree);
-      formattedWhole = chunks.join(',');
-    }
-    return '${isNegative ? '-' : ''}$formattedWhole.$decimalPart';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final isWide = width > 750;
-
-    return BlocProvider(
-      create: (_) => _bloc,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF8FAFC),
-        appBar: AppBar(
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF1E293B),
-          elevation: 0.5,
-          title: const Text(
-            'Trial Balance',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/home'),
-          ),
-        ),
-        body: _isLoadingInitialDates
-            ? const Center(child: CircularProgressIndicator())
-            : Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // Top Controls Card
-                    Card(
-                      color: Colors.white,
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (isWide)
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Expanded(child: _buildDatePicker(true)),
-                                  const SizedBox(width: 16),
-                                  Expanded(child: _buildDatePicker(false)),
-                                  const SizedBox(width: 16),
-                                  _buildFilterButton(),
-                                ],
-                              )
-                            else
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(child: _buildDatePicker(true)),
-                                      const SizedBox(width: 12),
-                                      Expanded(child: _buildDatePicker(false)),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  _buildFilterButton(fullWidth: true),
-                                ],
-                              ),
-                            const SizedBox(height: 16),
-                            // Action buttons (Reset, Print, Export Excel)
-                            Row(
-                              children: [
-                                ElevatedButton(
-                                  onPressed: _clear,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFF1F3F4),
-                                    foregroundColor: const Color(0xFF1E293B),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20, vertical: 12),
-                                  ),
-                                  child: const Text('Reset',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                                const SizedBox(width: 12),
-                                ElevatedButton(
-                                  onPressed: _printReport,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFF1F3F4),
-                                    foregroundColor: const Color(0xFF1E293B),
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20, vertical: 12),
-                                  ),
-                                  child: const Text('Print',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                ),
-                                const SizedBox(width: 12),
-                                ElevatedButton.icon(
-                                  onPressed:
-                                      _downloadInProgress ? null : _exportExcel,
-                                  icon: _downloadInProgress
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white),
-                                        )
-                                      : const Icon(Icons.table_chart_outlined,
-                                          size: 16, color: Colors.white),
-                                  label: const Text('Export Excel',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold)),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0F7C3E),
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 20, vertical: 12),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildBalanceTypeToggle(),
-                    const SizedBox(height: 12),
-                    // Table Header Column Labels
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF1F5F9),
-                        borderRadius:
-                            BorderRadius.vertical(top: Radius.circular(8)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            flex: 4,
-                            child: Text(
-                              'ACCOUNTS',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF475569),
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          if (_showOpening)
-                            const Expanded(
-                              flex: 2,
-                              child: Text(
-                                'OPENING',
-                                textAlign: TextAlign.right,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF475569),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          const Expanded(
-                            flex: 2,
-                            child: Text(
-                              'DEBIT',
-                              textAlign: TextAlign.right,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF475569),
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          const Expanded(
-                            flex: 2,
-                            child: Text(
-                              'CREDIT',
-                              textAlign: TextAlign.right,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF475569),
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          if (_showOpening)
-                            const Expanded(
-                              flex: 2,
-                              child: Text(
-                                'CLOSING',
-                                textAlign: TextAlign.right,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF475569),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    // Trial Balance content list
-                    Expanded(
-                      child: BlocBuilder<TrialBalanceBloc, TrialBalanceState>(
-                        builder: (context, state) {
-                          if (state is TrialBalanceLoading) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          }
-                          if (state is TrialBalanceLoaded) {
-                            return _buildReportContent(state.report);
-                          }
-                          if (state is TrialBalanceError) {
-                            return Center(
-                              child: Text(
-                                state.message,
-                                style: const TextStyle(color: Colors.red),
-                              ),
-                            );
-                          }
-                          return const Center(
-                              child:
-                                  Text('Select date range and apply filter'));
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-      ),
-    );
-  }
-
-  Widget _buildDatePicker(bool isStart) {
-    final date = isStart ? _start : _end;
-    final label = isStart ? 'START DATE' : 'END DATE';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF64748B),
-          ),
-        ),
-        const SizedBox(height: 6),
-        InkWell(
-          onTap: () => _pickDate(isStart),
-          child: Container(
-            height: 42,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: const Color(0xFFCBD5E1)),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    date == null ? 'Select' : formatCombinedDate(date),
-                    style:
-                        const TextStyle(fontSize: 13, color: Color(0xFF1E293B)),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const Icon(Icons.calendar_today_outlined,
-                    size: 16, color: Color(0xFF64748B)),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFilterButton({bool fullWidth = false}) {
-    final button = ElevatedButton(
-      onPressed: (_start != null && _end != null) ? _apply : null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFF59422),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      ),
-      child:
-          const Text('Filter', style: TextStyle(fontWeight: FontWeight.bold)),
-    );
-
-    if (fullWidth) {
-      return SizedBox(height: 42, child: button);
-    }
-
-    return Container(
-      height: 42,
-      margin: const EdgeInsets.only(bottom: 0),
-      child: button,
-    );
-  }
-
-  String _formatSignedValue(double amount) {
-    final absAmount = amount.abs();
-    return amount >= 0
-        ? '${formatNepaliNumber(absAmount)} Dr'
-        : '${formatNepaliNumber(absAmount)} Cr';
-  }
-
-  Widget _buildBalanceTypeToggle() {
-    return ToggleButtons(
-      isSelected: [_balanceType == 'closing', _balanceType == 'opening'],
-      onPressed: (index) {
-        setState(() {
-          _balanceType = index == 0 ? 'closing' : 'opening';
-        });
-      },
-      borderRadius: BorderRadius.circular(8),
-      selectedColor: Colors.white,
-      fillColor: const Color(0xFFF59422),
-      color: const Color(0xFF475569),
-      textStyle: const TextStyle(fontWeight: FontWeight.w600),
-      children: const [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text('Closing'),
-        ),
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: Text('Opening'),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAccountRow(TrialBalanceAccount acc) {
-    final isDebit = (acc.drCr ?? '').trim().toLowerCase() == 'debit' ||
-        (acc.drCr ?? '').trim().toLowerCase() == 'dr';
-    final amount = acc.totalAmount ?? 0.0;
-    final openingAmount = acc.openingBalance ?? 0.0;
-    final debitText = isDebit ? formatNepaliNumber(amount) : '-';
-    final creditText = !isDebit ? formatNepaliNumber(amount) : '-';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
-      ),
-      child: Row(
+  // ─── Table ──────────────────────────────────────────────────────────────────
+  Widget _buildTable(TrialBalanceGroupingResult grouping) {
+    return SingleChildScrollView(
+      child: Column(
         children: [
-          Expanded(
-            flex: 4,
-            child: Text(
-              acc.accountName ?? '',
-              style: const TextStyle(color: Color(0xFF334155), fontSize: 13),
-            ),
-          ),
-          if (_showOpening)
-            Expanded(
-              flex: 2,
-              child: Text(
-                openingAmount == 0 ? '-' : _formatSignedValue(openingAmount),
-                textAlign: TextAlign.right,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-            ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              _showOpening
-                  ? ((acc.totalDebit ?? 0) == 0
-                      ? '-'
-                      : formatNepaliNumber(acc.totalDebit ?? 0))
-                  : debitText,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color:
-                    isDebit ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
-                fontWeight: isDebit ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              _showOpening
-                  ? ((acc.totalCredit ?? 0) == 0
-                      ? '-'
-                      : formatNepaliNumber(acc.totalCredit ?? 0))
-                  : creditText,
-              textAlign: TextAlign.right,
-              style: TextStyle(
-                color: !isDebit
-                    ? const Color(0xFF1E293B)
-                    : const Color(0xFF94A3B8),
-                fontWeight: !isDebit ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          if (_showOpening)
-            Expanded(
-              flex: 2,
-              child: Text(
-                amount == 0 ? '-' : _formatSignedValue(amount),
-                textAlign: TextAlign.right,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-            ),
+          _tableHeader(),
+          for (final parent in grouping.parentGroups) ...[
+            _parentRow(parent),
+            if (_parentExpanded[parent.name] != false) ...[
+              for (final mg in parent.mainGroups) ...[
+                _mainGroupRow(parent.name, mg),
+                if (_mainGroupExpanded[
+                        '${parent.name}__${mg.name}'] !=
+                    false) ...[
+                  for (final acc in mg.accounts) _accountRow(acc),
+                ],
+              ],
+            ],
+          ],
+          _grandTotalRow(grouping),
+          _differenceRow(grouping),
+          const SizedBox(height: 32),
         ],
       ),
     );
   }
 
-  Widget _buildGroupTotalRow(TrialBalanceMainGroup group) {
+  // ─── Table header ────────────────────────────────────────────────────────────
+  Widget _tableHeader() {
     return Container(
-      color: const Color(0xFFF8FAFC),
+      color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: [
+          Expanded(
+            flex: _accFlex,
+            child: Text('ACCOUNTS',
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade500,
+                    letterSpacing: 0.8)),
+          ),
+          Expanded(
+            flex: _valFlex,
+            child: Text('DEBIT',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade500,
+                    letterSpacing: 0.8)),
+          ),
+          Expanded(
+            flex: _valFlex,
+            child: Text('CREDIT',
+                textAlign: TextAlign.right,
+                style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey.shade500,
+                    letterSpacing: 0.8)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Parent row (e.g. ASSETS) ────────────────────────────────────────────────
+  Widget _parentRow(TrialBalanceParentGroup parent) {
+    final isExpanded = _parentExpanded[parent.name] != false;
+    return GestureDetector(
+      onTap: () =>
+          setState(() => _parentExpanded[parent.name] = !isExpanded),
+      child: Container(
+        color: const Color(0xFFEEEEEE),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        child: Row(
+          children: [
+            Icon(
+              isExpanded
+                  ? Icons.keyboard_arrow_down_rounded
+                  : Icons.keyboard_arrow_right_rounded,
+              size: 18,
+              color: _orange,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                parent.name,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: _orange),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Main group row (e.g. CURRENT ASSETS) ────────────────────────────────────
+  Widget _mainGroupRow(String parentName, TrialBalanceMainGroup mg) {
+    final key = '${parentName}__${mg.name}';
+    final isExpanded = _mainGroupExpanded[key] != false;
+    return GestureDetector(
+      onTap: () =>
+          setState(() => _mainGroupExpanded[key] = !isExpanded),
+      child: Container(
+        color: const Color(0xFFF5F5F5),
+        padding: const EdgeInsets.only(
+            left: 32, right: 16, top: 9, bottom: 9),
+        child: Row(
+          children: [
+            Icon(
+              isExpanded
+                  ? Icons.keyboard_arrow_down_rounded
+                  : Icons.keyboard_arrow_right_rounded,
+              size: 15,
+              color: _orange,
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                mg.name,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: _orange),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ─── Account row ─────────────────────────────────────────────────────────────
+  Widget _accountRow(TrialBalanceAccount account) {
+    final isDebit =
+        (account.drCr ?? '').trim().toLowerCase().contains('debit');
+    final amount = (account.totalAmount ?? 0.0).abs();
+    final formatted =
+        '${_numFmt.format(amount)} ${isDebit ? 'Dr' : 'Cr'}';
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border:
+            Border(bottom: BorderSide(color: Colors.grey.shade100)),
+      ),
+      padding: const EdgeInsets.only(
+          left: 48, right: 16, top: 10, bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: _accFlex,
+            child: Text(
+              account.accountName ?? '',
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
+            ),
+          ),
+          Expanded(
+            flex: _valFlex,
+            child: Text(
+              isDebit ? formatted : '-',
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87),
+            ),
+          ),
+          Expanded(
+            flex: _valFlex,
+            child: Text(
+              !isDebit ? formatted : '-',
+              textAlign: TextAlign.right,
+              style:
+                  TextStyle(fontSize: 13, color: Colors.grey.shade700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Grand total row ─────────────────────────────────────────────────────────
+  Widget _grandTotalRow(TrialBalanceGroupingResult g) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: Colors.grey.shade400, width: 1.5),
+          bottom: BorderSide(color: Colors.grey.shade400, width: 1.5),
+        ),
+      ),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           const Expanded(
-            flex: 4,
+            flex: _accFlex,
+            child: Text('GRAND TOTAL',
+                style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    color: Colors.black87)),
+          ),
+          Expanded(
+            flex: _valFlex,
             child: Text(
-              'GROUP TOTAL',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF475569),
-                fontSize: 12,
-              ),
+              '${_numFmt.format(g.totalDebit)} Dr',
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w800, fontSize: 13),
             ),
           ),
           Expanded(
-            flex: 2,
+            flex: _valFlex,
             child: Text(
-              group.totalDebit > 0 ? formatNepaliNumber(group.totalDebit) : '-',
+              g.totalCredit > 0
+                  ? '${_numFmt.format(g.totalCredit)} Cr'
+                  : '- Dr',
               textAlign: TextAlign.right,
               style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1E293B),
-                fontSize: 12,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Text(
-              group.totalCredit > 0
-                  ? formatNepaliNumber(group.totalCredit)
-                  : '-',
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1E293B),
-                fontSize: 12,
-              ),
+                  fontWeight: FontWeight.w800, fontSize: 13),
             ),
           ),
         ],
@@ -914,200 +553,268 @@ class _TrialBalanceScreenState extends State<TrialBalanceScreen> {
     );
   }
 
-  Widget _buildReportContent(TrialBalanceReport report) {
-    final accounts = report.data ?? [];
-    if (accounts.isEmpty) {
-      return const Center(
-        child: Text('No records found for the selected period'),
-      );
-    }
+  // ─── Difference row ──────────────────────────────────────────────────────────
+  Widget _differenceRow(TrialBalanceGroupingResult g) {
+    final diff = g.totalDebit - g.totalCredit;
+    final label =
+        diff >= 0 ? 'DIFFERENCE\n(DEBIT)' : 'DIFFERENCE\n(CREDIT)';
 
-    final grouping = buildTrialBalanceGrouping(accounts);
-    final diff = grouping.difference;
-    final diffDebit = grouping.differenceDebit;
-    final diffCredit = grouping.differenceCredit;
-
-    return ListView(
-      children: [
-        ...grouping.parentGroups.map((parentGroup) {
-          final isExpanded = _isParentExpanded(parentGroup.name);
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              InkWell(
-                onTap: () => _toggleParent(parentGroup.name),
-                child: Container(
-                  width: double.infinity,
-                  color: const Color(0xFFE2E8F0),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          parentGroup.name.toUpperCase(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        isExpanded
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        size: 20,
-                        color: const Color(0xFF475569),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              if (isExpanded)
-                ...parentGroup.mainGroups.map((mainGroup) {
-                  final isMainExpanded = _isMainGroupExpanded(
-                    parentGroup.name,
-                    mainGroup.name,
-                  );
-                  return Column(
-                    children: [
-                      InkWell(
-                        onTap: () => _toggleMainGroup(
-                          parentGroup.name,
-                          mainGroup.name,
-                        ),
-                        child: Container(
-                          width: double.infinity,
-                          color: const Color(0xFFF1F5F9),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  mainGroup.name.toUpperCase(),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF475569),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ),
-                              Icon(
-                                isMainExpanded
-                                    ? Icons.keyboard_arrow_up
-                                    : Icons.keyboard_arrow_down,
-                                size: 18,
-                                color: const Color(0xFF64748B),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (isMainExpanded)
-                        ...mainGroup.accounts.map(_buildAccountRow),
-                      if (isMainExpanded) _buildGroupTotalRow(mainGroup),
-                    ],
-                  );
-                }),
-            ],
-          );
-        }),
-        Container(
-          color: const Color(0xFFE2E8F0),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              const Expanded(
-                flex: 4,
-                child: Text(
-                  'GRAND TOTAL',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+    return Container(
+      color: const Color(0xFFF5F5F5),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            flex: _accFlex,
+            child: Text(label,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w700,
                     fontSize: 13,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  grouping.totalDebit > 0
-                      ? formatNepaliNumber(grouping.totalDebit)
-                      : '-',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  grouping.totalCredit > 0
-                      ? formatNepaliNumber(grouping.totalCredit)
-                      : '-',
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
+                    color: Colors.black87)),
           ),
-        ),
-        if (!_showOpening && diff.abs() > 0.01)
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 4,
-                  child: Text(
-                    diff >= 0 ? 'DIFFERENCE (DEBIT)' : 'DIFFERENCE (CREDIT)',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF64748B),
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    diffDebit > 0 ? formatNepaliNumber(diffDebit) : '-',
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    diffCredit > 0 ? formatNepaliNumber(diffCredit) : '-',
-                    textAlign: TextAlign.right,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
+          Expanded(
+            flex: _valFlex,
+            child: Text(
+              _numFmt.format(g.totalDebit),
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w700, fontSize: 13),
             ),
           ),
-      ],
+          Expanded(
+            flex: _valFlex,
+            child: Text(
+              _numFmt.format(diff < 0 ? diff.abs() : 0.0),
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w700, fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Filter bottom sheet ─────────────────────────────────────────────────────
+  void _showFilterSheet(BuildContext context) {
+    DateTime? tempStart = _startDate;
+    DateTime? tempEnd = _endDate;
+    String tempBalanceType = _balanceType;
+
+    const balanceTypes = [
+      ('with_closing', 'Trial Balance with Closing'),
+      ('without_closing', 'Trial Balance without Closing'),
+      ('opening', 'Opening Balance'),
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheet) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(4)),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text('Filter Report',
+                      style: TextStyle(
+                          fontSize: 17, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 16),
+                  // Balance Type dropdown
+                  DropdownButtonFormField<String>(
+                    value: tempBalanceType,
+                    decoration: InputDecoration(
+                      labelText: 'Balance Type',
+                      labelStyle: TextStyle(
+                          fontSize: 12, color: Colors.grey.shade600),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide:
+                              BorderSide(color: Colors.grey.shade300)),
+                      enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide:
+                              BorderSide(color: Colors.grey.shade300)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                    ),
+                    items: balanceTypes
+                        .map((t) => DropdownMenuItem(
+                            value: t.$1, child: Text(t.$2, style: const TextStyle(fontSize: 13))))
+                        .toList(),
+                    onChanged: (v) =>
+                        setSheet(() => tempBalanceType = v ?? tempBalanceType),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _sheetDateField(
+                          ctx: ctx,
+                          label: 'Start Date',
+                          date: tempStart,
+                          onPicked: (d) =>
+                              setSheet(() => tempStart = d),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _sheetDateField(
+                          ctx: ctx,
+                          label: 'End Date',
+                          date: tempEnd,
+                          onPicked: (d) =>
+                              setSheet(() => tempEnd = d),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            context
+                                .read<TrialBalanceBloc>()
+                                .add(ResetTrialBalance());
+                          },
+                          icon: const Icon(Icons.refresh_rounded,
+                              size: 16),
+                          label: const Text('Reset'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14),
+                            side: BorderSide(
+                                color: Colors.grey.shade300),
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(10)),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton.icon(
+                          onPressed:
+                              (tempStart != null && tempEnd != null)
+                                  ? () {
+                                      Navigator.pop(ctx);
+                                      setState(() {
+                                        _startDate = tempStart;
+                                        _endDate = tempEnd;
+                                        _balanceType = tempBalanceType;
+                                      });
+                                      context
+                                          .read<TrialBalanceBloc>()
+                                          .add(FetchTrialBalance(
+                                            startDate:
+                                                DateFormat('yyyy-MM-dd')
+                                                    .format(tempStart!),
+                                            endDate:
+                                                DateFormat('yyyy-MM-dd')
+                                                    .format(tempEnd!),
+                                            balanceType: tempBalanceType,
+                                          ));
+                                    }
+                                  : null,
+                          icon: const Icon(Icons.check_rounded,
+                              size: 16),
+                          label: const Text('Apply'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _orange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius:
+                                    BorderRadius.circular(10)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _sheetDateField({
+    required BuildContext ctx,
+    required String label,
+    required DateTime? date,
+    required ValueChanged<DateTime> onPicked,
+  }) {
+    return InkWell(
+      onTap: () async {
+        final picked = await showDatePicker(
+          context: ctx,
+          initialDate: date ?? DateTime.now(),
+          firstDate: DateTime(2000),
+          lastDate: DateTime(2100),
+        );
+        if (picked != null) onPicked(picked);
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle:
+              TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          prefixIcon: const Icon(Icons.calendar_today_rounded,
+              size: 16, color: _orange),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide:
+                  BorderSide(color: Colors.grey.shade300)),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide:
+                  BorderSide(color: Colors.grey.shade300)),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12, vertical: 8),
+        ),
+        child: Text(
+          date != null
+              ? _fmtDate(date)
+              : 'Select',
+          style: TextStyle(
+              fontSize: 13,
+              color: date != null
+                  ? Colors.black87
+                  : Colors.grey.shade400),
+        ),
+      ),
     );
   }
 }

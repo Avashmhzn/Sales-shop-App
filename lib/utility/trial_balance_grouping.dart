@@ -72,7 +72,7 @@ TrialBalanceGroupingResult buildTrialBalanceGrouping(
     groupedByParent.putIfAbsent(parent, () => <TrialBalanceAccount>[]);
     groupedByParent[parent]!.add(account);
 
-    final amount = account.totalAmount ?? 0.0;
+    final amount = (account.totalAmount ?? 0.0).abs();
     if (_isDebit(account.drCr)) {
       totalDebit += amount;
     } else if (_isCredit(account.drCr)) {
@@ -95,7 +95,7 @@ TrialBalanceGroupingResult buildTrialBalanceGrouping(
       double groupDebit = 0.0;
       double groupCredit = 0.0;
       for (final account in accounts) {
-        final amount = account.totalAmount ?? 0.0;
+        final amount = (account.totalAmount ?? 0.0).abs();
         if (_isDebit(account.drCr)) {
           groupDebit += amount;
         } else if (_isCredit(account.drCr)) {

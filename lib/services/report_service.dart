@@ -369,12 +369,10 @@ class ReportService {
       final raw = resp.data;
       if (raw is String) return null;
 
-      // This endpoint returns the single active fiscal year object directly
       if (raw is Map<String, dynamic>) {
         if (raw['success'] == true && raw['data'] != null) {
           return FiscalYearData.fromJson(raw['data'] as Map<String, dynamic>);
         } else {
-          // Fallback if it returns the object directly without success wrapper
           return FiscalYearData.fromJson(raw);
         }
       }
@@ -387,13 +385,11 @@ class ReportService {
   /// Fetches the dynamic Day Open Date for the current user
   Future<String?> getDayOpenDate() async {
     try {
-      // ★ FIX: Use the exact endpoint you provided
       final resp = await DioClient().dio.get('/day-closing/get_day_data/');
       final raw = resp.data;
       if (raw is Map<String, dynamic>) {
         final data = raw['data'];
         if (data is Map) {
-          // Extract the open date
           return data['open_date'] as String? ?? data['date'] as String?;
         }
       }
@@ -401,5 +397,35 @@ class ReportService {
     } catch (_) {
       return null;
     }
+  }
+
+  /// Returns the fiscal year whose start_date <= [date] <= end_date.
+  /// Falls back to the active fiscal year if none matches.
+  Future<FiscalYearData?> getFiscalYearContaining(DateTime date) async {
+    try {
+      final resp = await DioClient().dio.get('/fiscal-year/get_fiscal_years/');
+      final raw = resp.data;
+      List<dynamic>? list;
+      if (raw is Map<String, dynamic>) {
+        final d = raw['data'];
+        if (d is List) list = d;
+        else if (d is Map) list = d['results'] as List?;
+      } else if (raw is List) {
+        list = raw;
+      }
+      if (list != null) {
+        for (final item in list) {
+          final fy = FiscalYearData.fromJson(item as Map<String, dynamic>);
+          final start = DateTime.tryParse(fy.startDate);
+          final end = fy.endDate != null ? DateTime.tryParse(fy.endDate!) : null;
+          if (start != null && end != null &&
+              !date.isBefore(start) && !date.isAfter(end)) {
+            return fy;
+          }
+        }
+      }
+    } catch (_) {}
+    // fallback
+    return getActiveFiscalYear();
   }
 }

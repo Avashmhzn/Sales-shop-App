@@ -267,29 +267,23 @@ class StockLedgerBloc extends Bloc<StockLedgerEvent, StockLedgerState> {
       _products = results[0] as List<ProductData>;
       _categories = results[1] as List<CategoryData>;
 
-      // ★ 1. Get the active Fiscal Year
-      final fiscalYear = await reportService.getActiveFiscalYear();
+      // Get day open date first, then find the fiscal year containing it
+      final dayOpenDate = await reportService.getDayOpenDate();
+      final dayOpen = dayOpenDate != null ? DateTime.tryParse(dayOpenDate) : null;
+      final fiscalYear = dayOpen != null
+          ? await reportService.getFiscalYearContaining(dayOpen)
+          : await reportService.getActiveFiscalYear();
 
       if (fiscalYear != null && fiscalYear.startDate.isNotEmpty) {
-        // ★ Start Date = Fiscal Year Start Date
         _defaultStart =
             DateTime.tryParse(fiscalYear.startDate) ?? _defaultStart;
       }
 
-      // ★ 2. End Date = Dynamic Day Open Date fetched from backend
-      final dayOpenDate = await reportService.getDayOpenDate();
-      if (dayOpenDate != null && dayOpenDate.isNotEmpty) {
-        _defaultEnd = DateTime.tryParse(dayOpenDate) ?? DateTime.now();
-      } else {
-        _defaultEnd = DateTime.now(); // Fallback to today if no day is open
-      }
-
-      // Guard: If start > end, swap them
-      if (_defaultStart.isAfter(_defaultEnd)) {
-        final tmp = _defaultStart;
-        _defaultStart = _defaultEnd;
-        _defaultEnd = tmp;
-      }
+      // End = day open date (guaranteed within fiscal year now)
+      _defaultEnd = dayOpen ??
+          (fiscalYear?.endDate != null
+              ? DateTime.tryParse(fiscalYear!.endDate!) ?? _defaultEnd
+              : _defaultEnd);
 
       add(FetchStockLedgerReport(
         startDate: _fmt(_defaultStart),
