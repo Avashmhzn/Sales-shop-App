@@ -408,8 +408,9 @@ class ReportService {
       List<dynamic>? list;
       if (raw is Map<String, dynamic>) {
         final d = raw['data'];
-        if (d is List) list = d;
-        else if (d is Map) list = d['results'] as List?;
+        if (d is List) {
+          list = d;
+        } else if (d is Map) list = d['results'] as List?;
       } else if (raw is List) {
         list = raw;
       }
