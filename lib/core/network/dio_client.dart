@@ -1112,6 +1112,8 @@ class DioClient {
   // ★ GoRouter reference for navigation without context
   GoRouter? _goRouter;
 
+  GoRouter? get goRouter => _goRouter;
+
   void setGoRouter(GoRouter router) {
     _goRouter = router;
   }
@@ -1327,21 +1329,16 @@ class DioClient {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // ★ SESSION EXPIRED DIALOG — User must press OK before redirect
+  // ★ SESSION EXPIRED — navigate to login via GoRouter
   // ═══════════════════════════════════════════════════════════════
   void _showSessionExpiredDialog() {
     final context = navigatorKey.currentContext;
 
     if (context == null || !context.mounted) {
       log('⚠️ No context for dialog — redirecting to login directly');
-      Future.delayed(const Duration(seconds: 2), () {
-        _goRouter?.go('/login');
-      });
+      _goRouter?.go('/login');
       return;
     }
-
-    // Prevent duplicate dialogs
-    if (ModalRoute.of(context)?.isCurrent == false) return;
 
     showDialog(
       context: context,
@@ -1351,43 +1348,21 @@ class DioClient {
         child: AlertDialog(
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-          contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          actionsPadding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
           title: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(
-                  Icons.lock_outline_rounded,
-                  color: Colors.orange.shade700,
-                  size: 28,
-                ),
-              ),
+              Icon(Icons.lock_outline_rounded,
+                  color: Colors.orange.shade700, size: 28),
               const SizedBox(width: 12),
               const Expanded(
-                child: Text(
-                  'Session Expired',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
+                child: Text('Session Expired',
+                    style: TextStyle(
+                        fontSize: 20, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           content: const Text(
-            'Your session has expired due to inactivity.\nPlease log in again to continue.',
-            style: TextStyle(
-              fontSize: 15,
-              color: Colors.black54,
-              height: 1.5,
-            ),
+            'Your session has expired.\nPlease log in again to continue.',
+            style: TextStyle(fontSize: 15, color: Colors.black54, height: 1.5),
           ),
           actions: [
             SizedBox(
@@ -1402,17 +1377,12 @@ class DioClient {
                   backgroundColor: Colors.orange,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Log In',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                child: const Text('Log In',
+                    style: TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w600)),
               ),
             ),
           ],

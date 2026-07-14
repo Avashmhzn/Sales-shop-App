@@ -295,10 +295,23 @@ class CompanyBloc extends Bloc<CompanyEvent, CompanyState> {
         ));
       }
     } on DioException catch (e) {
-      String message = 'Network error';
-      if (e.response?.data is Map<String, dynamic>) {
-        message = e.response?.data['message'] ?? e.message ?? message;
+      final isTimeout = e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError;
+
+      if (isTimeout || e.response?.statusCode == 401) {
+        log('DioException loading companies: $e → logging out');
+        await AuthService().clearTokens();
+        await DioClient().clearCookies();
+        Api.resetToPublic();
+        DioClient().goRouter?.go('/login');
+        return;
       }
+
+      final message = e.response?.data is Map
+          ? (e.response!.data['message'] ?? e.message ?? 'Network error')
+          : (e.message ?? 'Network error');
       log('DioException loading companies: $e → message: $message');
       emit(state.copyWith(isLoading: false, errorMessage: message));
     } catch (e, stack) {

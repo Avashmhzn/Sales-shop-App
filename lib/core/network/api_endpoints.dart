@@ -122,6 +122,7 @@
 //new api end point
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
 
 class Api {
@@ -130,23 +131,23 @@ class Api {
   //         false → local dev server
   // ─────────────────────────────────────────────────────────────
   // static const bool forceProduction = true;
-  static const bool forceProduction = bool.fromEnvironment(
-    'FORCE_PRODUCTION',
-    defaultValue: false,
-  );
+  static bool get forceProduction =>
+      dotenv.get('FORCE_PRODUCTION', fallback: 'false') == 'true';
 
   static bool get _useProduction => kReleaseMode || forceProduction;
 
   // ─────────────────────────────────────────────────────────────
   // Base domain — no protocol, no subdomain, no /api
   // ─────────────────────────────────────────────────────────────
-  static const String _productionMainDomain = "salesshopnepal.com";
-  static const String _devBaseUrl = "http://192.168.1.70:8000/api";
+  static String get _productionMainDomain =>
+      dotenv.get('PRODUCTION_DOMAIN', fallback: 'salesshopnepal.com');
+  static String get _devBaseUrl =>
+      dotenv.get('DEV_BASE_URL', fallback: 'http://192.168.1.73:8000/api');
 
   // ─────────────────────────────────────────────────────────────
   // PUBLIC base URL — used before login and company selection
   //   Production → https://salesshopnepal.com/api
-  //   Dev        → http://192.168.1.70:8000/api
+  //   Dev        → http://192.168.1.73:8000/api
   // ─────────────────────────────────────────────────────────────
   static String get publicBaseUrl {
     if (_useProduction) {
@@ -159,7 +160,9 @@ class Api {
   // ─────────────────────────────────────────────────────────────
   // PRIVATE base URL — set after company selection
   // ─────────────────────────────────────────────────────────────
-  static String privateBaseUrl = publicBaseUrl;
+  static String? _privateBaseUrl;
+  static String get privateBaseUrl => _privateBaseUrl ?? publicBaseUrl;
+  static set privateBaseUrl(String url) => _privateBaseUrl = url;
   static bool _isPrivateMode = false;
 
   static String get currentBaseUrl =>

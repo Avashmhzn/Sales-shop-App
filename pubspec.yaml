@@ -68,6 +68,7 @@ dependencies:
   nepali_date_picker: ^7.0.1
   nepali_utils: ^3.0.8
   open_file: ^3.5.11
+  flutter_dotenv: ^5.2.1
 
 
 dev_dependencies:
@@ -137,6 +138,7 @@ flutter:
     - assets/images/transactional-data.png
     - assets/images/receivable.png
     - assets/images/add_company.png
+    - .env
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

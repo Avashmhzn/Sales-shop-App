@@ -136,9 +136,12 @@ import 'package:saleup_app/screen/voucher/bloc/voucher_event.dart';
 import 'package:saleup_app/services/session_manager.dart';
 import 'package:saleup_app/services/user_services.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await dotenv.load(fileName: '.env');
 
   // Force portrait mode
   await SystemChrome.setPreferredOrientations([
@@ -233,19 +236,16 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           useMaterial3: true,
         ),
         routerConfig: _router,
-        // ═══════════════════════════════════════════════════════════════
-        // ★ REMOVED the broken `builder` wrapper that caused:
-        // "No GoRouter found in context" assertion error
-        //
-        // The old code wrapped MaterialApp.router's child with a
-        // separate Navigator using DioClient.navigatorKey. This
-        // isolated the GoRouter from any context derived from
-        // navigatorKey.currentContext, causing the crash when
-        // DioClient tried to call context.go('/login').
-        //
-        // Now DioClient uses _goRouter.go('/login') directly,
-        // so it doesn't need navigatorKey or BuildContext at all.
-        // ═══════════════════════════════════════════════════════════════
+        // Attach DioClient.navigatorKey so _showSessionExpiredDialog
+        // can obtain a BuildContext for showDialog.
+        // Using a Builder preserves the GoRouter InheritedWidget in the
+        // subtree, so context.go() still works inside dialogs.
+        builder: (context, child) => Navigator(
+          key: DioClient.navigatorKey,
+          onGenerateRoute: (_) => MaterialPageRoute(
+            builder: (_) => child ?? const SizedBox.shrink(),
+          ),
+        ),
       ),
     );
   }
