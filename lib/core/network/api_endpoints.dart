@@ -126,29 +126,16 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:saleup_app/core/network/dio_client.dart';
 
 class Api {
-  // ─────────────────────────────────────────────────────────────
-  // TOGGLE: true  → production URLs
-  //         false → local dev server
-  // ─────────────────────────────────────────────────────────────
-  // static const bool forceProduction = true;
   static bool get forceProduction =>
       dotenv.get('FORCE_PRODUCTION', fallback: 'false') == 'true';
 
   static bool get _useProduction => kReleaseMode || forceProduction;
 
-  // ─────────────────────────────────────────────────────────────
-  // Base domain — no protocol, no subdomain, no /api
-  // ─────────────────────────────────────────────────────────────
   static String get _productionMainDomain =>
       dotenv.get('PRODUCTION_DOMAIN', fallback: 'salesshopnepal.com');
   static String get _devBaseUrl =>
       dotenv.get('DEV_BASE_URL', fallback: 'http://192.168.1.73:8000/api');
 
-  // ─────────────────────────────────────────────────────────────
-  // PUBLIC base URL — used before login and company selection
-  //   Production → https://salesshopnepal.com/api
-  //   Dev        → http://192.168.1.73:8000/api
-  // ─────────────────────────────────────────────────────────────
   static String get publicBaseUrl {
     if (_useProduction) {
       return "https://$_productionMainDomain/api";
@@ -157,9 +144,6 @@ class Api {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // PRIVATE base URL — set after company selection
-  // ─────────────────────────────────────────────────────────────
   static String? _privateBaseUrl;
   static String get privateBaseUrl => _privateBaseUrl ?? publicBaseUrl;
   static set privateBaseUrl(String url) => _privateBaseUrl = url;
@@ -168,13 +152,6 @@ class Api {
   static String get currentBaseUrl =>
       _isPrivateMode ? privateBaseUrl : publicBaseUrl;
 
-  // ─────────────────────────────────────────────────────────────
-  // Switch to tenant subdomain after company selection
-  //
-  // Handles BOTH cases automatically:
-  //   DB stores "flutter"                    → https://flutter.salesshopnepal.com/api
-  //   DB stores "flutter.salesshopnepal.com" → https://flutter.salesshopnepal.com/api
-  // ─────────────────────────────────────────────────────────────
   static void switchToPrivate(String? subdomain) {
     _isPrivateMode = true;
 
@@ -185,8 +162,6 @@ class Api {
         String finalUrl;
 
         if (clean.contains(_productionMainDomain)) {
-          // DB stored full domain like "flutter.salesshopnepal.com"
-          // Strip any accidental https:// or /api prefix/suffix
           final domainOnly = clean
               .replaceAll('https://', '')
               .replaceAll('http://', '')
@@ -194,13 +169,11 @@ class Api {
               .trim();
           finalUrl = "https://$domainOnly/api";
         } else {
-          // DB stored subdomain only like "flutter"
           finalUrl = "https://$clean.$_productionMainDomain/api";
         }
 
         privateBaseUrl = finalUrl;
       } else {
-        // Dev: single local server handles all tenants
         privateBaseUrl = _devBaseUrl;
       }
 
@@ -219,9 +192,6 @@ class Api {
     DioClient().updateBaseUrl(privateBaseUrl);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Reset to public — call on logout
-  // ─────────────────────────────────────────────────────────────
   static void resetToPublic() {
     _isPrivateMode = false;
     privateBaseUrl = publicBaseUrl;
