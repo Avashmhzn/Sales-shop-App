@@ -801,7 +801,7 @@ class _StockLedgerViewState extends State<_StockLedgerView> {
               // ★ Show loading overlay ONLY when exporting
               if (state is StockLedgerExporting)
                 Container(
-                  color: Colors.black.withOpacity(0.3),
+                  color: Colors.black.withValues(alpha: 0.3),
                   child: Center(
                     child: Card(
                       child: Padding(

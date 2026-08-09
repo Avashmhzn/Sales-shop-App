@@ -112,7 +112,7 @@ class DashboardCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16.0),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withOpacity(0.15),
+                color: Colors.grey.withValues(alpha: 0.15),
                 spreadRadius: 3,
                 blurRadius: 2,
                 offset: const Offset(0, 3),
@@ -143,7 +143,7 @@ class DashboardCard extends StatelessWidget {
                     width: 22,
                     height: 22,
                     fit: BoxFit.contain,
-                    color: textColor.withOpacity(0.7), // optional tint
+                    color: textColor.withValues(alpha: 0.7), // optional tint
                     // colorBlendMode: BlendMode.srcIn,          // use if tint looks wrong
                   ),
                 ],
@@ -153,7 +153,7 @@ class DashboardCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 8,
                   fontFamily: 'Inter',
-                  color: textColor.withOpacity(0.6),
+                  color: textColor.withValues(alpha: 0.6),
                 ),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

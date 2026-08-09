@@ -162,7 +162,7 @@ class LocationCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color:
-              isSelected ? _orange.withOpacity(0.4) : const Color(0xFFEEEEEE),
+              isSelected ? _orange.withValues(alpha: 0.4) : const Color(0xFFEEEEEE),
         ),
       ),
       child: Padding(
@@ -292,7 +292,7 @@ class _Chip extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

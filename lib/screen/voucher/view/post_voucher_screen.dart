@@ -204,7 +204,7 @@ class _PostVoucherScreenState extends State<PostVoucherScreen> {
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.06),
+                          color: Colors.black.withValues(alpha: 0.06),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -290,7 +290,7 @@ class _PostVoucherScreenState extends State<PostVoucherScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: _orange,
                               foregroundColor: Colors.white,
-                              disabledBackgroundColor: _orange.withOpacity(0.5),
+                              disabledBackgroundColor: _orange.withValues(alpha: 0.5),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8)),

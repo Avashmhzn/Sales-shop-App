@@ -1564,9 +1564,9 @@ class _UnitsScreenState extends State<UnitsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.06),
+          color: color.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withOpacity(0.15)),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         child: Row(
           children: [
@@ -1574,7 +1574,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
+                color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, size: 16, color: color),
@@ -1746,7 +1746,7 @@ class _UnitsScreenState extends State<UnitsScreen> {
                             border: Border.all(color: const Color(0xFFEEEEEE)),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.03),
+                                color: Colors.black.withValues(alpha: 0.03),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -2522,7 +2522,7 @@ class _AddUnitScreenState extends State<AddUnitScreen> {
                             width: 32,
                             height: 32,
                             decoration: BoxDecoration(
-                              color: _orange.withOpacity(0.1),
+                              color: _orange.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(Icons.straighten_outlined,

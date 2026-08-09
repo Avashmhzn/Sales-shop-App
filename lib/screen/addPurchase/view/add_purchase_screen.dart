@@ -1390,7 +1390,7 @@ class AddPurchaseScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1918,8 +1918,8 @@ void _showAddItemDialog(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: noExpiry
-                              ? Colors.orange.withOpacity(0.15)
-                              : Colors.grey.withOpacity(0.15),
+                              ? Colors.orange.withValues(alpha: 0.15)
+                              : Colors.grey.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                               color: noExpiry ? Colors.orange : Colors.grey),

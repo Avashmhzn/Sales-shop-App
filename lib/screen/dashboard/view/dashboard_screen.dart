@@ -258,7 +258,7 @@ class _ChartPanelState extends State<ChartPanel> {
                   borderRadius: BorderRadius.circular(12.0),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
+                      color: Colors.grey.withValues(alpha: 0.3),
                       spreadRadius: 2,
                       blurRadius: 5,
                       offset: const Offset(0, 3),
@@ -301,7 +301,7 @@ class _ChartPanelState extends State<ChartPanel> {
                                 horizontalInterval: interval,
                                 getDrawingHorizontalLine: (value) => FlLine(
                                   color:
-                                      const Color(0xFF65636D).withOpacity(0.2),
+                                      const Color(0xFF65636D).withValues(alpha: 0.2),
                                   strokeWidth: 1,
                                 ),
                               ),
@@ -477,7 +477,7 @@ class _ChartPanelState extends State<ChartPanel> {
                     borderRadius: BorderRadius.circular(12.0),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.grey.withOpacity(0.3),
+                          color: Colors.grey.withValues(alpha: 0.3),
                           spreadRadius: 2,
                           blurRadius: 5,
                           offset: const Offset(0, 3))
@@ -626,7 +626,7 @@ class _ChartPanelState extends State<ChartPanel> {
                   borderRadius: BorderRadius.circular(12.0),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
+                      color: Colors.grey.withValues(alpha: 0.3),
                       spreadRadius: 2,
                       blurRadius: 5,
                       offset: const Offset(0, 3),

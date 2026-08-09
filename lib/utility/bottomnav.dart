@@ -45,7 +45,7 @@ class BottomNav extends StatelessWidget {
     return Expanded(
       child: InkWell(
         onTap: () => onTap(index),
-        splashColor: Colors.white.withOpacity(0.2),
+        splashColor: Colors.white.withValues(alpha: 0.2),
         highlightColor: Colors.transparent,
         borderRadius: BorderRadius.circular(30),
         child: Container(
@@ -57,7 +57,7 @@ class BottomNav extends StatelessWidget {
               Icon(
                 icon,
                 color:
-                    isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+                    isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
                 size: 20, // Reduced from 24
               ),
               const SizedBox(height: 4), // Reduced from 6
@@ -65,7 +65,7 @@ class BottomNav extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color:
-                      isSelected ? Colors.white : Colors.white.withOpacity(0.5),
+                      isSelected ? Colors.white : Colors.white.withValues(alpha: 0.5),
                   fontSize: 10, // Reduced from 12
                 ),
               ),

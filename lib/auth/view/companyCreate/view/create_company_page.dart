@@ -251,7 +251,7 @@ class _CreateCompanyViewState extends State<_CreateCompanyView> {
                                   backgroundColor: const Color(0xFFF97316),
                                   foregroundColor: Colors.white,
                                   disabledBackgroundColor:
-                                      const Color(0xFFF97316).withOpacity(0.6),
+                                      const Color(0xFFF97316).withValues(alpha: 0.6),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
                                   ),

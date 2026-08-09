@@ -21,7 +21,7 @@ class PurchaseCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
         elevation: 2,
-        shadowColor: Colors.black.withOpacity(0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.08),
         child: Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
           child: Row(

@@ -214,7 +214,7 @@ class _NepaliDatePickerDialogState extends State<NepaliDatePickerDialog> {
                   textColor = Colors.white;
                   subColor = Colors.white70;
                 } else if (isToday) {
-                  bgColor = const Color(0xFFF59422).withOpacity(0.18);
+                  bgColor = const Color(0xFFF59422).withValues(alpha: 0.18);
                   textColor = Colors.black87;
                   subColor = Colors.grey;
                 }

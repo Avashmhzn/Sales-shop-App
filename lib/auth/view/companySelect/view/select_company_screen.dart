@@ -1054,7 +1054,7 @@ class CompanySelectionScreen extends StatelessWidget {
                                         ),
                                         borderRadius: BorderRadius.circular(20),
                                         color: isSelected
-                                            ? Colors.orange.withOpacity(0.05)
+                                            ? Colors.orange.withValues(alpha: 0.05)
                                             : null,
                                       ),
                                       child: Row(
