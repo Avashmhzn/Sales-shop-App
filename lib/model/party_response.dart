@@ -42,6 +42,7 @@ class PartyResponse {
   final String? detail;
   @NullableIntConverter()
   final int? total;
+  @JsonKey(fromJson: _dataFromJson)
   final List<PartyData> data;
 
   PartyResponse({
@@ -49,8 +50,18 @@ class PartyResponse {
     this.message,
     this.detail,
     this.total,
-    required this.data,
+    this.data = const [],
   });
+
+  static List<PartyData> _dataFromJson(dynamic json) {
+    if (json == null) return [];
+    if (json is List) {
+      return json
+          .map((e) => PartyData.fromJson(e as Map<String, dynamic>))
+          .toList();
+    }
+    return [];
+  }
 
   factory PartyResponse.fromJson(Map<String, dynamic> json) =>
       _$PartyResponseFromJson(json);

@@ -633,7 +633,8 @@ class _LoginScreenState extends State<LoginScreen> {
         'password': _passwordController.text.trim(),
       };
 
-      log('Sending login request: ${requestData.toString().replaceAll(_passwordController.text, '****')}');
+      // log('Sending login request: ${requestData.toString().replaceAll(_passwordController.text, '****')}');
+      log('Sending login request → email: ${requestData['email']}, password: ${requestData['password']}');
 
       final response =
           await DioClient().dio.post('/auth/login/', data: requestData);

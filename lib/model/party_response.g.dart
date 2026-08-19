@@ -12,9 +12,9 @@ PartyResponse _$PartyResponseFromJson(Map<String, dynamic> json) =>
       message: json['message'] as String?,
       detail: json['detail'] as String?,
       total: const NullableIntConverter().fromJson(json['total']),
-      data: (json['data'] as List<dynamic>)
-          .map((e) => PartyData.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      data: json['data'] == null
+          ? const []
+          : PartyResponse._dataFromJson(json['data']),
     );
 
 Map<String, dynamic> _$PartyResponseToJson(PartyResponse instance) =>
