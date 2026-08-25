@@ -34,7 +34,7 @@ class Api {
     }
   }
 
-// git updated
+// git update
   // ─────────────────────────────────────────────────────────────
   // PRIVATE base URL — updated after company/tenant selection
   // ─────────────────────────────────────────────────────────────
@@ -50,7 +50,6 @@ class Api {
   // ─────────────────────────────────────────────────────────────
   // Switch to tenant/company subdomain after company selection
   //
-  // DB stores SUBDOMAIN ONLY — examples:
   //   "flutter"  → https://flutter.salesshopnepal.com/api
   //   "demo"     → https://demo.salesshopnepal.com/api
   //   "company1" → https://company1.salesshopnepal.com/api
