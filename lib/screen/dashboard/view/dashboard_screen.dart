@@ -1417,6 +1417,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             width: double.infinity,
                             height: 2,
                             fit: BoxFit.fill,
+                            cacheHeight: 4,
                           ),
                         ),
                         const RepaintBoundary(

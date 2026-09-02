@@ -24,7 +24,7 @@ class Api {
   // ─────────────────────────────────────────────────────────────
   // PUBLIC base URL — used before login and company selection
   // Production → https://salesshopnepal.com/api
-  // Dev        → http://192.168.1.78:8000/api
+  // Dev        → http://192.168.1.80:8000/api
   // ─────────────────────────────────────────────────────────────
   static String get publicBaseUrl {
     if (_useProduction) {

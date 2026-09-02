@@ -3062,11 +3062,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                       )
                                     : ListView.builder(
                                         shrinkWrap: true,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
+                                        itemCount: pageItems.length,
                                         padding: const EdgeInsets.symmetric(
                                             vertical: 8),
-                                        itemCount: pageItems.length,
                                         itemBuilder: (context, index) {
                                           final product = pageItems[index];
                                           final isSelected = _selectedIds

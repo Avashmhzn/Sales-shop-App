@@ -1182,7 +1182,6 @@ class DioClient {
   void _onRequest(
       RequestOptions options, RequestInterceptorHandler handler) async {
     options.extra['requestStartTime'] = DateTime.now();
-    await Future.delayed(const Duration(milliseconds: 100));
 
     if (options.path.startsWith('/')) {
       options.path = options.path.substring(1);

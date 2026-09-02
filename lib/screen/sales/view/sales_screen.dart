@@ -639,9 +639,8 @@ class _SaleScreenState extends State<SaleScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
+        child: Column(
+          children: [
               // Header (same as Purchase)
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 2, 16, 16),
@@ -654,6 +653,7 @@ class _SaleScreenState extends State<SaleScreen> {
                         'assets/images/back_button_logo.png',
                         width: 50,
                         height: 50,
+                        cacheWidth: 100,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -675,6 +675,7 @@ class _SaleScreenState extends State<SaleScreen> {
                 width: double.infinity,
                 height: 1,
                 fit: BoxFit.cover,
+                cacheHeight: 2,
               ),
 
               // Search + New Sales (same as Purchase)
@@ -695,7 +696,7 @@ class _SaleScreenState extends State<SaleScreen> {
                             Padding(
                               padding: const EdgeInsets.only(left: 16),
                               child: Image.asset('assets/images/search.png',
-                                  width: 22, height: 22),
+                                  width: 22, height: 22, cacheWidth: 44),
                             ),
                             Expanded(
                               child: TextField(
@@ -890,41 +891,40 @@ class _SaleScreenState extends State<SaleScreen> {
               const SizedBox(height: 8),
 
               // Sales List - same card style as your Purchase screen
-              BlocBuilder<SaleBloc, SaleState>(
-                builder: (context, state) {
-                  if (state.isLoading && state.sales.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Center(child: CircularProgressIndicator()),
+              Expanded(
+                child: BlocBuilder<SaleBloc, SaleState>(
+                  builder: (context, state) {
+                    if (state.isLoading && state.sales.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    if (state.errorMessage != null) {
+                      return Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Center(
+                            child: Text(state.errorMessage!,
+                                style: const TextStyle(color: Colors.red))),
+                      );
+                    }
+                    final filtered = _filtered(state.sales);
+                    if (filtered.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Center(child: Text('No sales found')),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, i) => _saleCard(filtered[i]),
                     );
-                  }
-                  if (state.errorMessage != null) {
-                    return Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Center(
-                          child: Text(state.errorMessage!,
-                              style: const TextStyle(color: Colors.red))),
-                    );
-                  }
-                  final filtered = _filtered(state.sales);
-                  if (filtered.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Center(child: Text('No sales found')),
-                    );
-                  }
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filtered.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, i) => _saleCard(filtered[i]),
-                  );
-                },
+                  },
+                ),
               ),
             ],
           ),
-        ),
       ),
     );
   }

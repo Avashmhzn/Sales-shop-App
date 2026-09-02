@@ -10,6 +10,7 @@ class LocationResponse {
   final String? detail;
   @JsonKey(name: 'total')
   final int? total;
+  @JsonKey(defaultValue: <LocationData>[])
   final List<LocationData> data;
 
   LocationResponse({

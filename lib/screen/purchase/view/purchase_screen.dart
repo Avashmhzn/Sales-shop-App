@@ -714,9 +714,8 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
+        child: Column(
+          children: [
               // Header
               Container(
                 padding: const EdgeInsets.fromLTRB(16, 2, 16, 16),
@@ -973,41 +972,40 @@ class _PurchaseScreenState extends State<PurchaseScreen> {
               const SizedBox(height: 8),
 
               // Purchase List
-              BlocBuilder<PurchaseBloc, PurchaseState>(
-                builder: (context, state) {
-                  if (state.isLoading && state.purchases.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Center(child: CircularProgressIndicator()),
+              Expanded(
+                child: BlocBuilder<PurchaseBloc, PurchaseState>(
+                  builder: (context, state) {
+                    if (state.isLoading && state.purchases.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    if (state.errorMessage != null) {
+                      return Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Center(
+                            child: Text(state.errorMessage!,
+                                style: const TextStyle(color: Colors.red))),
+                      );
+                    }
+                    final filtered = _filtered(state.purchases);
+                    if (filtered.isEmpty) {
+                      return const Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Center(child: Text('No purchases found')),
+                      );
+                    }
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, i) => _purchaseCard(filtered[i]),
                     );
-                  }
-                  if (state.errorMessage != null) {
-                    return Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Center(
-                          child: Text(state.errorMessage!,
-                              style: const TextStyle(color: Colors.red))),
-                    );
-                  }
-                  final filtered = _filtered(state.purchases);
-                  if (filtered.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Center(child: Text('No purchases found')),
-                    );
-                  }
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filtered.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemBuilder: (context, i) => _purchaseCard(filtered[i]),
-                  );
-                },
+                  },
+                ),
               ),
             ],
           ),
-        ),
       ),
     );
   }

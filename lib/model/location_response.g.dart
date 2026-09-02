@@ -12,9 +12,10 @@ LocationResponse _$LocationResponseFromJson(Map<String, dynamic> json) =>
       message: json['message'] as String?,
       detail: json['detail'] as String?,
       total: (json['total'] as num?)?.toInt(),
-      data: (json['data'] as List<dynamic>)
-          .map((e) => LocationData.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      data: (json['data'] as List<dynamic>?)
+              ?.map((e) => LocationData.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
 
 Map<String, dynamic> _$LocationResponseToJson(LocationResponse instance) =>
