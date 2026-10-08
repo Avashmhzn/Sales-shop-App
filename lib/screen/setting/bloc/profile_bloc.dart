@@ -326,7 +326,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
       emit(
         ProfileLoaded(
-          profiles: profile != null ? [profile] : [],
+          profiles: [profile],
           managers: currentManagers,
         ),
       );
